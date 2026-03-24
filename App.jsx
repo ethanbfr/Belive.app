@@ -1076,6 +1076,34 @@ export default function App(){
       {/* Main content */}
       <div className="main-content" style={{marginLeft:SW,flex:1,padding:24,paddingTop:24,minHeight:"100vh",transition:"margin-left 0.25s ease"}} id="main-content">
 
+        {/* PAYWALL — Accès bloqué si essai terminé */}
+        {role==="createur"&&!hasAccess&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:20,backdropFilter:"blur(10px)"}}>
+            <div className="fade" style={{background:"#0d0d0d",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:24,padding:32,width:"100%",maxWidth:440,textAlign:"center",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
+              <div style={{fontSize:48,marginBottom:16}}>🔒</div>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2,marginBottom:8}}>
+                ESSAI TERMINÉ
+              </div>
+              <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.7,marginBottom:24}}>
+                Ton essai gratuit de 14 jours est terminé.<br/>
+                Pour continuer à accéder à Belive Academy,<br/>
+                choisis ton offre ci-dessous.
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
+                <button onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")} style={{background:R,color:"white",border:"none",borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                  🎯 Créateur Belive — 9,99€/mois
+                </button>
+                <button onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05","_blank")} style={{background:"rgba(255,255,255,0.08)",color:"white",border:`1px solid ${B}`,borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                  ⚡ Accès indépendant — 14,99€/mois
+                </button>
+              </div>
+              <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
+              <button onClick={()=>{setUser(null);}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
+            </div>
+          </div>
+        )}
+
         {/* DASHBOARD */}
         {page==="dashboard"&&(
           <div>
