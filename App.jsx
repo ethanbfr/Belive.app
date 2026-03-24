@@ -103,7 +103,16 @@ const AI_R=(q,avg)=>{
 
   return`Bonne question ! Pour te donner une réponse précise, j'aurais besoin de plus de détails sur ta situation.\n\nJe peux t'aider sur :\n• 📈 Viewers et croissance\n• 🎮 Choix des jeux\n• ⏰ Horaires optimaux\n• 💰 Monétisation\n• 🤝 Partenariats\n• 🎯 Affiliation Twitch\n• 🎙️ Setup technique\n\n⚠️ Pour un accompagnement complet et personnalisé, nos agents **Belive Academy** sont disponibles. 🎯`;
 };
-const CTR=(c,f,cm,mt,d)=>`CONTRAT D'ACCOMPAGNEMENT CRÉATEUR
+const CTR=(c,ct)=>{
+  const revenus=[];
+  if(ct.inclDons) revenus.push("Dons");
+  if(ct.inclPubs) revenus.push("Publicités");
+  if(ct.inclPartenariats) revenus.push("Partenariats");
+  if(ct.inclSubs) revenus.push("Abonnements/Subs");
+  if(ct.inclBits) revenus.push("Bits/Super Chats");
+  if(ct.inclMerchandise) revenus.push("Merchandise");
+  const revenusStr=revenus.length>0?revenus.join(", "):"Tous les revenus";
+  return `CONTRAT D'ACCOMPAGNEMENT CRÉATEUR
 Belive Academy — Agence Créateurs & Influence
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -115,14 +124,15 @@ Twitch: ${c?.twitch||"—"} | YouTube: ${c?.youtube||"—"} | TikTok: ${c?.tikto
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-FORMULE : ${f==="commission"?"COMMISSION":"COACHING PREMIUM"}
-${f==="commission"?`Frais d'entrée : ${mt}€\nCommission : ${cm}% sur TOUS les revenus`:`Mensualité : ${mt}€/mois\nCommission : ${cm}% sur les partenariats`}
-Durée : ${d} | Préavis résiliation : 15 jours
+FORMULE : ${ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}
+${ct.formule==="commission"?`Frais d'entrée : ${ct.montant}€`:`Mensualité : ${ct.montant}€/mois`}
+Commission : ${ct.commission}% sur — ${revenusStr}
+Durée : ${ct.duree} | Préavis résiliation : ${ct.preavis||"15 jours"}
+${ct.clauseExclu?`\nClause d'exclusivité : ${ct.clauseExclu}`:""}
+${ct.noteLibre?`\nConditions particulières : ${ct.noteLibre}`:""}
 
-PRESTATIONS : Coaching personnalisé • Suivi stats
-Recherche partenariats • Stratégie croissance
-Accès app Belive Academy • Groupe privé
-
+PRESTATIONS INCLUSES :
+${ct.prestCoaching?"✓ Coaching personnalisé\n":""}${ct.prestStats?"✓ Suivi statistiques\n":""}${ct.prestPartenariats?"✓ Recherche partenariats\n":""}${ct.prestStrategie?"✓ Stratégie de croissance\n":""}${ct.prestApp?"✓ Accès app Belive Academy\n":""}${ct.prestGroupe?"✓ Accès groupe privé\n":""}${ct.prestContenu?"✓ Aide à la création de contenu\n":""}${ct.prestReseaux?"✓ Gestion réseaux sociaux\n":""}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Fait le : ___/___/______
 
@@ -132,6 +142,7 @@ ____________________      ____________________
                           "Lu et approuvé"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 beliveacademy.com | @BeliveAcademy`;
+};
 
 const css=`
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&display=swap');
@@ -253,6 +264,9 @@ export default function App(){
   const [regAge,setRegAge]=useState(false);
   const [regCGU,setRegCGU]=useState(false);
   const [showPass,setShowPass]=useState(false);
+  const [isForgot,setIsForgot]=useState(false);
+  const [forgotEmail,setForgotEmail]=useState("");
+  const [forgotSent,setForgotSent]=useState(false);
   const [showRegPass,setShowRegPass]=useState(false);
   const [page,setPage]=useState("dashboard");
   const [sideOpen,setSideOpen]=useState(true);
@@ -390,23 +404,81 @@ export default function App(){
     if(sv[authEmail]&&sv[authEmail].password===authPass){
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
-      // Charger les streams depuis Supabase
       try{
         const supaStreams=await db.getStreams(authEmail);
         if(supaStreams&&supaStreams.length>0){
-          setStreams(supaStreams.map(s=>({
-            id:s.id,
-            date:s.date,
-            duration:s.duration,
-            viewers:s.viewers,
-            platform:s.platform,
-            user_email:s.user_email,
-          })));
+          setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
         }
       }catch(e){console.log("Streams load failed");}
       return;
     }
+    // Essayer Supabase si pas dans localStorage
+    try{
+      const supaUser=await db.getUser(authEmail);
+      if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
+        const u2=supaUser[0];
+        const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+        sv2[authEmail]=u2;
+        localStorage.setItem("ba6_users",JSON.stringify(sv2));
+        setUser({email:authEmail,...u2});
+        return;
+      }
+    }catch(e){}
     setAuthErr("Email ou mot de passe incorrect.");
+  }
+
+  async function doForgotPassword(){
+    if(!forgotEmail){alert("Entre ton email.");return;}
+    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+    const u=sv[forgotEmail];
+    if(!u){
+      // Essayer dans Supabase
+      try{
+        const supaUser=await db.getUser(forgotEmail);
+        if(!supaUser||!supaUser[0]){alert("❌ Aucun compte avec cet email.");return;}
+      }catch(e){alert("❌ Aucun compte avec cet email.");return;}
+    }
+    // Génère un code de réinitialisation
+    const resetCode=Math.random().toString(36).slice(2,8).toUpperCase();
+    const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
+    resets[forgotEmail]={code:resetCode,expiry:Date.now()+3600000};
+    localStorage.setItem("ba6_resets",JSON.stringify(resets));
+    // Envoyer l'email via EmailJS
+    try{
+      await fetch("https://api.emailjs.com/api/v1.0/email/send",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          service_id:"service_belive",
+          template_id:"template_reset",
+          user_id:"YOUR_EMAILJS_PUBLIC_KEY",
+          template_params:{
+            to_email:forgotEmail,
+            reset_code:resetCode,
+            from_name:"Belive Academy",
+          }
+        })
+      });
+    }catch(e){}
+    setForgotSent(true);
+    alert(`✅ Code de réinitialisation envoyé à ${forgotEmail} !\n\nCode : ${resetCode}\n(Valable 1 heure)`);
+  }
+
+  function doResetPassword(newPass){
+    const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
+    const r=resets[forgotEmail];
+    if(!r||Date.now()>r.expiry){alert("❌ Code expiré.");return;}
+    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+    if(sv[forgotEmail]){
+      sv[forgotEmail].password=newPass;
+      localStorage.setItem("ba6_users",JSON.stringify(sv));
+    }
+    delete resets[forgotEmail];
+    localStorage.setItem("ba6_resets",JSON.stringify(resets));
+    setIsForgot(false);
+    setForgotSent(false);
+    setForgotEmail("");
+    alert("✅ Mot de passe réinitialisé ! Tu peux te connecter.");
   }
 
   async function doReg(){
@@ -447,6 +519,10 @@ export default function App(){
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     sv[email]=nu;
     localStorage.setItem("ba6_users",JSON.stringify(sv));
+    // Sauvegarde dans Supabase
+    try{
+      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString()});
+    }catch(e){console.log("User save to Supabase failed");}
     setUser({email,...nu});
     setShowWelcome(true);
     storeAdminNotif(`🎉 Nouveau créateur inscrit : ${name} (${email})`);
@@ -681,8 +757,64 @@ export default function App(){
 
   function applyPartner(pid){const already=partners.find(p=>p.id===pid)?.applicants.find(a=>a.email===user.email);if(already){alert("Tu as déjà postulé !");return;}setPartners(prev=>prev.map(p=>p.id!==pid?p:{...p,applicants:[...p.applicants,{name:user.name,email:user.email,phone:user.phone||"—",twitch:user.twitch||"—",youtube:user.youtube||"—",tiktok:user.tiktok||"—",instagram:user.instagram||"—",date:new Date().toLocaleDateString("fr-FR")}]}));alert("✅ Candidature envoyée ! Belive Academy te contactera.");}
 
-  function saveContract(){if(!ct.createur)return;setContrats(p=>[...p,{id:Date.now(),...ct.createur,formule:ct.formule,commission:ct.commission,montant:ct.montant,duree:ct.duree,date:new Date().toLocaleDateString("fr-FR")}]);alert(`✅ Contrat sauvegardé ! Envoie-le à ${ct.createur.email}`);setModal(null);}
-  function openContract(c){setCt({createur:c,formule:c.formule||"commission",commission:"25",montant:c.formule==="premium"?"14.99":"19",duree:"Sans engagement"});setModal("contract");}
+  async function saveContract(){
+    if(!ct.createur)return;
+    const contratTexte=CTR(ct.createur,ct);
+    setContrats(p=>[...p,{id:Date.now(),...ct.createur,formule:ct.formule,commission:ct.commission,montant:ct.montant,duree:ct.duree,date:new Date().toLocaleDateString("fr-FR")}]);
+    // Envoi email via EmailJS
+    try{
+      const res=await fetch("https://api.emailjs.com/api/v1.0/email/send",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          service_id:"service_belive",
+          template_id:"template_contrat",
+          user_id:"YOUR_EMAILJS_PUBLIC_KEY",
+          template_params:{
+            to_email:ct.createur.email,
+            to_name:ct.createur.name,
+            from_name:"Belive Academy — Ethan",
+            contrat:contratTexte,
+          }
+        })
+      });
+      if(res.ok){
+        alert(`✅ Contrat envoyé par email à ${ct.createur.email} !`);
+      } else {
+        alert(`✅ Contrat sauvegardé !\n⚠️ Email non envoyé — configure EmailJS dans les paramètres.`);
+      }
+    }catch(e){
+      alert(`✅ Contrat sauvegardé !\n📧 Email à envoyer manuellement à : ${ct.createur.email}`);
+    }
+    setModal(null);
+  }
+  function openContract(c){setCt({
+    createur:c,
+    formule:c.formule||"commission",
+    commission:"25",
+    montant:c.formule==="premium"?"14.99":"19",
+    duree:"Sans engagement",
+    preavis:"15 jours",
+    // Revenus
+    inclDons:false,
+    inclPubs:true,
+    inclPartenariats:true,
+    inclSubs:true,
+    inclBits:true,
+    inclMerchandise:true,
+    // Prestations
+    prestCoaching:true,
+    prestStats:true,
+    prestPartenariats:true,
+    prestStrategie:true,
+    prestApp:true,
+    prestGroupe:true,
+    prestContenu:false,
+    prestReseaux:false,
+    // Options
+    clauseExclu:"",
+    noteLibre:"",
+  });setModal("contract");}
 
   const navItems=[
     {id:"dashboard",    icon:"⬡", label:"Dashboard",    roles:["admin","createur"]},
@@ -772,6 +904,9 @@ export default function App(){
             </div>
             {authErr&&<div style={{color:R,fontSize:12,marginBottom:12,textAlign:"center"}}>{authErr}</div>}
             <Btn full onClick={doLogin} sz="lg">Se connecter</Btn>
+            <div style={{textAlign:"center",marginTop:10}}>
+              <span onClick={()=>setIsForgot(true)} style={{color:M,fontSize:12,cursor:"pointer",textDecoration:"underline"}}>Mot de passe oublié ?</span>
+            </div>
           </>)}
           <div style={{textAlign:"center",marginTop:16,fontSize:13,color:M}}>
             {isReg?"Déjà un compte ?":"Pas encore de compte ?"}{" "}
@@ -1120,23 +1255,86 @@ export default function App(){
                 </div>
                 <div style={{marginTop:10,fontSize:11,color:M}}>💡 Stats actualisées automatiquement toutes les 2 minutes.</div>
               </Card>
-              {/* Affiliation */}
+              {/* Checklist recommandations créateur */}
               <Card style={{marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <div><div style={{fontWeight:800,fontSize:14}}>🎯 Progression Affiliation Twitch</div><div style={{fontSize:12,color:M}}>50 followers • 3 viewers • 7 jours</div></div>
-                  <Pill color={affPct>=100?"green":"yellow"}>{affPct}%</Pill>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:14}}>✅ Objectifs de la semaine</div>
+                    <div style={{fontSize:12,color:M,marginTop:2}}>Coche ce que tu as accompli — barre de progression automatique</div>
+                  </div>
                 </div>
-                <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden",marginBottom:12}}>
-                  <div style={{height:"100%",width:`${affPct}%`,background:`linear-gradient(90deg,${R},#ff4d4d)`,borderRadius:3,transition:"width 0.8s ease"}}/>
+
+                {/* Barre de progression globale */}
+                {(()=>{
+                  const total=8;
+                  const twitchOk=!!user.twitch;
+                  const youtubeOk=!!user.youtube;
+                  const done=[
+                    twitchOk,
+                    youtubeOk,
+                    profil.check_stream3x||false,
+                    profil.check_clip||false,
+                    profil.check_community||false,
+                    profil.check_profil||false,
+                    profil.check_planning||false,
+                    profil.check_raid||false,
+                  ].filter(Boolean).length;
+                  const pct=Math.round((done/total)*100);
+                  return(
+                    <>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                        <div style={{fontSize:12,color:M}}>{done}/{total} objectifs accomplis</div>
+                        <Pill color={pct===100?"green":pct>=50?"yellow":"red"}>{pct}%</Pill>
+                      </div>
+                      <div style={{height:8,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden",marginBottom:14}}>
+                        <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${R},#ff4d4d)`,borderRadius:4,transition:"width 0.5s ease"}}/>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {/* Liste des objectifs */}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {[
+                    {auto:!!user.twitch,   k:null,              icon:"🟣", label:"Connecter ton compte Twitch",      desc:user.twitch?`@${user.twitch} connecté ✓`:"Connecte ton Twitch depuis le dashboard"},
+                    {auto:!!user.youtube,  k:null,              icon:"▶️", label:"Connecter ton compte YouTube",     desc:user.youtube?`${user.youtube} connecté ✓`:"Connecte ta chaîne YouTube depuis le dashboard"},
+                    {auto:false,           k:"check_stream3x",  icon:"🎮", label:"Streamer au moins 3 fois cette semaine", desc:"La régularité est la clé numéro 1 de la croissance"},
+                    {auto:false,           k:"check_clip",      icon:"🎬", label:"Poster un clip sur TikTok ou YouTube Shorts", desc:"Un clip viral peut t'amener 50-200 nouveaux followers"},
+                    {auto:false,           k:"check_community", icon:"👥", label:"Poster dans la communauté Belive", desc:"Crée du lien avec les autres créateurs de l'agence"},
+                    {auto:false,           k:"check_profil",    icon:"👤", label:"Compléter ton profil (photo + bio + jeux)", desc:"Un profil complet inspire confiance aux partenaires"},
+                    {auto:false,           k:"check_planning",  icon:"📅", label:"Planifier ses streams de la semaine", desc:"Annonce tes horaires sur tes réseaux 24h avant"},
+                    {auto:false,           k:"check_raid",      icon:"⚔️", label:"Faire ou recevoir un raid",        desc:"Les raids boostent ta visibilité et créent du lien"},
+                  ].map(item=>{
+                    const isChecked=item.auto||(item.k&&profil[item.k])||false;
+                    return(
+                      <div key={item.k||item.label} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",background:isChecked?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${isChecked?"rgba(34,197,94,0.25)":B}`,borderRadius:10}}>
+                        <div style={{width:32,height:32,background:isChecked?"rgba(34,197,94,0.15)":"rgba(255,255,255,0.05)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{item.icon}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,fontSize:13,color:isChecked?"white":M,textDecoration:isChecked?"line-through":"none"}}>{item.label}</div>
+                          <div style={{fontSize:11,color:M,marginTop:2}}>{item.desc}</div>
+                        </div>
+                        {item.auto?(
+                          <div style={{width:24,height:24,background:G,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0,color:"white",fontWeight:800}}>✓</div>
+                        ):item.k?(
+                          <label style={{cursor:"pointer",flexShrink:0}}>
+                            <input type="checkbox" checked={profil[item.k]||false} onChange={e=>setProfil(p=>({...p,[item.k]:e.target.checked}))} style={{width:20,height:20,accentColor:G,cursor:"pointer"}}/>
+                          </label>
+                        ):null}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-                  {[{l:"Followers",v:ms.twitch,t:50},{l:"Viewers",v:avgV,t:3},{l:"Jours",v:streams.length,t:7}].map(c=>(
-                    <div key={c.l} style={{textAlign:"center",padding:"8px",background:"rgba(255,255,255,0.03)",borderRadius:10}}>
-                      <div style={{fontSize:18,fontWeight:800,color:c.v>=c.t?G:R}}>{c.v}/{c.t}</div>
-                      <div style={{fontSize:10,color:M,marginTop:2}}>{c.l}</div>
+
+                {/* Message quand tout est fait */}
+                {(()=>{
+                  const allDone=!!user.twitch&&!!user.youtube&&profil.check_stream3x&&profil.check_clip&&profil.check_community&&profil.check_profil&&profil.check_planning&&profil.check_raid;
+                  return allDone?(
+                    <div style={{marginTop:12,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+                      <div style={{fontWeight:800,color:G,fontSize:14}}>🔥 Semaine parfaite ! Tu es sur la bonne voie !</div>
+                      <div style={{fontSize:12,color:M,marginTop:4}}>Continue comme ça — la régularité fait tout.</div>
                     </div>
-                  ))}
-                </div>
+                  ):null;
+                })()}
               </Card>
               {/* Quick stream */}
               <Card>
@@ -2440,6 +2638,49 @@ export default function App(){
       {/* MODALS */}
 
       {/* WELCOME MODAL */}
+      {/* FORGOT PASSWORD MODAL */}
+      <Modal open={isForgot} onClose={()=>{setIsForgot(false);setForgotSent(false);setForgotEmail("");}} title="🔑 Mot de passe oublié">
+        {!forgotSent?(
+          <>
+            <div style={{fontSize:13,color:M,marginBottom:16,lineHeight:1.6}}>Entre ton email — on t'envoie un code de réinitialisation.</div>
+            <Field label="Email" type="email" value={forgotEmail} onChange={e=>setForgotEmail(e.target.value)} placeholder="ton@email.com"/>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <Btn v="ghost" onClick={()=>setIsForgot(false)}>Annuler</Btn>
+              <Btn onClick={doForgotPassword}>Envoyer le code</Btn>
+            </div>
+          </>
+        ):(
+          <>
+            <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:13,color:M}}>
+              ✅ Code envoyé à <strong style={{color:"white"}}>{forgotEmail}</strong>
+            </div>
+            {(()=>{
+              const [code,setCode]=useState("");
+              const [newPass,setNewPass]=useState("");
+              const [confirmPass,setConfirmPass]=useState("");
+              return(
+                <>
+                  <Field label="Code reçu par email" value={code} onChange={e=>setCode(e.target.value)} placeholder="XXXXXX"/>
+                  <Field label="Nouveau mot de passe" type="password" value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="••••••••"/>
+                  <Field label="Confirmer le mot de passe" type="password" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="••••••••"/>
+                  <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+                    <Btn v="ghost" onClick={()=>setIsForgot(false)}>Annuler</Btn>
+                    <Btn onClick={()=>{
+                      const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
+                      const r=resets[forgotEmail];
+                      if(!r||r.code!==code.toUpperCase()){alert("❌ Code incorrect.");return;}
+                      if(newPass!==confirmPass){alert("❌ Les mots de passe ne correspondent pas.");return;}
+                      if(newPass.length<6){alert("❌ Mot de passe trop court (6 caractères minimum).");return;}
+                      doResetPassword(newPass);
+                    }}>Réinitialiser</Btn>
+                  </div>
+                </>
+              );
+            })()}
+          </>
+        )}
+      </Modal>
+
       {showWelcome&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20,backdropFilter:"blur(8px)"}}>
           <div className="fade" style={{background:"#0d0d0d",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:24,padding:32,width:"100%",maxWidth:460,textAlign:"center",position:"relative",overflow:"hidden"}}>
@@ -2607,14 +2848,79 @@ export default function App(){
 
       <Modal open={modal==="contract"} onClose={()=>setModal(null)} title={`Contrat — ${ct.createur?.name||""}`} wide>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-          <Field label="Formule" as="select" value={ct.formule} onChange={e=>setCt({...ct,formule:e.target.value,montant:e.target.value==="premium"?"14.99":"19"})}><option value="commission">Commission</option><option value="premium">Coaching Premium</option></Field>
-          <Field label="Commission (%)" type="number" value={ct.commission} onChange={e=>setCt({...ct,commission:e.target.value})} placeholder="25"/>
+          <Field label="Formule" as="select" value={ct.formule} onChange={e=>setCt({...ct,formule:e.target.value,montant:e.target.value==="premium"?"14.99":"19"})}>
+            <option value="commission">Commission (frais unique)</option>
+            <option value="premium">Coaching Premium (mensuel)</option>
+          </Field>
           <Field label={ct.formule==="commission"?"Frais d'entrée (€)":"Mensualité (€)"} type="number" value={ct.montant} onChange={e=>setCt({...ct,montant:e.target.value})}/>
-          <Field label="Durée" as="select" value={ct.duree} onChange={e=>setCt({...ct,duree:e.target.value})}><option>Sans engagement</option><option>3 mois</option><option>6 mois</option><option>12 mois</option></Field>
+          <Field label="Commission (%)" type="number" value={ct.commission} onChange={e=>setCt({...ct,commission:e.target.value})} placeholder="25"/>
+          <Field label="Durée" as="select" value={ct.duree} onChange={e=>setCt({...ct,duree:e.target.value})}>
+            <option>Sans engagement</option>
+            <option>3 mois</option>
+            <option>6 mois</option>
+            <option>9 mois</option>
+            <option>12 mois</option>
+          </Field>
+          <Field label="Préavis résiliation" as="select" value={ct.preavis} onChange={e=>setCt({...ct,preavis:e.target.value})}>
+            <option>7 jours</option>
+            <option>15 jours</option>
+            <option>30 jours</option>
+          </Field>
         </div>
-        <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:16,fontFamily:"monospace",fontSize:11,whiteSpace:"pre-wrap",color:"rgba(255,255,255,0.72)",maxHeight:340,overflowY:"auto",lineHeight:1.65,marginBottom:16}}>
-          {CTR(ct.createur,ct.formule,ct.commission,ct.montant,ct.duree)}
+
+        {/* Revenus concernés */}
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>💰 Commission prélevée sur :</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            {[
+              {k:"inclPartenariats",l:"🤝 Partenariats"},
+              {k:"inclPubs",l:"📺 Publicités"},
+              {k:"inclSubs",l:"💜 Subs/Abonnements"},
+              {k:"inclBits",l:"💎 Bits/Super Chats"},
+              {k:"inclMerchandise",l:"👕 Merchandise"},
+              {k:"inclDons",l:"🎁 Dons"},
+            ].map(r=>(
+              <label key={r.k} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 12px",background:ct[r.k]?"rgba(212,16,63,0.1)":"rgba(255,255,255,0.03)",border:`1px solid ${ct[r.k]?"rgba(212,16,63,0.3)":B}`,borderRadius:8}}>
+                <input type="checkbox" checked={ct[r.k]||false} onChange={e=>setCt({...ct,[r.k]:e.target.checked})} style={{accentColor:R}}/>
+                <span style={{fontSize:12,color:ct[r.k]?"white":M}}>{r.l}</span>
+              </label>
+            ))}
+          </div>
         </div>
+
+        {/* Prestations incluses */}
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>✅ Prestations incluses :</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {[
+              {k:"prestCoaching",l:"🎯 Coaching personnalisé"},
+              {k:"prestStats",l:"📊 Suivi statistiques"},
+              {k:"prestPartenariats",l:"🤝 Recherche partenariats"},
+              {k:"prestStrategie",l:"📈 Stratégie de croissance"},
+              {k:"prestApp",l:"📱 Accès app Belive Academy"},
+              {k:"prestGroupe",l:"👥 Accès groupe privé"},
+              {k:"prestContenu",l:"🎬 Aide création contenu"},
+              {k:"prestReseaux",l:"📲 Gestion réseaux sociaux"},
+            ].map(p=>(
+              <label key={p.k} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 12px",background:ct[p.k]?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${ct[p.k]?"rgba(34,197,94,0.25)":B}`,borderRadius:8}}>
+                <input type="checkbox" checked={ct[p.k]||false} onChange={e=>setCt({...ct,[p.k]:e.target.checked})} style={{accentColor:G}}/>
+                <span style={{fontSize:12,color:ct[p.k]?"white":M}}>{p.l}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Options avancées */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          <Field label="Clause d'exclusivité (optionnel)" value={ct.clauseExclu||""} onChange={e=>setCt({...ct,clauseExclu:e.target.value})} placeholder="Ex: Exclusivité agence 6 mois"/>
+          <Field label="Notes particulières (optionnel)" value={ct.noteLibre||""} onChange={e=>setCt({...ct,noteLibre:e.target.value})} placeholder="Conditions spécifiques..."/>
+        </div>
+
+        {/* Aperçu contrat */}
+        <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:16,fontFamily:"monospace",fontSize:11,whiteSpace:"pre-wrap",color:"rgba(255,255,255,0.72)",maxHeight:300,overflowY:"auto",lineHeight:1.65,marginBottom:16}}>
+          {CTR(ct.createur,ct)}
+        </div>
+
         <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
           <Btn v="ghost" onClick={()=>setModal(null)}>Fermer</Btn>
           <Btn v="success" onClick={saveContract} icon="💾">Sauvegarder & Envoyer</Btn>
