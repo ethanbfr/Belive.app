@@ -449,9 +449,9 @@ export default function App(){
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          service_id:"service_belive",
-          template_id:"template_reset",
-          user_id:"YOUR_EMAILJS_PUBLIC_KEY",
+          service_id:"service_on459ks",
+          template_id:"template_ey0hwpz",
+          user_id:"MTTbA9t4YLXMDdk1I",
           template_params:{
             to_email:forgotEmail,
             reset_code:resetCode,
@@ -767,9 +767,9 @@ export default function App(){
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          service_id:"service_belive",
-          template_id:"template_contrat",
-          user_id:"YOUR_EMAILJS_PUBLIC_KEY",
+          service_id:"service_on459ks",
+          template_id:"template_7kpdxpg",
+          user_id:"MTTbA9t4YLXMDdk1I",
           template_params:{
             to_email:ct.createur.email,
             to_name:ct.createur.name,
