@@ -255,7 +255,12 @@ const ProfileFrameTemplate=({variant,pseudo})=>{
 
 // MAIN
 export default function App(){
-  const [user,setUser]=useState(null);
+  const [user,setUser]=useState(()=>{
+    try{
+      const saved=localStorage.getItem("ba6_session");
+      return saved?JSON.parse(saved):null;
+    }catch(e){return null;}
+  });
   const [authEmail,setAuthEmail]=useState("");
   const [authPass,setAuthPass]=useState("");
   const [authErr,setAuthErr]=useState("");
@@ -321,6 +326,14 @@ export default function App(){
   useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   useEffect(()=>{localStorage.setItem("ba6_co",JSON.stringify(contrats));},[contrats]);
+  // Sauvegarder la session pour éviter déconnexion au refresh
+  useEffect(()=>{
+    if(user){
+      localStorage.setItem("ba6_session",JSON.stringify(user));
+    } else {
+      localStorage.removeItem("ba6_session");
+    }
+  },[user]);
   useEffect(()=>{localStorage.setItem("ba6_cd",JSON.stringify(codes));},[codes]);
   useEffect(()=>{localStorage.setItem("ba6_ms",JSON.stringify(ms));},[ms]);
   useEffect(()=>{localStorage.setItem("ba6_sc",JSON.stringify(schedule));},[schedule]);
@@ -365,9 +378,10 @@ export default function App(){
   const isInTrial=trialDaysLeft>0;
   const hasAccess=isPro||isInTrial||isBeliveCreator;
 
-  // Charger les codes depuis Supabase quand admin connecté
+  // Charger les codes et utilisateurs depuis Supabase quand admin connecté
   useEffect(()=>{
     if(role==="admin"){
+      // Charger les codes
       db.getCodes().then(data=>{
         if(data&&data.length>0){
           setCodes(data.map(c=>({
@@ -381,6 +395,30 @@ export default function App(){
             owner:c.owner,
             creatorName:c.creator_name||"",
           })));
+        }
+      }).catch(()=>{});
+      // Charger les utilisateurs depuis Supabase
+      db.getUsers().then(data=>{
+        if(data&&data.length>0){
+          const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+          data.forEach(u=>{
+            if(!sv[u.email]){
+              sv[u.email]={
+                name:u.name,
+                role:u.role||"createur",
+                password:u.password,
+                plan:u.plan||"free",
+                phone:u.phone,
+                twitch:u.twitch,
+                youtube:u.youtube,
+                tiktok:u.tiktok,
+                instagram:u.instagram,
+                av:u.av||(u.name?u.name.charAt(0):"?"),
+                trialStart:u.trial_start,
+              };
+            }
+          });
+          localStorage.setItem("ba6_users",JSON.stringify(sv));
         }
       }).catch(()=>{});
     }
