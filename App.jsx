@@ -136,10 +136,14 @@ ${ct.prestCoaching?"✓ Coaching personnalisé\n":""}${ct.prestStats?"✓ Suivi 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Fait le : ___/___/______
 
-Pour Belive Academy :     Pour le Créateur :
+Pour Belive Academy :          Pour le Créateur :
 
-____________________      ____________________
-                          "Lu et approuvé"
+Ethan — Belive Academy         ${c?.name||"___"}
+ethan@beliveacademy.com        ${c?.email||"___"}
+07 80 99 92 51
+
+____________________           ____________________
+        Signature                      "Lu et approuvé"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 beliveacademy.com | @BeliveAcademy`;
 };
@@ -799,9 +803,28 @@ export default function App(){
     if(!ct.createur)return;
     const contratTexte=CTR(ct.createur,ct);
     setContrats(p=>[...p,{id:Date.now(),...ct.createur,formule:ct.formule,commission:ct.commission,montant:ct.montant,duree:ct.duree,date:new Date().toLocaleDateString("fr-FR")}]);
-    // Envoi email via EmailJS
+    // Envoi email à Ethan + copie au créateur
     try{
-      const res=await fetch("https://api.emailjs.com/api/v1.0/email/send",{
+      // Email à Ethan
+      await fetch("https://api.emailjs.com/api/v1.0/email/send",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          service_id:"service_on459ks",
+          template_id:"template_7kpdxpg",
+          user_id:"MTTbA9t4YLXMDdk1I",
+          template_params:{
+            to_email:"ethan@beliveacademy.com",
+            to_name:"Ethan — Belive Academy",
+            from_name:`${ct.createur.name} via Belive Academy`,
+            contrat:contratTexte,
+            createur_email:ct.createur.email,
+            createur_name:ct.createur.name,
+          }
+        })
+      });
+      // Email au créateur
+      await fetch("https://api.emailjs.com/api/v1.0/email/send",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
@@ -811,18 +834,16 @@ export default function App(){
           template_params:{
             to_email:ct.createur.email,
             to_name:ct.createur.name,
-            from_name:"Belive Academy — Ethan",
+            from_name:"Ethan — Belive Academy",
             contrat:contratTexte,
+            createur_email:ct.createur.email,
+            createur_name:ct.createur.name,
           }
         })
       });
-      if(res.ok){
-        alert(`✅ Contrat envoyé par email à ${ct.createur.email} !`);
-      } else {
-        alert(`✅ Contrat sauvegardé !\n⚠️ Email non envoyé — configure EmailJS dans les paramètres.`);
-      }
+      alert(`✅ Contrat envoyé !\n📧 À toi : ethan@beliveacademy.com\n📧 Au créateur : ${ct.createur.email}`);
     }catch(e){
-      alert(`✅ Contrat sauvegardé !\n📧 Email à envoyer manuellement à : ${ct.createur.email}`);
+      alert(`✅ Contrat sauvegardé !\n📧 Envoie manuellement à : ${ct.createur.email}`);
     }
     setModal(null);
   }
@@ -1121,34 +1142,60 @@ export default function App(){
             {role==="admin"&&(()=>{
               // Récupère tous les utilisateurs inscrits
               const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
-              const payants=allUsers.filter(u=>u.plan==="pro");
-              const essai=allUsers.filter(u=>u.plan!=="pro"&&u.trialStart&&Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))<14);
-              const expires=allUsers.filter(u=>u.plan!=="pro"&&(!u.trialStart||Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))>=14));
-              const revenuMensuel=payants.length*14.99;
+              const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator");
+              const payantsPro=allUsers.filter(u=>u.plan==="pro");
+              const gratuitVie=allUsers.filter(u=>u.plan==="unlimited"||u.freeType==="unlimited"||u.free_type==="unlimited");
+              const essai=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&u.trialStart&&Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))<14);
+              const expires=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&(!u.trialStart||Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))>=14));
+              const revenuMensuel=(payantsBelive.length*9.99)+(payantsPro.length*14.99);
+              const potentielMax=revenuMensuel+(essai.length*14.99)+(expires.length*14.99);
 
               return(<>
                 {/* KPIs */}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
                   <SC label="Total inscrits" value={allUsers.length} sub="créateurs" icon="👥"/>
-                  <SC label="Abonnés Pro" value={payants.length} sub={`${revenuMensuel.toFixed(2)}€/mois`} icon="💰" color="green"/>
-                  <SC label="En essai" value={essai.length} sub="14 jours" icon="⏳" color="yellow"/>
+                  <SC label="Revenu réel" value={`${revenuMensuel.toFixed(2)}€`} sub="ce mois" icon="💰" color="green"/>
+                  <SC label="En essai" value={essai.length} sub={`${essai.length} gratuits`} icon="⏳" color="yellow"/>
                   <SC label="Expirés" value={expires.length} sub="à relancer" icon="🔒" color="red"/>
-                  <SC label="Candidatures" value={totalCand} sub="partenariats" icon="🤝" color="blue"/>
-                  <SC label="Contrats" value={contrats.length} sub="générés" icon="📋" color="purple"/>
+                  <SC label="Gratuit à vie" value={gratuitVie.length} sub="offerts" icon="🎁" color="purple"/>
+                  <SC label="Contrats" value={contrats.length} sub="générés" icon="📋" color="blue"/>
                 </div>
 
                 {/* Revenu estimé */}
                 <Card style={{marginBottom:20,background:"rgba(34,197,94,0.05)",border:`1px solid rgba(34,197,94,0.2)`}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                     <div>
-                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>💰 Revenu mensuel estimé</div>
+                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>💰 Revenu mensuel réel</div>
                       <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:42,color:G,lineHeight:1}}>{revenuMensuel.toFixed(2)}€</div>
-                      <div style={{fontSize:12,color:M,marginTop:4}}>{payants.length} abonné{payants.length>1?"s":""} Pro × 14,99€</div>
+                      <div style={{fontSize:12,color:M,marginTop:4}}>
+                        {payantsBelive.length>0&&`${payantsBelive.length} × 9,99€`}
+                        {payantsBelive.length>0&&payantsPro.length>0&&" + "}
+                        {payantsPro.length>0&&`${payantsPro.length} × 14,99€`}
+                        {payantsBelive.length===0&&payantsPro.length===0&&"Aucun abonné payant"}
+                      </div>
                     </div>
                     <div style={{textAlign:"right"}}>
-                      <div style={{fontSize:12,color:M,marginBottom:4}}>Potentiel si tous convertis</div>
-                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:YE}}>{(allUsers.length*14.99).toFixed(2)}€</div>
-                      <div style={{fontSize:11,color:M}}>{allUsers.length} inscrits × 14,99€</div>
+                      <div style={{fontSize:12,color:M,marginBottom:4}}>Potentiel si essais convertis</div>
+                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:YE}}>{potentielMax.toFixed(2)}€</div>
+                      <div style={{fontSize:11,color:M}}>{essai.length} essais + {expires.length} expirés à convertir</div>
+                    </div>
+                  </div>
+                  {/* Détail par plan */}
+                  <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid rgba(255,255,255,0.06)`,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+                    <div style={{textAlign:"center",background:"rgba(212,16,63,0.06)",borderRadius:10,padding:"10px 8px"}}>
+                      <div style={{fontWeight:800,fontSize:16,color:R}}>{payantsBelive.length}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Créateurs Belive</div>
+                      <div style={{fontSize:11,color:R,fontWeight:700}}>9,99€/mois</div>
+                    </div>
+                    <div style={{textAlign:"center",background:"rgba(34,197,94,0.06)",borderRadius:10,padding:"10px 8px"}}>
+                      <div style={{fontWeight:800,fontSize:16,color:G}}>{payantsPro.length}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Pro indépendants</div>
+                      <div style={{fontSize:11,color:G,fontWeight:700}}>14,99€/mois</div>
+                    </div>
+                    <div style={{textAlign:"center",background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 8px"}}>
+                      <div style={{fontWeight:800,fontSize:16,color:M}}>{gratuitVie.length}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Gratuit à vie</div>
+                      <div style={{fontSize:11,color:M,fontWeight:700}}>0€</div>
                     </div>
                   </div>
                 </Card>
