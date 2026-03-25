@@ -1185,8 +1185,8 @@ export default function App(){
             {role==="admin"&&(()=>{
               // Récupère tous les utilisateurs inscrits
               const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
-              const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&!u.offert);
-              const payantsPro=allUsers.filter(u=>u.plan==="pro"&&!u.offert);
+              const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&u.offert!==true&&u.offert!=="true");
+              const payantsPro=allUsers.filter(u=>u.plan==="pro"&&u.offert!==true&&u.offert!=="true");
               const gratuitVie=allUsers.filter(u=>u.offert===true);
               const revenuBelive=payantsBelive.length*9.99;
               const revenuPro=payantsPro.length*14.99;
