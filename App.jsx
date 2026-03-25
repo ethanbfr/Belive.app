@@ -429,12 +429,19 @@ export default function App(){
         if(data&&data.length>0){
           const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
           data.forEach(u=>{
-            if(!sv[u.email]){
+            // Toujours mettre à jour plan, offert et paid depuis Supabase
+            if(sv[u.email]){
+              sv[u.email].plan=u.plan||sv[u.email].plan||"free";
+              sv[u.email].offert=u.offert||false;
+              sv[u.email].paid=u.paid||false;
+            } else {
               sv[u.email]={
                 name:u.name,
                 role:u.role||"createur",
                 password:u.password,
                 plan:u.plan||"free",
+                offert:u.offert||false,
+                paid:u.paid||false,
                 phone:u.phone,
                 twitch:u.twitch,
                 youtube:u.youtube,
@@ -767,22 +774,22 @@ export default function App(){
     alert("✅ Créateur supprimé.");
   }
 
-  function togglePro(email){
+  async function togglePro(email){
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     if(sv[email]){
       if(sv[email].plan==="pro"){
-        // Retirer le Pro
         sv[email].plan="free";
         sv[email].offert=false;
+        await db.updateUser(email,{plan:"free",offert:false});
       } else {
-        // Passer Pro — demander si payant ou offert
         const isPaid=window.confirm("Ce créateur a-t-il payé ?\n\nOK = Payant (compté dans les revenus)\nAnnuler = Offert (gratuit, non compté)");
         sv[email].plan="pro";
         sv[email].offert=!isPaid;
+        await db.updateUser(email,{plan:"pro",offert:!isPaid,paid:isPaid});
       }
       localStorage.setItem("ba6_users",JSON.stringify(sv));
     }
-    setCreateurs(p=>p.map(c=>c.email===email?{...c,plan:c.plan==="pro"?"free":"pro",offert:sv[email]?.offert}:c));
+    setCreateurs(p=>p.map(c=>c.email===email?{...c,plan:sv[email]?.plan,offert:sv[email]?.offert}:c));
   }
 
   async function genCode(type, freeType="limited", freeDays=14, creatorName=""){
