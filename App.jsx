@@ -374,7 +374,7 @@ export default function App(){
   useEffect(()=>{aiEnd.current?.scrollIntoView({behavior:"smooth"});},[aiMsgs]);
 
   const role=user?.role;
-  const isPro=user?.plan==="pro"||role==="admin";
+  const isPro=user?.plan==="pro"||user?.plan==="unlimited"||role==="admin";
   const isBeliveCreator=user?.plan==="belive_creator";
   const trialStart=user?.trialStart?new Date(user.trialStart):null;
   const trialDays=14;
@@ -553,11 +553,12 @@ export default function App(){
       if(!f){alert("❌ Code invalide ou déjà utilisé.");return;}
       r2=f.type||"createur";
       if(f.freeType==="belive_creator"||f.free_type==="belive_creator") plan="belive_creator";
-      if(f.freeType==="unlimited"||f.free_type==="unlimited") plan="pro";
+      if(f.freeType==="unlimited"||f.free_type==="unlimited"){plan="pro";}
       if((f.freeType==="limited"||f.free_type==="limited")&&(f.freeDays||f.free_days)) trialDaysFromCode=f.freeDays||f.free_days;
     }
+    const isOffert=plan==="pro"&&true; // sera false si paiement Stripe
     const trialEnd=new Date(Date.now()+trialDaysFromCode*24*60*60*1000).toISOString();
-    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString()};
+    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString()};
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     sv[email]=nu;
     localStorage.setItem("ba6_users",JSON.stringify(sv));
@@ -1142,12 +1143,14 @@ export default function App(){
             {role==="admin"&&(()=>{
               // Récupère tous les utilisateurs inscrits
               const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
-              const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator");
-              const payantsPro=allUsers.filter(u=>u.plan==="pro");
-              const gratuitVie=allUsers.filter(u=>u.plan==="unlimited"||u.freeType==="unlimited"||u.free_type==="unlimited");
+              const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&!u.offert);
+              const payantsPro=allUsers.filter(u=>u.plan==="pro"&&!u.offert);
+              const gratuitVie=allUsers.filter(u=>u.offert===true);
+              const revenuBelive=payantsBelive.length*9.99;
+              const revenuPro=payantsPro.length*14.99;
               const essai=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&u.trialStart&&Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))<14);
               const expires=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&(!u.trialStart||Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))>=14));
-              const revenuMensuel=(payantsBelive.length*9.99)+(payantsPro.length*14.99);
+              const revenuMensuel=revenuBelive+revenuPro;
               const potentielMax=revenuMensuel+(essai.length*14.99)+(expires.length*14.99);
 
               return(<>
