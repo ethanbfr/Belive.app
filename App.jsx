@@ -3074,14 +3074,103 @@ export default function App(){
           <Field label="Notes particulières (optionnel)" value={ct.noteLibre||""} onChange={e=>setCt({...ct,noteLibre:e.target.value})} placeholder="Conditions spécifiques..."/>
         </div>
 
-        {/* Aperçu contrat */}
-        <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:16,fontFamily:"monospace",fontSize:11,whiteSpace:"pre-wrap",color:"rgba(255,255,255,0.72)",maxHeight:300,overflowY:"auto",lineHeight:1.65,marginBottom:16}}>
-          {CTR(ct.createur,ct)}
+        {/* Aperçu contrat PDF */}
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>👁️ Aperçu du contrat</div>
+          <div style={{background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}>
+            {/* Header */}
+            <div style={{background:"#111",padding:"20px 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:20,letterSpacing:3,color:"white"}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
+              <div style={{background:R,color:"white",borderRadius:100,padding:"4px 14px",fontSize:10,fontWeight:800,letterSpacing:2}}>CONTRAT D'ACCOMPAGNEMENT</div>
+            </div>
+            <div style={{height:3,background:`linear-gradient(90deg,${R},#ff4d4d)`}}/>
+            {/* Body */}
+            <div style={{padding:"24px 28px"}}>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:16,letterSpacing:2,color:"#111",marginBottom:4}}>CONTRAT D'ACCOMPAGNEMENT CRÉATEUR</div>
+              <div style={{fontSize:11,color:"#888",marginBottom:20}}>📅 Fait le {new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"})}</div>
+              {/* Two cols */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+                <div style={{background:"#f8f8f8",borderRadius:10,padding:"14px 16px",borderLeft:"4px solid #D4103F"}}>
+                  <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>AGENCE</div>
+                  {[["Nom","Belive Academy — Ethan"],["Email","ethan@beliveacademy.com"],["Tél.","07 80 99 92 51"]].map(([l,v])=>(
+                    <div key={l} style={{fontSize:11,color:"#333",marginBottom:4,display:"flex",gap:8}}><strong style={{minWidth:50,color:"#111"}}>{l}</strong>{v}</div>
+                  ))}
+                </div>
+                <div style={{background:"#f8f8f8",borderRadius:10,padding:"14px 16px",borderLeft:"4px solid #D4103F"}}>
+                  <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>CRÉATEUR</div>
+                  {[["Nom",ct.createur?.name||"—"],["Email",ct.createur?.email||"—"],["Twitch",ct.createur?.twitch?"@"+ct.createur.twitch:"—"],["YouTube",ct.createur?.youtube||"—"]].map(([l,v])=>(
+                    <div key={l} style={{fontSize:11,color:"#333",marginBottom:4,display:"flex",gap:8}}><strong style={{minWidth:50,color:"#111"}}>{l}</strong>{v}</div>
+                  ))}
+                </div>
+              </div>
+              {/* Formule */}
+              <div style={{background:"#111",borderRadius:10,padding:"16px 18px",marginBottom:14}}>
+                <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,marginBottom:12}}>FORMULE : {ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+                  {[
+                    [ct.formule==="commission"?"Frais d'entrée":"Mensualité",`${ct.montant}€`],
+                    ["Commission",`${ct.commission}%`],
+                    ["Durée",ct.duree],
+                    ["Préavis",ct.preavis||"15 jours"],
+                    ["Revenus",[ct.inclPartenariats&&"Partenariats",ct.inclPubs&&"Pubs",ct.inclSubs&&"Subs",ct.inclBits&&"Bits",ct.inclMerchandise&&"Merch",ct.inclDons&&"Dons"].filter(Boolean).join(", ")||"Tous"],
+                  ].map(([l,v])=>(
+                    <div key={l} style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"10px 12px"}}>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:4}}>{l}</div>
+                      <div style={{fontSize:12,fontWeight:800,color:"white"}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Prestations */}
+              <div style={{background:"#f8f8f8",borderRadius:10,padding:"14px 18px",marginBottom:14}}>
+                <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,marginBottom:10}}>PRESTATIONS INCLUSES</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[
+                    {k:"prestCoaching",l:"Coaching personnalisé"},
+                    {k:"prestStats",l:"Suivi statistiques"},
+                    {k:"prestPartenariats",l:"Recherche partenariats"},
+                    {k:"prestStrategie",l:"Stratégie de croissance"},
+                    {k:"prestApp",l:"Accès app Belive Academy"},
+                    {k:"prestGroupe",l:"Accès groupe privé"},
+                    {k:"prestContenu",l:"Aide création contenu"},
+                    {k:"prestReseaux",l:"Gestion réseaux sociaux"},
+                  ].filter(p=>ct[p.k]).map(p=>(
+                    <div key={p.k} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:"#333"}}>
+                      <div style={{width:16,height:16,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:9,flexShrink:0}}>✓</div>
+                      {p.l}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Signatures */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                {[["Ethan — Belive Academy","ethan@beliveacademy.com","Signature de l'agence"],[ct.createur?.name||"___",ct.createur?.email||"___","Signature + Lu et approuvé"]].map(([name,email,label])=>(
+                  <div key={name} style={{border:"2px solid #eee",borderRadius:10,padding:"16px",textAlign:"center"}}>
+                    <div style={{fontWeight:800,fontSize:12,color:"#111",marginBottom:2}}>{name}</div>
+                    <div style={{fontSize:10,color:"#888",marginBottom:16}}>{email}</div>
+                    <div style={{borderTop:`2px solid ${R}`,margin:"0 20px"}}/>
+                    <div style={{fontSize:9,color:"#aaa",marginTop:6}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{background:"#111",padding:"14px 28px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:14,letterSpacing:2,color:"white"}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",textAlign:"right"}}>beliveacademy.com • ethan@beliveacademy.com • 07 80 99 92 51</div>
+            </div>
+          </div>
         </div>
 
         <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
           <Btn v="ghost" onClick={()=>setModal(null)}>Fermer</Btn>
-          <Btn v="success" onClick={saveContract} icon="💾">Sauvegarder & Envoyer</Btn>
+          <Btn v="ghost" onClick={()=>{
+            const w=window.open("","_blank");
+            w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:white;}@media print{body{margin:0;}}</style></head><body>${document.querySelector('[data-contract-preview]')?.innerHTML||""}</body></html>`);
+            w.document.close();
+            setTimeout(()=>w.print(),500);
+          }} icon="📄">Imprimer PDF</Btn>
+          <Btn v="success" onClick={saveContract} icon="💾">Envoyer par email</Btn>
         </div>
       </Modal>
 
