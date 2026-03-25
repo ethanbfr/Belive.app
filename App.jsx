@@ -746,8 +746,20 @@ export default function App(){
 
   function togglePro(email){
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-    if(sv[email]){sv[email].plan=sv[email].plan==="pro"?"free":"pro";localStorage.setItem("ba6_users",JSON.stringify(sv));}
-    setCreateurs(p=>p.map(c=>c.email===email?{...c,plan:c.plan==="pro"?"free":"pro"}:c));
+    if(sv[email]){
+      if(sv[email].plan==="pro"){
+        // Retirer le Pro
+        sv[email].plan="free";
+        sv[email].offert=false;
+      } else {
+        // Passer Pro — demander si payant ou offert
+        const isPaid=window.confirm("Ce créateur a-t-il payé ?\n\nOK = Payant (compté dans les revenus)\nAnnuler = Offert (gratuit, non compté)");
+        sv[email].plan="pro";
+        sv[email].offert=!isPaid;
+      }
+      localStorage.setItem("ba6_users",JSON.stringify(sv));
+    }
+    setCreateurs(p=>p.map(c=>c.email===email?{...c,plan:c.plan==="pro"?"free":"pro",offert:sv[email]?.offert}:c));
   }
 
   async function genCode(type, freeType="limited", freeDays=14, creatorName=""){
