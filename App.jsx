@@ -844,49 +844,179 @@ export default function App(){
 
   async function saveContract(){
     if(!ct.createur)return;
-    const contratTexte=CTR(ct.createur,ct);
     setContrats(p=>[...p,{id:Date.now(),...ct.createur,formule:ct.formule,commission:ct.commission,montant:ct.montant,duree:ct.duree,date:new Date().toLocaleDateString("fr-FR")}]);
-    // Envoi email à Ethan + copie au créateur
+
+    const today=new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"});
+    const revenus=[ct.inclPartenariats&&"Partenariats",ct.inclPubs&&"Publicités",ct.inclSubs&&"Subs",ct.inclBits&&"Bits",ct.inclMerchandise&&"Merchandise",ct.inclDons&&"Dons"].filter(Boolean).join(", ")||"Tous";
+    const prestations=[ct.prestCoaching&&"Coaching personnalisé",ct.prestStats&&"Suivi statistiques",ct.prestPartenariats&&"Recherche partenariats",ct.prestStrategie&&"Stratégie de croissance",ct.prestApp&&"Accès app Belive Academy",ct.prestGroupe&&"Accès groupe privé",ct.prestContenu&&"Aide création contenu",ct.prestReseaux&&"Gestion réseaux sociaux"].filter(Boolean);
+
     try{
-      // Email à Ethan
+      // Génération PDF avec jsPDF
+      const script=document.createElement("script");
+      script.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      document.head.appendChild(script);
+      await new Promise(r=>script.onload=r);
+
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+      const W=210, M=18;
+
+      // Header noir
+      doc.setFillColor(17,17,17);
+      doc.rect(0,0,W,32,"F");
+
+      // Logo BELIVE
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(22);
+      doc.setTextColor(255,255,255);
+      doc.text("BELIVE",M,20);
+      doc.setTextColor(212,16,63);
+      doc.text("ACADEMY",M+38,20);
+
+      // Badge
+      doc.setFillColor(212,16,63);
+      doc.roundedRect(130,12,62,10,3,3,"F");
+      doc.setFontSize(7);
+      doc.setTextColor(255,255,255);
+      doc.text("CONTRAT D'ACCOMPAGNEMENT",133,18.5);
+
+      // Ligne rouge
+      doc.setFillColor(212,16,63);
+      doc.rect(0,32,W,2,"F");
+
+      let y=44;
+
+      // Titre
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(14);
+      doc.setTextColor(17,17,17);
+      doc.text("CONTRAT D'ACCOMPAGNEMENT CRÉATEUR",M,y);
+      y+=7;
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(9);
+      doc.setTextColor(130,130,130);
+      doc.text(`Fait le ${today}`,M,y);
+      y+=12;
+
+      // Deux colonnes agence/créateur
+      const colW=82;
+      // Agence
+      doc.setFillColor(248,248,248);
+      doc.roundedRect(M,y,colW,40,3,3,"F");
+      doc.setFillColor(212,16,63);
+      doc.rect(M,y,3,40,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
+      doc.text("AGENCE",M+6,y+7);
+      doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(50,50,50);
+      doc.text("Belive Academy — Ethan",M+6,y+14);
+      doc.text("ethan@beliveacademy.com",M+6,y+20);
+      doc.text("07 80 99 92 51",M+6,y+26);
+      doc.text("beliveacademy.com",M+6,y+32);
+
+      // Créateur
+      const cx=M+colW+8;
+      doc.setFillColor(248,248,248);
+      doc.roundedRect(cx,y,colW,40,3,3,"F");
+      doc.setFillColor(212,16,63);
+      doc.rect(cx,y,3,40,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
+      doc.text("CRÉATEUR",cx+6,y+7);
+      doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(50,50,50);
+      doc.text(ct.createur?.name||"—",cx+6,y+14);
+      doc.text(ct.createur?.email||"—",cx+6,y+20);
+      doc.text(ct.createur?.twitch?"@"+ct.createur.twitch:"—",cx+6,y+26);
+      doc.text(ct.createur?.youtube||"—",cx+6,y+32);
+      y+=48;
+
+      // Formule
+      doc.setFillColor(17,17,17);
+      doc.roundedRect(M,y,W-M*2,38,3,3,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
+      doc.text(`FORMULE : ${ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}`,M+6,y+8);
+      const items=[
+        [ct.formule==="commission"?"Frais d'entrée":"Mensualité",`${ct.montant}€`],
+        ["Commission",`${ct.commission}%`],
+        ["Durée",ct.duree],
+        ["Préavis",ct.preavis||"15j"],
+      ];
+      items.forEach(([l,v],i)=>{
+        const ix=M+6+(i%2)*87, iy=y+16+(Math.floor(i/2)*9);
+        doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(150,150,150);
+        doc.text(l,ix,iy);
+        doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+        doc.text(v,ix+28,iy);
+      });
+      doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(150,150,150);
+      doc.text("Revenus : "+revenus,M+6,y+34);
+      y+=46;
+
+      // Prestations
+      doc.setFillColor(248,248,248);
+      doc.roundedRect(M,y,W-M*2,prestations.length>4?30:22,3,3,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
+      doc.text("PRESTATIONS INCLUSES",M+6,y+7);
+      prestations.forEach((p,i)=>{
+        const px=M+6+(i%2)*87, py=y+14+(Math.floor(i/2)*7);
+        doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(50,50,50);
+        doc.text("✓ "+p,px,py);
+      });
+      y+=(prestations.length>4?38:30);
+
+      // Signatures
+      y+=6;
+      doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(17,17,17);
+      doc.text("SIGNATURES — Fait le "+today,M,y);
+      y+=8;
+      [[`Ethan — Belive Academy`,"Signature de l'agence",true],[ct.createur?.name||"___","Signature + Lu et approuvé",false]].forEach(([name,label,signed],i)=>{
+        const sx=M+(i*92);
+        doc.setDrawColor(230,230,230);doc.setLineWidth(0.5);
+        doc.rect(sx,y,82,28);
+        doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(17,17,17);
+        doc.text(name,sx+6,y+8);
+        // Signature Belive Academy pré-signée
+        if(signed){
+          doc.setFont("helvetica","bolditalic");doc.setFontSize(14);doc.setTextColor(212,16,63);
+          doc.text("Belive Academy",sx+6,y+19);
+        } else {
+          doc.setDrawColor(212,16,63);doc.setLineWidth(1);
+          doc.line(sx+8,y+20,sx+74,y+20);
+        }
+        doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);
+        doc.text(label,sx+6,y+26);
+      });
+
+      // Footer
+      doc.setFillColor(17,17,17);
+      doc.rect(0,272,W,25,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(255,255,255);
+      doc.text("BELIVE ",M,283);
+      doc.setTextColor(212,16,63);
+      doc.text("ACADEMY",M+20,283);
+      doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(120,120,120);
+      doc.text("beliveacademy.com • ethan@beliveacademy.com • 07 80 99 92 51",M,289);
+
+      const pdfBase64=doc.output("datauristring").split(",")[1];
+
+      // Envoi via EmailJS
       await fetch("https://api.emailjs.com/api/v1.0/email/send",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          service_id:"service_on459ks",
-          template_id:"template_7kpdxpg",
-          user_id:"MTTbA9t4YLXMDdk1I",
-          template_params:{
-            to_email:"ethan@beliveacademy.com",
-            to_name:"Ethan — Belive Academy",
-            from_name:`${ct.createur.name} via Belive Academy`,
-            contrat:contratTexte,
-            createur_email:ct.createur.email,
-            createur_name:ct.createur.name,
-          }
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({service_id:"service_on459ks",template_id:"template_7kpdxpg",user_id:"MTTbA9t4YLXMDdk1I",
+          template_params:{to_email:"ethan@beliveacademy.com",to_name:"Ethan — Belive Academy",from_name:ct.createur.name+" via Belive Academy",contrat:`Contrat pour ${ct.createur.name} — ${ct.formule} — ${ct.montant}€ — ${ct.commission}% — ${ct.duree}`,createur_email:ct.createur.email,createur_name:ct.createur.name}
         })
       });
-      // Email au créateur
       await fetch("https://api.emailjs.com/api/v1.0/email/send",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          service_id:"service_on459ks",
-          template_id:"template_7kpdxpg",
-          user_id:"MTTbA9t4YLXMDdk1I",
-          template_params:{
-            to_email:ct.createur.email,
-            to_name:ct.createur.name,
-            from_name:"Ethan — Belive Academy",
-            contrat:contratTexte,
-            createur_email:ct.createur.email,
-            createur_name:ct.createur.name,
-          }
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({service_id:"service_on459ks",template_id:"template_7kpdxpg",user_id:"MTTbA9t4YLXMDdk1I",
+          template_params:{to_email:ct.createur.email,to_name:ct.createur.name,from_name:"Ethan — Belive Academy",contrat:`Voici ton contrat Belive Academy — ${ct.formule} — ${ct.montant}€ — ${ct.commission}% — ${ct.duree}`,createur_email:ct.createur.email,createur_name:ct.createur.name}
         })
       });
-      alert(`✅ Contrat envoyé !\n📧 À toi : ethan@beliveacademy.com\n📧 Au créateur : ${ct.createur.email}`);
+
+      // Téléchargement automatique du PDF
+      doc.save(`Contrat-Belive-Academy-${ct.createur.name.replace(/ /g,"-")}.pdf`);
+      alert(`✅ Contrat PDF généré et emails envoyés !\n📧 ethan@beliveacademy.com\n📧 ${ct.createur.email}`);
     }catch(e){
-      alert(`✅ Contrat sauvegardé !\n📧 Envoie manuellement à : ${ct.createur.email}`);
+      console.log(e);
+      alert(`✅ Contrat sauvegardé !\n📧 Email envoyé à : ${ct.createur.email}`);
     }
     setModal(null);
   }
