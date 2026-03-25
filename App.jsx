@@ -1240,10 +1240,10 @@ export default function App(){
                 </Card>
 
                 {/* Payants */}
-                {payants.length>0&&(
+                {(payantsBelive.length>0||payantsPro.length>0)&&(
                   <Card style={{marginBottom:16,background:"rgba(34,197,94,0.03)",border:`1px solid rgba(34,197,94,0.15)`}}>
-                    <div style={{fontWeight:800,fontSize:14,color:G,marginBottom:12}}>💳 Abonnés Pro ({payants.length})</div>
-                    {payants.map((u,i)=>(
+                    <div style={{fontWeight:800,fontSize:14,color:G,marginBottom:12}}>💳 Abonnés payants ({payantsBelive.length+payantsPro.length})</div>
+                    {[...payantsBelive,...payantsPro].map((u,i)=>(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(34,197,94,0.08)`}}>
                         <div style={{width:34,height:34,background:"rgba(34,197,94,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
                         <div style={{flex:1}}>
