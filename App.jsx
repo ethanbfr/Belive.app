@@ -112,40 +112,77 @@ const CTR=(c,ct)=>{
   if(ct.inclBits) revenus.push("Bits/Super Chats");
   if(ct.inclMerchandise) revenus.push("Merchandise");
   const revenusStr=revenus.length>0?revenus.join(", "):"Tous les revenus";
-  return `CONTRAT D'ACCOMPAGNEMENT CRÉATEUR
-Belive Academy — Agence Créateurs & Influence
+  const today=new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"});
+  const prestations=[];
+  if(ct.prestCoaching) prestations.push("Coaching personnalisé");
+  if(ct.prestStats) prestations.push("Suivi statistiques");
+  if(ct.prestPartenariats) prestations.push("Recherche partenariats");
+  if(ct.prestStrategie) prestations.push("Stratégie de croissance");
+  if(ct.prestApp) prestations.push("Accès app Belive Academy");
+  if(ct.prestGroupe) prestations.push("Accès groupe privé");
+  if(ct.prestContenu) prestations.push("Aide création de contenu");
+  if(ct.prestReseaux) prestations.push("Gestion réseaux sociaux");
+
+  return `
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  BELIVE ACADEMY — CONTRAT D'ACCOMPAGNEMENT
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+  Agence Créateurs & Influence
+  "Écris ta propre histoire"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📅 Date : ${today}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-AGENCE : Belive Academy — Ethan
-ethan@beliveacademy.com | 07 80 99 92 51
+  🏢 AGENCE
+  ─────────────────────────────────────
+  Belive Academy — Ethan
+  ethan@beliveacademy.com
+  07 80 99 92 51
+  beliveacademy.com
 
-CRÉATEUR : ${c?.name||"___"} | ${c?.email||"___"} | ${c?.phone||"___"}
-Twitch: ${c?.twitch||"—"} | YouTube: ${c?.youtube||"—"} | TikTok: ${c?.tiktok||"—"}
+  🎮 CRÉATEUR
+  ─────────────────────────────────────
+  Nom        : ${c?.name||"___"}
+  Email      : ${c?.email||"___"}
+  Téléphone  : ${c?.phone||"___"}
+  Twitch     : ${c?.twitch?"@"+c.twitch:"—"}
+  YouTube    : ${c?.youtube||"—"}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-FORMULE : ${ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}
-${ct.formule==="commission"?`Frais d'entrée : ${ct.montant}€`:`Mensualité : ${ct.montant}€/mois`}
-Commission : ${ct.commission}% sur — ${revenusStr}
-Durée : ${ct.duree} | Préavis résiliation : ${ct.preavis||"15 jours"}
-${ct.clauseExclu?`\nClause d'exclusivité : ${ct.clauseExclu}`:""}
-${ct.noteLibre?`\nConditions particulières : ${ct.noteLibre}`:""}
-
-PRESTATIONS INCLUSES :
-${ct.prestCoaching?"✓ Coaching personnalisé\n":""}${ct.prestStats?"✓ Suivi statistiques\n":""}${ct.prestPartenariats?"✓ Recherche partenariats\n":""}${ct.prestStrategie?"✓ Stratégie de croissance\n":""}${ct.prestApp?"✓ Accès app Belive Academy\n":""}${ct.prestGroupe?"✓ Accès groupe privé\n":""}${ct.prestContenu?"✓ Aide à la création de contenu\n":""}${ct.prestReseaux?"✓ Gestion réseaux sociaux\n":""}
+  💼 FORMULE : ${ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Fait le : ___/___/______
 
-Pour Belive Academy :          Pour le Créateur :
+  ${ct.formule==="commission"?`Frais d'entrée unique : ${ct.montant}€`:`Mensualité : ${ct.montant}€/mois`}
+  Commission : ${ct.commission}%
+  Revenus concernés : ${revenusStr}
+  Durée : ${ct.duree}
+  Préavis de résiliation : ${ct.preavis||"15 jours"}
+  ${ct.clauseExclu?`Exclusivité : ${ct.clauseExclu}`:""}
+  ${ct.noteLibre?`Note : ${ct.noteLibre}`:""}
 
-Ethan — Belive Academy         ${c?.name||"___"}
-ethan@beliveacademy.com        ${c?.email||"___"}
-07 80 99 92 51
-
-____________________           ____________________
-        Signature                      "Lu et approuvé"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-beliveacademy.com | @BeliveAcademy`;
+  ✅ PRESTATIONS INCLUSES
+━━━━━━━━━━━�━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${prestations.map(p=>`  • ${p}`).join("\n")}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✍️ SIGNATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Pour BELIVE ACADEMY          Pour le CRÉATEUR
+  Ethan                        ${c?.name||"___"}
+
+  Fait le ${today}
+
+  ____________________         ____________________
+  Signature Belive Academy     Signature + "Lu et approuvé"
+
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  beliveacademy.com | @BeliveAcademy
+  ethan@beliveacademy.com | 07 80 99 92 51
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓`;
 };
 
 const css=`
