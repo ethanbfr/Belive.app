@@ -321,6 +321,7 @@ export default function App(){
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
   const [posts,setPosts]=useState(IPOSTS);
   const [parrainages,setParrainages]=useState([]);
+  const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
 
@@ -459,6 +460,8 @@ export default function App(){
           localStorage.setItem("ba6_users",JSON.stringify(sv));
         }
       }).catch(()=>{});
+      // Charger les parrainages admin
+      db.getReferrals().then(data=>{if(data&&data.length>0)setAdminRefs(data);}).catch(()=>{});
     }
   },[role]);
   const totalH=streams.reduce((s,r)=>s+r.duration,0);
@@ -1478,47 +1481,34 @@ export default function App(){
                 )}
 
                 {/* Parrainages admin */}
-                {(()=>{
-                  const [adminRefs,setAdminRefs]=useState([]);
-                  useEffect(()=>{
-                    db.getReferrals().then(data=>{if(data)setAdminRefs(data);}).catch(()=>{});
-                  },[]);
-                  if(adminRefs.length===0)return null;
-                  return(
-                    <Card style={{marginTop:16,background:"rgba(251,191,36,0.03)",border:`1px solid rgba(251,191,36,0.15)`}}>
-                      <div style={{fontWeight:800,fontSize:14,color:YE,marginBottom:12}}>🎁 Parrainages ({adminRefs.length})</div>
-                      {adminRefs.map((r,i)=>(
+                {adminRefs.length>0&&(
+                  <Card style={{marginTop:16,background:"rgba(251,191,36,0.03)",border:`1px solid rgba(251,191,36,0.15)`}}>
+                    <div style={{fontWeight:800,fontSize:14,color:YE,marginBottom:12}}>🎁 Parrainages ({adminRefs.length})</div>
+                    {adminRefs.map((r,i)=>{
+                      const currentMonth=new Date().toISOString().slice(0,7);
+                      return(
                         <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(251,191,36,0.08)`}}>
                           <div style={{flex:1}}>
                             <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
                             <div style={{fontSize:11,color:M}}>a parrainé → {r.filleul_name||r.filleul_email}</div>
+                            <div style={{fontSize:11,color:M}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
                           </div>
                           <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
                           {r.reward_applied&&<Pill color="green" xs>🎁 -50% appliqué</Pill>}
                           {r.paid&&!r.reward_applied&&(
                             <Btn sz="sm" onClick={async()=>{
-                              const month=new Date().toISOString().slice(0,7);
-                              // Vérifier limite 1/mois
-                              const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===month);
+                              const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===currentMonth);
                               if(alreadyRewarded){alert("Ce parrain a déjà reçu une réduction ce mois.");return;}
-                              await db.updateReferral(r.id,{reward_applied:true,reward_month:month});
-                              // Créer coupon Stripe via API
-                              try{
-                                await fetch("https://api.stripe.com/v1/coupons",{
-                                  method:"POST",
-                                  headers:{"Authorization":`Bearer sk_live_...`,"Content-Type":"application/x-www-form-urlencoded"},
-                                  body:`percent_off=50&duration=once&name=PARRAIN-${r.parrain_email.slice(0,8)}`
-                                });
-                              }catch(e){}
+                              await db.updateReferral(r.id,{reward_applied:true,reward_month:currentMonth});
                               alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
                               db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
                             }}>Appliquer -50%</Btn>
                           )}
                         </div>
-                      ))}
-                    </Card>
-                  );
-                })()}
+                      );
+                    })}
+                  </Card>
+                )}
               </>);
             })()}
             {role==="createur"&&(<>
