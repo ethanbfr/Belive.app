@@ -303,6 +303,9 @@ export default function App(){
   const [isForgot,setIsForgot]=useState(false);
   const [forgotEmail,setForgotEmail]=useState("");
   const [forgotSent,setForgotSent]=useState(false);
+  const [resetCode,setResetCode]=useState("");
+  const [resetNewPass,setResetNewPass]=useState("");
+  const [resetConfirmPass,setResetConfirmPass]=useState("");
   const [showRegPass,setShowRegPass]=useState(false);
   const [page,setPage]=useState("dashboard");
   const [sideOpen,setSideOpen]=useState(true);
@@ -3009,15 +3012,13 @@ export default function App(){
           );
         })()}
 
-      </div>
-
-      {/* PARRAINAGES ADMIN */}
-      {page==="parrainages"&&role==="admin"&&(
-        <div className="fade">
-          <div style={{marginBottom:20}}>
-            <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
-            <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
-          </div>
+        {/* PARRAINAGES ADMIN */}
+        {page==="parrainages"&&role==="admin"&&(
+          <div className="fade">
+            <div style={{marginBottom:20}}>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
+              <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
+            </div>
 
           {/* Stats */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
@@ -3085,23 +3086,21 @@ export default function App(){
               ✅ Code envoyé à <strong style={{color:"white"}}>{forgotEmail}</strong>
             </div>
             {(()=>{
-              const [code,setCode]=useState("");
-              const [newPass,setNewPass]=useState("");
-              const [confirmPass,setConfirmPass]=useState("");
               return(
                 <>
-                  <Field label="Code reçu par email" value={code} onChange={e=>setCode(e.target.value)} placeholder="XXXXXX"/>
-                  <Field label="Nouveau mot de passe" type="password" value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="••••••••"/>
-                  <Field label="Confirmer le mot de passe" type="password" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="••••••••"/>
+                  <Field label="Code reçu par email" value={resetCode} onChange={e=>setResetCode(e.target.value)} placeholder="XXXXXX"/>
+                  <Field label="Nouveau mot de passe" type="password" value={resetNewPass} onChange={e=>setResetNewPass(e.target.value)} placeholder="••••••••"/>
+                  <Field label="Confirmer le mot de passe" type="password" value={resetConfirmPass} onChange={e=>setResetConfirmPass(e.target.value)} placeholder="••••••••"/>
                   <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
                     <Btn v="ghost" onClick={()=>setIsForgot(false)}>Annuler</Btn>
                     <Btn onClick={()=>{
                       const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
                       const r=resets[forgotEmail];
-                      if(!r||r.code!==code.toUpperCase()){alert("❌ Code incorrect.");return;}
-                      if(newPass!==confirmPass){alert("❌ Les mots de passe ne correspondent pas.");return;}
-                      if(newPass.length<6){alert("❌ Mot de passe trop court (6 caractères minimum).");return;}
-                      doResetPassword(newPass);
+                      if(!r||r.code!==resetCode.toUpperCase()){alert("❌ Code incorrect.");return;}
+                      if(resetNewPass!==resetConfirmPass){alert("❌ Les mots de passe ne correspondent pas.");return;}
+                      if(resetNewPass.length<6){alert("❌ Mot de passe trop court (6 caractères minimum).");return;}
+                      doResetPassword(resetNewPass);
+                      setResetCode("");setResetNewPass("");setResetConfirmPass("");
                     }}>Réinitialiser</Btn>
                   </div>
                 </>
