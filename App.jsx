@@ -3013,7 +3013,7 @@ export default function App(){
 
       {/* PARRAINAGES ADMIN */}
       {page==="parrainages"&&role==="admin"&&(
-        <div>
+        <div className="fade">
           <div style={{marginBottom:20}}>
             <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
             <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
