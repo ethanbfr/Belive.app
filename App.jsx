@@ -21,18 +21,22 @@ async function supabase(method, table, body, match) {
 }
 
 const db = {
-  getUsers:    ()           => supabase("GET",    "users",    null),
-  getUser:     (email)      => supabase("GET",    "users",    null, `email=eq.${encodeURIComponent(email)}`),
-  createUser:  (data)       => supabase("POST",   "users",    data),
-  updateUser:  (email, data)=> supabase("PATCH",  "users",    data, `email=eq.${encodeURIComponent(email)}`),
-  deleteUser:  (email)      => supabase("DELETE", "users",    null, `email=eq.${encodeURIComponent(email)}`),
-  getStreams:  (email)      => supabase("GET",    "streams",  null, `user_email=eq.${encodeURIComponent(email)}`),
-  addStream:   (data)       => supabase("POST",   "streams",  data),
-  getCodes:    ()           => supabase("GET",    "codes",    null),
-  addCode:     (data)       => supabase("POST",   "codes",    data),
-  useCode:     (code, name) => supabase("PATCH",  "codes",    {used_by: name, used_at: new Date().toISOString()}, `code=eq.${code}`),
-  getContrats: ()           => supabase("GET",    "contrats", null),
-  addContrat:  (data)       => supabase("POST",   "contrats", data),
+  getUsers:       ()              => supabase("GET",    "users",     null),
+  getUser:        (email)         => supabase("GET",    "users",     null, `email=eq.${encodeURIComponent(email)}`),
+  createUser:     (data)          => supabase("POST",   "users",     data),
+  updateUser:     (email, data)   => supabase("PATCH",  "users",     data, `email=eq.${encodeURIComponent(email)}`),
+  deleteUser:     (email)         => supabase("DELETE", "users",     null, `email=eq.${encodeURIComponent(email)}`),
+  getStreams:     (email)         => supabase("GET",    "streams",   null, `user_email=eq.${encodeURIComponent(email)}`),
+  addStream:      (data)          => supabase("POST",   "streams",   data),
+  getCodes:       ()              => supabase("GET",    "codes",     null),
+  addCode:        (data)          => supabase("POST",   "codes",     data),
+  useCode:        (code, name)    => supabase("PATCH",  "codes",     {used_by: name, used_at: new Date().toISOString()}, `code=eq.${code}`),
+  getContrats:    ()              => supabase("GET",    "contrats",  null),
+  addContrat:     (data)          => supabase("POST",   "contrats",  data),
+  getReferrals:   ()              => supabase("GET",    "referrals", null),
+  getReferralsByParrain: (email)  => supabase("GET",    "referrals", null, `parrain_email=eq.${encodeURIComponent(email)}`),
+  addReferral:    (data)          => supabase("POST",   "referrals", data),
+  updateReferral: (id, data)      => supabase("PATCH",  "referrals", data, `id=eq.${id}`),
 };
 
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
@@ -292,7 +296,7 @@ export default function App(){
   const [authPass,setAuthPass]=useState("");
   const [authErr,setAuthErr]=useState("");
   const [isReg,setIsReg]=useState(false);
-  const [reg,setReg]=useState({name:"",email:"",pass:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",code:""});
+  const [reg,setReg]=useState({name:"",email:"",pass:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",code:"",referralCode:""});
   const [regAge,setRegAge]=useState(false);
   const [regCGU,setRegCGU]=useState(false);
   const [showPass,setShowPass]=useState(false);
@@ -481,7 +485,10 @@ export default function App(){
         if(supaStreams&&supaStreams.length>0){
           setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
         }
-      }catch(e){console.log("Streams load failed");}
+        // Charger les parrainages
+        const supaRefs=await db.getReferralsByParrain(authEmail);
+        if(supaRefs&&supaRefs.length>0) setParrainages(supaRefs);
+      }catch(e){console.log("Data load failed");}
       return;
     }
     // Essayer Supabase si pas dans localStorage
@@ -586,16 +593,36 @@ export default function App(){
       if(f.freeType==="unlimited"||f.free_type==="unlimited"){plan="pro";}
       if((f.freeType==="limited"||f.free_type==="limited")&&(f.freeDays||f.free_days)) trialDaysFromCode=f.freeDays||f.free_days;
     }
-    const isOffert=plan==="pro"&&true; // sera false si paiement Stripe
+    const isOffert=plan==="pro"&&true;
     const trialEnd=new Date(Date.now()+trialDaysFromCode*24*60*60*1000).toISOString();
-    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString()};
+    // Génère un code parrain unique
+    const refCode="REF-"+name.toUpperCase().replace(/\s/g,"").slice(0,6)+"-"+Math.random().toString(36).slice(2,5).toUpperCase();
+    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString(),referral_code:refCode};
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     sv[email]=nu;
     localStorage.setItem("ba6_users",JSON.stringify(sv));
     // Sauvegarde dans Supabase
     try{
-      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString()});
+      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode});
     }catch(e){console.log("User save to Supabase failed");}
+    // Si inscrit avec un code parrain — créer le lien parrainage
+    if(reg.referralCode){
+      try{
+        // Trouver le parrain
+        const allUsers=await db.getUsers();
+        const parrain=allUsers?.find(u=>u.referral_code===reg.referralCode.toUpperCase());
+        if(parrain){
+          await db.addReferral({
+            parrain_email:parrain.email,
+            filleul_email:email,
+            filleul_name:name,
+            paid:false,
+            reward_applied:false,
+            reward_month:null,
+          });
+        }
+      }catch(e){console.log("Referral save failed");}
+    }
     setUser({email,...nu});
     setShowWelcome(true);
     storeAdminNotif(`🎉 Nouveau créateur inscrit : ${name} (${email})`);
@@ -1102,6 +1129,7 @@ export default function App(){
               </div>
             </div>
             <Field label="Code Belive Academy" value={reg.code} onChange={e=>setReg({...reg,code:e.target.value.toUpperCase()})} placeholder="BELIVE-XXXXXX" hint="Si tu es dans l'agence — sinon essai gratuit 14 jours"/>
+            <Field label="Code de parrainage (optionnel)" value={reg.referralCode} onChange={e=>setReg({...reg,referralCode:e.target.value.toUpperCase()})} placeholder="REF-XXXXXX-XXX" hint="Si un créateur t'a recommandé Belive Academy"/>
 
             {/* Vérification âge */}
             <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginBottom:10,padding:"12px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${regAge?"rgba(34,197,94,0.3)":B}`,borderRadius:10}}>
@@ -1448,6 +1476,49 @@ export default function App(){
                     ))}
                   </Card>
                 )}
+
+                {/* Parrainages admin */}
+                {(()=>{
+                  const [adminRefs,setAdminRefs]=useState([]);
+                  useEffect(()=>{
+                    db.getReferrals().then(data=>{if(data)setAdminRefs(data);}).catch(()=>{});
+                  },[]);
+                  if(adminRefs.length===0)return null;
+                  return(
+                    <Card style={{marginTop:16,background:"rgba(251,191,36,0.03)",border:`1px solid rgba(251,191,36,0.15)`}}>
+                      <div style={{fontWeight:800,fontSize:14,color:YE,marginBottom:12}}>🎁 Parrainages ({adminRefs.length})</div>
+                      {adminRefs.map((r,i)=>(
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(251,191,36,0.08)`}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
+                            <div style={{fontSize:11,color:M}}>a parrainé → {r.filleul_name||r.filleul_email}</div>
+                          </div>
+                          <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                          {r.reward_applied&&<Pill color="green" xs>🎁 -50% appliqué</Pill>}
+                          {r.paid&&!r.reward_applied&&(
+                            <Btn sz="sm" onClick={async()=>{
+                              const month=new Date().toISOString().slice(0,7);
+                              // Vérifier limite 1/mois
+                              const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===month);
+                              if(alreadyRewarded){alert("Ce parrain a déjà reçu une réduction ce mois.");return;}
+                              await db.updateReferral(r.id,{reward_applied:true,reward_month:month});
+                              // Créer coupon Stripe via API
+                              try{
+                                await fetch("https://api.stripe.com/v1/coupons",{
+                                  method:"POST",
+                                  headers:{"Authorization":`Bearer sk_live_...`,"Content-Type":"application/x-www-form-urlencoded"},
+                                  body:`percent_off=50&duration=once&name=PARRAIN-${r.parrain_email.slice(0,8)}`
+                                });
+                              }catch(e){}
+                              alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
+                              db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
+                            }}>Appliquer -50%</Btn>
+                          )}
+                        </div>
+                      ))}
+                    </Card>
+                  );
+                })()}
               </>);
             })()}
             {role==="createur"&&(<>
@@ -2585,7 +2656,15 @@ export default function App(){
         )}
 
         {/* PARRAINAGE */}
-        {page==="parrainage"&&role==="createur"&&(
+        {page==="parrainage"&&role==="createur"&&(()=>{
+          const myCode=user?.referral_code||("REF-"+(user?.name||"").toUpperCase().replace(/\s/g,"").slice(0,6)+"-"+(user?.email||"").slice(0,3).toUpperCase());
+          const currentMonth=new Date().toISOString().slice(0,7); // YYYY-MM
+          const myReferrals=parrainages.filter(r=>r.parrain_email===user?.email);
+          const paidReferrals=myReferrals.filter(r=>r.paid);
+          const rewardThisMonth=myReferrals.find(r=>r.reward_applied&&r.reward_month===currentMonth);
+          const pendingReward=paidReferrals.find(r=>!r.reward_applied);
+
+          return(
           <div className="fade">
             <div style={{marginBottom:20}}>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGE</div>
@@ -2596,9 +2675,10 @@ export default function App(){
             <Card style={{marginBottom:20,background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.15)`}}>
               <div style={{fontWeight:800,marginBottom:14,fontSize:15}}>🎁 Comment ça marche ?</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
-                {[{icon:"🔗",t:"Partage ton code",d:"Donne ton code à un créateur"},
-                  {icon:"✅",t:"Il s'inscrit",d:"Il utilise ton code à l'inscription"},
-                  {icon:"💰",t:"-50% le mois suivant",d:"Tu reçois -50% sur ton abonnement"},
+                {[
+                  {icon:"🔗",t:"Partage ton code",d:"Donne ton code à un créateur"},
+                  {icon:"💳",t:"Il prend un abonnement",d:"Le -50% s'active uniquement si il paye"},
+                  {icon:"💰",t:"-50% le mois suivant",d:"1 seule réduction par mois maximum"},
                 ].map((s,i)=>(
                   <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:"16px 14px",textAlign:"center"}}>
                     <div style={{fontSize:28,marginBottom:8}}>{s.icon}</div>
@@ -2607,6 +2687,9 @@ export default function App(){
                   </div>
                 ))}
               </div>
+              <div style={{marginTop:12,background:"rgba(255,165,0,0.08)",border:"1px solid rgba(255,165,0,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"rgba(255,165,0,0.9)"}}>
+                ⚠️ Limite : 1 réduction de -50% par mois. Si tu paraines 2 personnes le même mois, seule la première compte.
+              </div>
             </Card>
 
             {/* Mon code */}
@@ -2614,54 +2697,68 @@ export default function App(){
               <div style={{fontWeight:800,marginBottom:12}}>🔑 Mon code de parrainage</div>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
                 <div style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:10,padding:"14px 20px",fontFamily:"monospace",fontSize:18,letterSpacing:4,color:R,fontWeight:800,textAlign:"center"}}>
-                  {monCodeParrain}
+                  {myCode}
                 </div>
-                <Btn onClick={()=>{navigator.clipboard?.writeText(monCodeParrain).catch(()=>{});setParrainCopied(true);setTimeout(()=>setParrainCopied(false),2000);}} icon={parrainCopied?"✓":"📋"} v={parrainCopied?"success":"primary"}>
+                <Btn onClick={()=>{navigator.clipboard?.writeText(myCode).catch(()=>{});setParrainCopied(true);setTimeout(()=>setParrainCopied(false),2000);}} icon={parrainCopied?"✓":"📋"} v={parrainCopied?"success":"primary"}>
                   {parrainCopied?"Copié !":"Copier"}
                 </Btn>
               </div>
               <div style={{fontSize:12,color:M}}>💡 Partage ce code en stream, sur tes réseaux ou en MP</div>
             </Card>
 
-            {/* Réduction active */}
-            {referrals.some(r=>r.status==="actif")&&(
+            {/* Réduction en cours */}
+            {rewardThisMonth&&(
               <Card style={{marginBottom:20,background:"rgba(34,197,94,0.06)",border:`1px solid rgba(34,197,94,0.2)`}}>
                 <div style={{display:"flex",alignItems:"center",gap:14}}>
                   <div style={{fontSize:36}}>🎉</div>
                   <div>
-                    <div style={{fontWeight:800,fontSize:15,color:G,marginBottom:4}}>-50% activé pour le mois prochain !</div>
-                    <div style={{fontSize:13,color:M}}>Un de tes filleuls s'est inscrit. Ta réduction sera appliquée automatiquement.</div>
+                    <div style={{fontWeight:800,fontSize:15,color:G,marginBottom:4}}>-50% activé ce mois !</div>
+                    <div style={{fontSize:13,color:M}}>Ta réduction est appliquée sur ton prochain paiement.</div>
                   </div>
                 </div>
               </Card>
             )}
 
-            {/* Filleuls */}
+            {/* Réduction en attente */}
+            {pendingReward&&!rewardThisMonth&&(
+              <Card style={{marginBottom:20,background:"rgba(251,191,36,0.06)",border:`1px solid rgba(251,191,36,0.2)`}}>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{fontSize:36}}>⏳</div>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:15,color:YE,marginBottom:4}}>-50% en attente pour le mois prochain !</div>
+                    <div style={{fontSize:13,color:M}}>Un de tes filleuls a payé. Ta réduction sera appliquée automatiquement.</div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Mes filleuls */}
             <Card>
-              <div style={{fontWeight:800,marginBottom:14}}>👥 Mes filleuls ({referrals.length})</div>
-              {referrals.length===0?(
+              <div style={{fontWeight:800,marginBottom:14}}>👥 Mes filleuls ({myReferrals.length})</div>
+              {myReferrals.length===0?(
                 <div style={{textAlign:"center",padding:"24px 0",color:M}}>
                   <div style={{fontSize:36,marginBottom:10}}>🔗</div>
                   <div style={{fontWeight:700,marginBottom:6}}>Aucun filleul pour l'instant</div>
                   <div style={{fontSize:13}}>Partage ton code pour commencer !</div>
                 </div>
-              ):referrals.map((r,i)=>(
+              ):myReferrals.map((r,i)=>(
                 <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 0",borderBottom:`1px solid ${B}`}}>
-                  <div style={{width:36,height:36,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,flexShrink:0}}>{r.name.charAt(0)}</div>
+                  <div style={{width:36,height:36,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,flexShrink:0}}>{(r.filleul_name||"?").charAt(0)}</div>
                   <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:13}}>{r.name}</div>
-                    <div style={{fontSize:11,color:M}}>Inscrit le {r.date}</div>
+                    <div style={{fontWeight:700,fontSize:13}}>{r.filleul_name||r.filleul_email}</div>
+                    <div style={{fontSize:11,color:M}}>Inscrit le {new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
                   </div>
-                  <span style={{background:r.status==="actif"?"rgba(34,197,94,0.12)":"rgba(96,165,250,0.12)",color:r.status==="actif"?G:"#60a5fa",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>{r.status}</span>
-                  {r.reduction&&<span style={{background:"rgba(255,215,0,0.12)",color:"#ffd700",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>-50% gagné</span>}
+                  <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                  {r.reward_applied&&<Pill color="green" xs>🎁 -50% appliqué</Pill>}
                 </div>
               ))}
               <div style={{marginTop:14,padding:"12px 14px",background:"rgba(255,255,255,0.03)",borderRadius:10,fontSize:12,color:M,lineHeight:1.7}}>
-                <strong style={{color:"white"}}>Règles :</strong> 1 filleul actif = -50% le mois suivant. Pas de limite de filleuls !
+                <strong style={{color:"white"}}>Règles :</strong> 1 filleul payant = -50% le mois suivant. Maximum 1 réduction par mois.
               </div>
             </Card>
           </div>
-        )}
+          );
+        })()}
 
         {/* COACH IA */}
         {page==="coach"&&role==="createur"&&(
