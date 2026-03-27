@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-// â”€â”€ SUPABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SUPABASE ──────────────────────────────────────────────
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVpaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
 
@@ -42,17 +42,17 @@ const db = {
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
 const G="#22c55e",BL="#60a5fa",PU="#a78bfa",YE="#fbbf24";
 const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
-const TIPS=["Streame aux mÃªmes horaires â€” la rÃ©gularitÃ© fidÃ©lise.","Ton titre : 1 mot-clÃ© + une accroche Ã©motionnelle.","Les 5 premiÃ¨res minutes dÃ©cident si un viewer reste.","Un raid ciblÃ© vaut 10 raids alÃ©atoires.","La qualitÃ© audio compte plus que la qualitÃ© vidÃ©o.","Remercie chaque nouveau follower par son pseudo.","Brawl Stars et Fortnite = meilleure visibilitÃ© Twitch FR."];
+const TIPS=["Streame aux mêmes horaires — la régularité fidélise.","Ton titre : 1 mot-clé + une accroche émotionnelle.","Les 5 premières minutes décident si un viewer reste.","Un raid ciblé vaut 10 raids aléatoires.","La qualité audio compte plus que la qualité vidéo.","Remercie chaque nouveau follower par son pseudo.","Brawl Stars et Fortnite = meilleure visibilité Twitch FR."];
 const LB=[];
 const PARTNERS=[];
 const IPOSTS=[
-  {id:1,user:"AlexStream",av:"A",time:"il y a 2h",content:"Quelqu'un dispo pour un raid ce soir vers 22h sur Warzone ? On peut s'Ã©changer nos viewers ðŸ”¥",likes:8,liked:false,replies:[{user:"GamingPro",av:"G",text:"Moi je suis lÃ  ! Je t'envoie un MP ðŸ‘Š",time:"1h"}],showReplies:false,replyInput:"",category:"raid"},
-  {id:2,user:"GamingPro",av:"G",time:"il y a 5h",content:"Tip du jour : activez les marqueurs de clip automatiques sur OBS. J'ai retrouvÃ© 3 moments incroyables ðŸŽ¬",likes:15,liked:false,replies:[],showReplies:false,replyInput:"",category:"conseil"},
-  {id:3,user:"StreamKing",av:"S",time:"il y a 1j",content:"Viens de passer 150 followers ! Merci Ã  tous les raids de la communautÃ© Belive ðŸ™",likes:24,liked:false,replies:[{user:"AlexStream",av:"A",text:"FÃ©licitations ! ðŸŽ‰",time:"23h"}],showReplies:false,replyInput:"",category:"milestone"},
+  {id:1,user:"AlexStream",av:"A",time:"il y a 2h",content:"Quelqu'un dispo pour un raid ce soir vers 22h sur Warzone ? On peut s'échanger nos viewers 🔥",likes:8,liked:false,replies:[{user:"GamingPro",av:"G",text:"Moi je suis là ! Je t'envoie un MP 👊",time:"1h"}],showReplies:false,replyInput:"",category:"raid"},
+  {id:2,user:"GamingPro",av:"G",time:"il y a 5h",content:"Tip du jour : activez les marqueurs de clip automatiques sur OBS. J'ai retrouvé 3 moments incroyables 🎬",likes:15,liked:false,replies:[],showReplies:false,replyInput:"",category:"conseil"},
+  {id:3,user:"StreamKing",av:"S",time:"il y a 1j",content:"Viens de passer 150 followers ! Merci à tous les raids de la communauté Belive 🙏",likes:24,liked:false,replies:[{user:"AlexStream",av:"A",text:"Félicitations ! 🎉",time:"23h"}],showReplies:false,replyInput:"",category:"milestone"},
 ];
 const ADMIN={"ethanbfr06@gmail.com":{name:"Ethan",role:"admin",password:"Belive2025!",av:"E",phone:"0780999251",twitch:"ethan_bfr",youtube:"",tiktok:"",instagram:""}};
 
-// â”€â”€ NOTIFICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── NOTIFICATIONS ─────────────────────────────────────────
 function askNotifPermission(){
   if(!("Notification" in window))return;
   Notification.requestPermission();
@@ -73,44 +73,44 @@ const AI_R=(q,avg)=>{
   const l=q.toLowerCase();
 
   if(l.includes("bonjour")||l.includes("salut")||l.includes("coucou"))
-    return`Bonjour ! ðŸ‘‹ Je suis ton coach streaming dÃ©diÃ©.\n\nPose-moi des questions sur :\nâ€¢ ðŸ“ˆ Ta croissance et tes viewers\nâ€¢ ðŸŽ® Le choix de tes jeux\nâ€¢ ðŸ’° La monÃ©tisation\nâ€¢ ðŸ¤ Les partenariats\nâ€¢ ðŸŽ¯ L'affiliation Twitch\n\nQu'est-ce que tu veux amÃ©liorer en premier ?`;
+    return`Bonjour ! 👋 Je suis ton coach streaming dédié.\n\nPose-moi des questions sur :\n• 📈 Ta croissance et tes viewers\n• 🎮 Le choix de tes jeux\n• 💰 La monétisation\n• 🤝 Les partenariats\n• 🎯 L'affiliation Twitch\n\nQu'est-ce que tu veux améliorer en premier ?`;
 
   if(l.includes("titre")||l.includes("title"))
-    return`Un bon titre de stream c'est **3 Ã©lÃ©ments** :\n\n1. Le jeu ou la catÃ©gorie\n2. Ce que tu fais exactement\n3. Une Ã©motion ou un dÃ©fi\n\nExemple âŒ : "Warzone ce soir"\nExemple âœ… : "Warzone ranked â€” Je monte jusqu'au Diamond ou j'arrÃªte"\n\nLes titres avec un dÃ©fi ou une promesse gÃ©nÃ¨rent 40% de clics en plus.\n\nâš ï¸ Nos agents t'aident Ã  crÃ©er des titres optimisÃ©s selon ton style.`;
+    return`Un bon titre de stream c'est **3 éléments** :\n\n1. Le jeu ou la catégorie\n2. Ce que tu fais exactement\n3. Une émotion ou un défi\n\nExemple ❌ : "Warzone ce soir"\nExemple ✅ : "Warzone ranked — Je monte jusqu'au Diamond ou j'arrête"\n\nLes titres avec un défi ou une promesse génèrent 40% de clics en plus.\n\n⚠️ Nos agents t'aident à créer des titres optimisés selon ton style.`;
 
   if(l.includes("viewer")||l.includes("audience")||l.includes("regarder"))
-    return`Avec ${avg||3} viewers en moyenne, voilÃ  les leviers concrets :\n\n**Court terme :**\nâ€¢ Parle constamment mÃªme si personne ne regarde â€” les gens restent si tu es actif\nâ€¢ Fais des polls et poses des questions Ã  ton chat\nâ€¢ Remercie chaque nouveau viewer par son pseudo\n\n**Moyen terme :**\nâ€¢ Raids ciblÃ©s vers des streamers de ta taille\nâ€¢ Clips TikTok de tes meilleurs moments\nâ€¢ Horaires fixes = viewers fidÃ¨les\n\nâš ï¸ Pour une stratÃ©gie personnalisÃ©e basÃ©e sur tes stats rÃ©elles, nos agents Belive Academy analysent ton profil en profondeur.`;
+    return`Avec ${avg||3} viewers en moyenne, voilà les leviers concrets :\n\n**Court terme :**\n• Parle constamment même si personne ne regarde — les gens restent si tu es actif\n• Fais des polls et poses des questions à ton chat\n• Remercie chaque nouveau viewer par son pseudo\n\n**Moyen terme :**\n• Raids ciblés vers des streamers de ta taille\n• Clips TikTok de tes meilleurs moments\n• Horaires fixes = viewers fidèles\n\n⚠️ Pour une stratégie personnalisée basée sur tes stats réelles, nos agents Belive Academy analysent ton profil en profondeur.`;
 
   if(l.includes("partenariat")||l.includes("sponsor")||l.includes("deal"))
-    return`Les partenariats se dÃ©bloquent par paliers :\n\n**0â€“200 followers** â†’ Codes promo affiliation (GFuel, Kinguin...)\n**200â€“500 followers** â†’ Deals produits offerts\n**500â€“1000 followers** â†’ Premiers vrais deals rÃ©munÃ©rÃ©s\n**1000+ followers** â†’ Sponsoring rÃ©gulier\n\nLa clÃ© : avoir une **audience engagÃ©e** compte plus que le nombre de followers. 100 viewers actifs valent mieux que 1000 followers inactifs.\n\nâš ï¸ La prospection de marques et la nÃ©gociation des contrats, c'est exactement le travail de Belive Academy â€” rejoins-nous pour accÃ©lÃ©rer.`;
+    return`Les partenariats se débloquent par paliers :\n\n**0–200 followers** → Codes promo affiliation (GFuel, Kinguin...)\n**200–500 followers** → Deals produits offerts\n**500–1000 followers** → Premiers vrais deals rémunérés\n**1000+ followers** → Sponsoring régulier\n\nLa clé : avoir une **audience engagée** compte plus que le nombre de followers. 100 viewers actifs valent mieux que 1000 followers inactifs.\n\n⚠️ La prospection de marques et la négociation des contrats, c'est exactement le travail de Belive Academy — rejoins-nous pour accélérer.`;
 
   if(l.includes("argent")||l.includes("monetis")||l.includes("gagner"))
-    return`Les sources de revenus d'un crÃ©ateur :\n\nðŸ’œ **Twitch** : Subs (2,50â‚¬), Bits, Ads\nâ–¶ï¸ **YouTube** : MonÃ©tisation (1000 subs + 4000h)\nðŸŽµ **TikTok** : Creator Fund\nðŸ¤ **Partenariats** : La vraie source d'argent\nðŸ’° **Dons directs** : Streamlabs, PayPal\n\nLa plupart des streamers gagnent leur premier vrai argent via les **partenariats**, pas les subs.\n\nâš ï¸ Belive Academy cherche et nÃ©gocie des partenariats pour toi â€” c'est lÃ  qu'est le vrai revenu.`;
+    return`Les sources de revenus d'un créateur :\n\n💜 **Twitch** : Subs (2,50€), Bits, Ads\n▶️ **YouTube** : Monétisation (1000 subs + 4000h)\n🎵 **TikTok** : Creator Fund\n🤝 **Partenariats** : La vraie source d'argent\n💰 **Dons directs** : Streamlabs, PayPal\n\nLa plupart des streamers gagnent leur premier vrai argent via les **partenariats**, pas les subs.\n\n⚠️ Belive Academy cherche et négocie des partenariats pour toi — c'est là qu'est le vrai revenu.`;
 
-  if(l.includes("jeu")||l.includes("game")||l.includes("jouer")||l.includes("catÃ©gorie"))
-    return`Le choix du jeu est stratÃ©gique :\n\n**RÃ¨gle d'or** : vise des catÃ©gories avec **200â€“800 viewers totaux** sur Twitch â†’ tu apparais en haut de liste\n\n**Bons choix actuellement :**\nâ€¢ Brawl Stars â€” petite communautÃ© FR, forte fidÃ©litÃ©\nâ€¢ Valorant ranked â€” clips viraux faciles\nâ€¢ Minecraft crÃ©atif â€” niche mais trÃ¨s fidÃ¨le\n\n**Ã€ Ã©viter :** Fortnite, GTA RP, Warzone â†’ trop de concurrence sauf si tu as dÃ©jÃ  une audience.\n\nâš ï¸ L'analyse de ta niche optimale selon ton style, c'est un travail d'agent Belive.`;
+  if(l.includes("jeu")||l.includes("game")||l.includes("jouer")||l.includes("catégorie"))
+    return`Le choix du jeu est stratégique :\n\n**Règle d'or** : vise des catégories avec **200–800 viewers totaux** sur Twitch → tu apparais en haut de liste\n\n**Bons choix actuellement :**\n• Brawl Stars — petite communauté FR, forte fidélité\n• Valorant ranked — clips viraux faciles\n• Minecraft créatif — niche mais très fidèle\n\n**À éviter :** Fortnite, GTA RP, Warzone → trop de concurrence sauf si tu as déjà une audience.\n\n⚠️ L'analyse de ta niche optimale selon ton style, c'est un travail d'agent Belive.`;
 
   if(l.includes("follower")||l.includes("croissance")||l.includes("grow")||l.includes("grandir"))
-    return`Pour grandir rapidement, les 3 leviers qui marchent vraiment :\n\n**1. Le contenu court** ðŸŽ¬\nClipe tes meilleurs moments et poste sur TikTok/YouTube Shorts. Un clip viral peut t'amener 50â€“200 followers en une nuit.\n\n**2. Le rÃ©seau** ðŸ¤\nFais des raids ciblÃ©s vers des streamers de ta taille. Propose des co-streams. Rejoins des communities Discord.\n\n**3. La rÃ©gularitÃ©** ðŸ“…\nStreame aux mÃªmes horaires. Les algorithmes Twitch rÃ©compensent la rÃ©gularitÃ©.\n\nâš ï¸ Une stratÃ©gie de croissance complÃ¨te et personnalisÃ©e avec un agent Belive accÃ©lÃ¨re tout Ã§a de 3x.`;
+    return`Pour grandir rapidement, les 3 leviers qui marchent vraiment :\n\n**1. Le contenu court** 🎬\nClipe tes meilleurs moments et poste sur TikTok/YouTube Shorts. Un clip viral peut t'amener 50–200 followers en une nuit.\n\n**2. Le réseau** 🤝\nFais des raids ciblés vers des streamers de ta taille. Propose des co-streams. Rejoins des communities Discord.\n\n**3. La régularité** 📅\nStreame aux mêmes horaires. Les algorithmes Twitch récompensent la régularité.\n\n⚠️ Une stratégie de croissance complète et personnalisée avec un agent Belive accélère tout ça de 3x.`;
 
   if(l.includes("affili")||l.includes("affiliate"))
-    return`L'affiliation Twitch nÃ©cessite sur 30 jours consÃ©cutifs :\n\nâœ… **50 followers**\nâœ… **500 minutes** streamÃ©es\nâœ… **7 jours** de stream diffÃ©rents\nâœ… **3 viewers moyens**\n\nLe plus dur : les **3 viewers moyens**. VoilÃ  comment y arriver :\nâ€¢ Invite des amis Ã  regarder tes premiers streams\nâ€¢ Streame en heures de pointe (20hâ€“23h)\nâ€¢ Annonce tes streams sur tes rÃ©seaux 1h avant\n\nâš ï¸ Nos agents ont des mÃ©thodes spÃ©cifiques pour booster ta moyenne de viewers rapidement.`;
+    return`L'affiliation Twitch nécessite sur 30 jours consécutifs :\n\n✅ **50 followers**\n✅ **500 minutes** streamées\n✅ **7 jours** de stream différents\n✅ **3 viewers moyens**\n\nLe plus dur : les **3 viewers moyens**. Voilà comment y arriver :\n• Invite des amis à regarder tes premiers streams\n• Streame en heures de pointe (20h–23h)\n• Annonce tes streams sur tes réseaux 1h avant\n\n⚠️ Nos agents ont des méthodes spécifiques pour booster ta moyenne de viewers rapidement.`;
 
-  if(l.includes("setup")||l.includes("micro")||l.includes("camÃ©ra")||l.includes("materiel")||l.includes("matÃ©riel"))
-    return`Les prioritÃ©s setup dans l'ordre :\n\n**1. Audio** ðŸŽ™ï¸ â€” Le plus important\nUn mauvais micro = les viewers partent. Budget min : 50â‚¬ (HyperX SoloCast)\n\n**2. Internet** ðŸ“¡\n6 Mbps upload minimum pour streamer en 1080p60\n\n**3. Ã‰clairage** ðŸ’¡\nUne simple ring light Ã  20â‚¬ change tout\n\n**4. CamÃ©ra** ðŸ“·\nEn dernier â€” pas obligatoire pour dÃ©buter\n\nLa rÃ¨gle : investis dans l'ordre, pas tout d'un coup.\n\nâš ï¸ Pour un audit complet de ton setup selon ton budget, nos agents Belive sont lÃ .`;
+  if(l.includes("setup")||l.includes("micro")||l.includes("caméra")||l.includes("materiel")||l.includes("matériel"))
+    return`Les priorités setup dans l'ordre :\n\n**1. Audio** 🎙️ — Le plus important\nUn mauvais micro = les viewers partent. Budget min : 50€ (HyperX SoloCast)\n\n**2. Internet** 📡\n6 Mbps upload minimum pour streamer en 1080p60\n\n**3. Éclairage** 💡\nUne simple ring light à 20€ change tout\n\n**4. Caméra** 📷\nEn dernier — pas obligatoire pour débuter\n\nLa règle : investis dans l'ordre, pas tout d'un coup.\n\n⚠️ Pour un audit complet de ton setup selon ton budget, nos agents Belive sont là.`;
 
   if(l.includes("horaire")||l.includes("heure")||l.includes("quand"))
-    return`Les meilleurs crÃ©neaux streaming FR :\n\nðŸ“… **Semaine :**\nâ€¢ 19hâ€“20h : Bonne audience, peu de concurrence\nâ€¢ 20hâ€“23h âœ… : Peak time â€” meilleur crÃ©neau\n\nðŸ“… **Weekend :**\nâ€¢ 14hâ€“17h : Audience ado\nâ€¢ 20hâ€“minuit âœ… : Meilleur crÃ©neau\n\nâš ï¸ **Important** : La rÃ©gularitÃ© > Le timing. Streame toujours aux mÃªmes heures plutÃ´t que de chasser le "meilleur moment".\n\nâš ï¸ Nos agents analysent les donnÃ©es de ta catÃ©gorie pour trouver ton crÃ©neau optimal.`;
+    return`Les meilleurs créneaux streaming FR :\n\n📅 **Semaine :**\n• 19h–20h : Bonne audience, peu de concurrence\n• 20h–23h ✅ : Peak time — meilleur créneau\n\n📅 **Weekend :**\n• 14h–17h : Audience ado\n• 20h–minuit ✅ : Meilleur créneau\n\n⚠️ **Important** : La régularité > Le timing. Streame toujours aux mêmes heures plutôt que de chasser le "meilleur moment".\n\n⚠️ Nos agents analysent les données de ta catégorie pour trouver ton créneau optimal.`;
 
-  if(l.includes("rÃ©seau")||l.includes("tiktok")||l.includes("instagram")||l.includes("youtube"))
-    return`La stratÃ©gie multi-plateforme qui marche :\n\nðŸŽ® **Twitch** â†’ Ton stream principal, ta communautÃ©\nðŸŽµ **TikTok** â†’ Tes clips viraux, ta dÃ©couverte\nâ–¶ï¸ **YouTube** â†’ Tes highlights, ton rÃ©fÃ©rencement long terme\nðŸ“¸ **Instagram** â†’ Ta vie, ton personal branding\n\n**La rÃ¨gle des 80/20** : 80% de ton contenu sur Twitch, 20% recyclÃ© sur les autres plateformes.\n\nâš ï¸ Une stratÃ©gie cross-plateforme coordonnÃ©e, c'est exactement ce que nos agents construisent pour toi.`;
+  if(l.includes("réseau")||l.includes("tiktok")||l.includes("instagram")||l.includes("youtube"))
+    return`La stratégie multi-plateforme qui marche :\n\n🎮 **Twitch** → Ton stream principal, ta communauté\n🎵 **TikTok** → Tes clips viraux, ta découverte\n▶️ **YouTube** → Tes highlights, ton référencement long terme\n📸 **Instagram** → Ta vie, ton personal branding\n\n**La règle des 80/20** : 80% de ton contenu sur Twitch, 20% recyclé sur les autres plateformes.\n\n⚠️ Une stratégie cross-plateforme coordonnée, c'est exactement ce que nos agents construisent pour toi.`;
 
-  return`Bonne question ! Pour te donner une rÃ©ponse prÃ©cise, j'aurais besoin de plus de dÃ©tails sur ta situation.\n\nJe peux t'aider sur :\nâ€¢ ðŸ“ˆ Viewers et croissance\nâ€¢ ðŸŽ® Choix des jeux\nâ€¢ â° Horaires optimaux\nâ€¢ ðŸ’° MonÃ©tisation\nâ€¢ ðŸ¤ Partenariats\nâ€¢ ðŸŽ¯ Affiliation Twitch\nâ€¢ ðŸŽ™ï¸ Setup technique\n\nâš ï¸ Pour un accompagnement complet et personnalisÃ©, nos agents **Belive Academy** sont disponibles. ðŸŽ¯`;
+  return`Bonne question ! Pour te donner une réponse précise, j'aurais besoin de plus de détails sur ta situation.\n\nJe peux t'aider sur :\n• 📈 Viewers et croissance\n• 🎮 Choix des jeux\n• ⏰ Horaires optimaux\n• 💰 Monétisation\n• 🤝 Partenariats\n• 🎯 Affiliation Twitch\n• 🎙️ Setup technique\n\n⚠️ Pour un accompagnement complet et personnalisé, nos agents **Belive Academy** sont disponibles. 🎯`;
 };
 const CTR=(c,ct)=>{
   const revenus=[];
   if(ct.inclDons) revenus.push("Dons");
-  if(ct.inclPubs) revenus.push("PublicitÃ©s");
+  if(ct.inclPubs) revenus.push("Publicités");
   if(ct.inclPartenariats) revenus.push("Partenariats");
   if(ct.inclSubs) revenus.push("Abonnements/Subs");
   if(ct.inclBits) revenus.push("Bits/Super Chats");
@@ -149,7 +149,7 @@ ____________________________________________________________
 
 FORMULE : ${ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}
 
-${ct.formule==="commission"?`Frais d entree unique : ${ct.montant}â‚¬`:`Mensualite : ${ct.montant}â‚¬/mois`}
+${ct.formule==="commission"?`Frais d entree unique : ${ct.montant}€`:`Mensualite : ${ct.montant}€/mois`}
 Commission : ${ct.commission}%
 Revenus concernes : ${revenusStr}
 Duree : ${ct.duree}
@@ -189,7 +189,7 @@ select option{background:#1a1a1a;color:white;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .fade{animation:fadeUp 0.3s ease both;}
 .slide{animation:slideIn 0.25s ease both;}
-.blink::after{content:'â–‹';animation:pulse 0.8s infinite;margin-left:2px;}
+.blink::after{content:'▋';animation:pulse 0.8s infinite;margin-left:2px;}
 .desktop-sidebar{display:flex;}
 .mobile-bar{display:none;}
 @media(max-width:900px){
@@ -208,9 +208,9 @@ const Field=({label,hint,...p})=><div style={{marginBottom:14}}>{label&&<div sty
 
 const Card=({children,style,onClick})=><div onClick={onClick} style={{background:C,border:`1px solid ${B}`,borderRadius:16,padding:20,cursor:onClick?"pointer":"default",...style}}>{children}</div>;
 
-const Modal=({open,onClose,title,children,wide})=>{if(!open)return null;return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:16,backdropFilter:"blur(6px)"}}><div onClick={e=>e.stopPropagation()} className="fade" style={{background:C2,border:`1px solid ${B}`,borderRadius:20,padding:24,width:"100%",maxWidth:wide?700:480,maxHeight:"92vh",overflowY:"auto"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div style={{fontWeight:800,fontSize:16}}>{title}</div><button onClick={onClose} style={{background:"none",border:"none",color:M,fontSize:22,cursor:"pointer"}}>âœ•</button></div>{children}</div></div>;};
+const Modal=({open,onClose,title,children,wide})=>{if(!open)return null;return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:16,backdropFilter:"blur(6px)"}}><div onClick={e=>e.stopPropagation()} className="fade" style={{background:C2,border:`1px solid ${B}`,borderRadius:20,padding:24,width:"100%",maxWidth:wide?700:480,maxHeight:"92vh",overflowY:"auto"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div style={{fontWeight:800,fontSize:16}}>{title}</div><button onClick={onClose} style={{background:"none",border:"none",color:M,fontSize:22,cursor:"pointer"}}>✕</button></div>{children}</div></div>;};
 
-const SC=({label,value,sub,icon,color="red",delta})=>{const cl={red:R,green:G,blue:BL,purple:PU}[color]||R;return <Card><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,textTransform:"uppercase"}}>{label}</div>{icon&&<span style={{fontSize:18}}>{icon}</span>}</div><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:34,color:cl,lineHeight:1,marginBottom:4}}>{value}</div>{sub&&<div style={{fontSize:12,color:M}}>{sub}</div>}{delta!==undefined&&<div style={{marginTop:6,fontSize:11,fontWeight:700,color:delta>=0?G:"#ef4444"}}>{delta>=0?"â†‘":"â†“"} {Math.abs(delta)}% vs mois dernier</div>}</Card>;};
+const SC=({label,value,sub,icon,color="red",delta})=>{const cl={red:R,green:G,blue:BL,purple:PU}[color]||R;return <Card><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,textTransform:"uppercase"}}>{label}</div>{icon&&<span style={{fontSize:18}}>{icon}</span>}</div><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:34,color:cl,lineHeight:1,marginBottom:4}}>{value}</div>{sub&&<div style={{fontSize:12,color:M}}>{sub}</div>}{delta!==undefined&&<div style={{marginTop:6,fontSize:11,fontWeight:700,color:delta>=0?G:"#ef4444"}}>{delta>=0?"↑":"↓"} {Math.abs(delta)}% vs mois dernier</div>}</Card>;};
 
 const Av=({name,size=36})=><div style={{width:size,height:size,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:size*0.38,flexShrink:0}}>{(name||"?").charAt(0).toUpperCase()}</div>;
 
@@ -235,18 +235,18 @@ const BannerTemplate=({variant,pseudo})=>{
       <div style={{position:"relative",zIndex:2}}>
         <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(20px,4vw,36px)",color:v.text,letterSpacing:2,lineHeight:1}}>BELIVE <span style={{color:v.accent==="white"?"rgba(255,255,255,0.7)":v.accent}}>ACADEMY</span></div>
         <div style={{background:v.accent,borderRadius:100,padding:"2px 10px",display:"inline-block",marginTop:4}}>
-          <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(8px,1.5vw,12px)",color:v.bg,letterSpacing:3}}>CRÃ‰ATEUR OFFICIEL</div>
+          <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(8px,1.5vw,12px)",color:v.bg,letterSpacing:3}}>CRÉATEUR OFFICIEL</div>
         </div>
       </div>
       {/* Pseudo */}
       <div style={{position:"relative",zIndex:2,textAlign:"center"}}>
         <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(16px,3.5vw,32px)",color:v.text,letterSpacing:2}}>{pseudo||"TON PSEUDO"}</div>
-        <div style={{fontSize:"clamp(8px,1.2vw,11px)",color:v.sub,letterSpacing:2,textTransform:"uppercase"}}>Agence CrÃ©ateurs & Influence</div>
+        <div style={{fontSize:"clamp(8px,1.2vw,11px)",color:v.sub,letterSpacing:2,textTransform:"uppercase"}}>Agence Créateurs & Influence</div>
       </div>
       {/* Right */}
       <div style={{position:"relative",zIndex:2,textAlign:"right"}}>
         <div style={{fontSize:"clamp(7px,1vw,10px)",color:v.sub,letterSpacing:1}}>beliveacademy.com</div>
-        <div style={{fontSize:"clamp(6px,0.9vw,9px)",color:v.sub,marginTop:4,letterSpacing:0.5}}>ðŸ”¥ Rejoins la communautÃ©</div>
+        <div style={{fontSize:"clamp(6px,0.9vw,9px)",color:v.sub,marginTop:4,letterSpacing:0.5}}>🔥 Rejoins la communauté</div>
       </div>
     </div>
   );
@@ -267,7 +267,7 @@ const ProfileFrameTemplate=({variant,pseudo})=>{
           <div style={{width:"100%",height:"100%",borderRadius:"50%",background:v.bg,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
             {/* Placeholder photo area */}
             <div style={{position:"absolute",inset:6,borderRadius:"50%",background:"rgba(255,255,255,0.06)",border:`2px dashed rgba(255,255,255,0.15)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4}}>
-              <div style={{fontSize:28,opacity:0.3}}>ðŸ“·</div>
+              <div style={{fontSize:28,opacity:0.3}}>📷</div>
               <div style={{fontSize:9,color:"rgba(255,255,255,0.2)",textAlign:"center",lineHeight:1.3}}>Ta photo ici</div>
             </div>
           </div>
@@ -277,7 +277,7 @@ const ProfileFrameTemplate=({variant,pseudo})=>{
           <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:9,color:v.badgeText,letterSpacing:2}}>BELIVE</div>
         </div>
         {/* Top verified */}
-        <div style={{position:"absolute",top:2,right:2,width:24,height:24,background:v.ring,borderRadius:"50%",border:`2px solid ${v.bg}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>âœ“</div>
+        <div style={{position:"absolute",top:2,right:2,width:24,height:24,background:v.ring,borderRadius:"50%",border:`2px solid ${v.bg}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>✓</div>
       </div>
       {pseudo&&<div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:14,color:"white",letterSpacing:1,textAlign:"center"}}>@{pseudo}</div>}
     </div>
@@ -328,7 +328,7 @@ export default function App(){
   const [newCr,setNewCr]=useState({name:"",email:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",formule:"commission"});
   const [newSt,setNewSt]=useState({date:"",dur:"",viewers:"",platform:"twitch"});
   const [newSc,setNewSc]=useState({day:"Lundi",time:"20:00",dur:"2",platform:"twitch"});
-  const [newPartner,setNewPartner]=useState({brand:"",type:"",budget:"",desc:"",icon:"ðŸ¤",hot:false});
+  const [newPartner,setNewPartner]=useState({brand:"",type:"",budget:"",desc:"",icon:"🤝",hot:false});
   const [codeType,setCodeType]=useState("createur");
   const [freeType,setFreeType]=useState("limited");
   const [freeDays,setFreeDays]=useState(14);
@@ -350,7 +350,7 @@ export default function App(){
   const [profilEdit,setProfilEdit]=useState(false);
   const monCodeParrain=user?"BELIVE-"+user.name.toUpperCase().replace(/ /g,"").slice(0,4)+"2025":"";
 
-  const [aiMsgs,setAiMsgs]=useState([{role:"ai",text:"Bonjour ! Je suis ton coach streaming IA ðŸŽ®\nPose-moi tes questions sur la croissance, la monÃ©tisation ou ta stratÃ©gie."}]);
+  const [aiMsgs,setAiMsgs]=useState([{role:"ai",text:"Bonjour ! Je suis ton coach streaming IA 🎮\nPose-moi tes questions sur la croissance, la monétisation ou ta stratégie."}]);
   const [aiInput,setAiInput]=useState("");
   const [aiTyping,setAiTyping]=useState(false);
   const aiEnd=useRef(null);
@@ -358,7 +358,7 @@ export default function App(){
   useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   useEffect(()=>{localStorage.setItem("ba6_co",JSON.stringify(contrats));},[contrats]);
-  // Sauvegarder la session pour Ã©viter dÃ©connexion au refresh
+  // Sauvegarder la session pour éviter déconnexion au refresh
   useEffect(()=>{
     if(user){
       localStorage.setItem("ba6_session",JSON.stringify(user));
@@ -374,7 +374,7 @@ export default function App(){
   useEffect(()=>{localStorage.setItem("ba6_nprefs",JSON.stringify(notifPrefs));},[notifPrefs]);
   useEffect(()=>{localStorage.setItem("ba6_ref",JSON.stringify(referrals));},[referrals]);
 
-  // GÃ©nÃ¨re un code de parrainage unique pour chaque crÃ©ateur
+  // Génère un code de parrainage unique pour chaque créateur
   function getMyReferralCode(){
     const base=(user.twitch||user.name).toUpperCase().replace(/\s/g,"").slice(0,6);
     return`REF-${base}-${user.email.slice(0,3).toUpperCase()}`;
@@ -384,10 +384,10 @@ export default function App(){
     const found=referrals.find(r=>r.code===code.toUpperCase());
     if(found){
       if(found.usedBy===user.email){alert("Tu ne peux pas utiliser ton propre code !");return false;}
-      if(found.usedBy){alert("Ce code a dÃ©jÃ  Ã©tÃ© utilisÃ©.");return false;}
+      if(found.usedBy){alert("Ce code a déjà été utilisé.");return false;}
       setReferrals(p=>p.map(r=>r.code===code.toUpperCase()?{...r,usedBy:user.email,usedAt:new Date().toLocaleDateString("fr-FR")}:r));
       // Donne -50% au parrain le mois prochain
-      alert("âœ… Code de parrainage appliquÃ© ! Le crÃ©ateur qui t'a parrainÃ© recevra -50% le mois prochain. Merci !");
+      alert("✅ Code de parrainage appliqué ! Le créateur qui t'a parrainé recevra -50% le mois prochain. Merci !");
       return true;
     }
     alert("Code de parrainage invalide.");return false;
@@ -410,7 +410,7 @@ export default function App(){
   const isInTrial=trialDaysLeft>0;
   const hasAccess=isPro||isInTrial||isBeliveCreator;
 
-  // Charger les codes et utilisateurs depuis Supabase quand admin connectÃ©
+  // Charger les codes et utilisateurs depuis Supabase quand admin connecté
   useEffect(()=>{
     if(role==="admin"){
       // Charger les codes
@@ -434,7 +434,7 @@ export default function App(){
         if(data&&data.length>0){
           const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
           data.forEach(u=>{
-            // Toujours mettre Ã  jour plan, offert et paid depuis Supabase
+            // Toujours mettre à jour plan, offert et paid depuis Supabase
             if(sv[u.email]){
               sv[u.email].plan=u.plan||sv[u.email].plan||"free";
               sv[u.email].offert=u.offert||false;
@@ -517,10 +517,10 @@ export default function App(){
       // Essayer dans Supabase
       try{
         const supaUser=await db.getUser(forgotEmail);
-        if(!supaUser||!supaUser[0]){alert("âŒ Aucun compte avec cet email.");return;}
-      }catch(e){alert("âŒ Aucun compte avec cet email.");return;}
+        if(!supaUser||!supaUser[0]){alert("❌ Aucun compte avec cet email.");return;}
+      }catch(e){alert("❌ Aucun compte avec cet email.");return;}
     }
-    // GÃ©nÃ¨re un code de rÃ©initialisation
+    // Génère un code de réinitialisation
     const resetCode=Math.random().toString(36).slice(2,8).toUpperCase();
     const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
     resets[forgotEmail]={code:resetCode,expiry:Date.now()+3600000};
@@ -543,13 +543,13 @@ export default function App(){
       });
     }catch(e){}
     setForgotSent(true);
-    alert(`âœ… Code de rÃ©initialisation envoyÃ© Ã  ${forgotEmail} !\n\nCode : ${resetCode}\n(Valable 1 heure)`);
+    alert(`✅ Code de réinitialisation envoyé à ${forgotEmail} !\n\nCode : ${resetCode}\n(Valable 1 heure)`);
   }
 
   function doResetPassword(newPass){
     const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
     const r=resets[forgotEmail];
-    if(!r||Date.now()>r.expiry){alert("âŒ Code expirÃ©.");return;}
+    if(!r||Date.now()>r.expiry){alert("❌ Code expiré.");return;}
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     if(sv[forgotEmail]){
       sv[forgotEmail].password=newPass;
@@ -560,26 +560,26 @@ export default function App(){
     setIsForgot(false);
     setForgotSent(false);
     setForgotEmail("");
-    alert("âœ… Mot de passe rÃ©initialisÃ© ! Tu peux te connecter.");
+    alert("✅ Mot de passe réinitialisé ! Tu peux te connecter.");
   }
 
   async function doReg(){
     const{name,email,pass,phone,twitch,youtube,tiktok,instagram,code}=reg;
-    if(!name||!email||!pass||!phone){alert("Nom, email, mot de passe et tÃ©lÃ©phone obligatoires.");return;}
-    if(!regAge){alert("âš ï¸ Tu dois confirmer avoir 18 ans ou plus.");return;}
-    if(!regCGU){alert("âš ï¸ Tu dois accepter les conditions gÃ©nÃ©rales d'utilisation.");return;}
+    if(!name||!email||!pass||!phone){alert("Nom, email, mot de passe et téléphone obligatoires.");return;}
+    if(!regAge){alert("⚠️ Tu dois confirmer avoir 18 ans ou plus.");return;}
+    if(!regCGU){alert("⚠️ Tu dois accepter les conditions générales d'utilisation.");return;}
     let r2="createur";
     let plan="free";
     let trialDaysFromCode=14;
     if(code){
-      // VÃ©rifier d'abord dans Supabase
+      // Vérifier d'abord dans Supabase
       let f=null;
       try{
         const supaResult=await db.getCodes();
         if(supaResult){
           f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
           if(f){
-            // Marquer comme utilisÃ© dans Supabase
+            // Marquer comme utilisé dans Supabase
             await db.useCode(f.code, name);
             // Adapter le format
             f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
@@ -590,7 +590,7 @@ export default function App(){
         f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
         if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
       }
-      if(!f){alert("âŒ Code invalide ou dÃ©jÃ  utilisÃ©.");return;}
+      if(!f){alert("❌ Code invalide ou déjà utilisé.");return;}
       r2=f.type||"createur";
       if(f.freeType==="belive_creator"||f.free_type==="belive_creator") plan="belive_creator";
       if(f.freeType==="unlimited"||f.free_type==="unlimited"){plan="pro";}
@@ -598,7 +598,7 @@ export default function App(){
     }
     const isOffert=plan==="pro"&&true;
     const trialEnd=new Date(Date.now()+trialDaysFromCode*24*60*60*1000).toISOString();
-    // GÃ©nÃ¨re un code parrain unique
+    // Génère un code parrain unique
     const refCode="REF-"+name.toUpperCase().replace(/\s/g,"").slice(0,6)+"-"+Math.random().toString(36).slice(2,5).toUpperCase();
     const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString(),referral_code:refCode};
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
@@ -608,7 +608,7 @@ export default function App(){
     try{
       await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode});
     }catch(e){console.log("User save to Supabase failed");}
-    // Si inscrit avec un code parrain â€” crÃ©er le lien parrainage
+    // Si inscrit avec un code parrain — créer le lien parrainage
     if(reg.referralCode){
       try{
         // Trouver le parrain
@@ -628,8 +628,8 @@ export default function App(){
     }
     setUser({email,...nu});
     setShowWelcome(true);
-    storeAdminNotif(`ðŸŽ‰ Nouveau crÃ©ateur inscrit : ${name} (${email})`);
-    sendNotif("ðŸŽ‰ Nouveau crÃ©ateur !",`${name} vient de s'inscrire sur Belive Academy`,"new-user");
+    storeAdminNotif(`🎉 Nouveau créateur inscrit : ${name} (${email})`);
+    sendNotif("🎉 Nouveau créateur !",`${name} vient de s'inscrire sur Belive Academy`,"new-user");
   }
 
   const TWITCH_CLIENT_ID="splan7frqhf243aohn4l08n3z3a82c";
@@ -664,7 +664,7 @@ export default function App(){
     }catch(e){console.log("Twitch refresh failed");}
   }
 
-  // RafraÃ®chir les stats Twitch toutes les 2 minutes si connectÃ©
+  // Rafraîchir les stats Twitch toutes les 2 minutes si connecté
   useEffect(()=>{
     if(user?.twitch&&role==="createur"){
       refreshTwitchStats();
@@ -680,24 +680,24 @@ export default function App(){
       const token=await getTwitchToken();
       const userRes=await fetch(`https://api.twitch.tv/helix/users?login=${pseudo}`,{headers:{"Client-ID":TWITCH_CLIENT_ID,"Authorization":`Bearer ${token}`}});
       const userData=await userRes.json();
-      if(!userData.data||userData.data.length===0){alert("âŒ Pseudo Twitch introuvable.");return;}
+      if(!userData.data||userData.data.length===0){alert("❌ Pseudo Twitch introuvable.");return;}
       const twitchUser=userData.data[0];
       const followRes=await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${twitchUser.id}`,{headers:{"Client-ID":TWITCH_CLIENT_ID,"Authorization":`Bearer ${token}`}});
       const followData=await followRes.json();
       const followers=followData.total||0;
-      // VÃ©rifier si en live
+      // Vérifier si en live
       const streamRes=await fetch(`https://api.twitch.tv/helix/streams?user_login=${pseudo}`,{headers:{"Client-ID":TWITCH_CLIENT_ID,"Authorization":`Bearer ${token}`}});
       const streamData=await streamRes.json();
       const liveStream=streamData.data&&streamData.data[0];
       const liveViewers=liveStream?liveStream.viewer_count:0;
       setUser(p=>({...p,twitch:pseudo,twitchId:twitchUser.id,twitchAvatar:twitchUser.profile_image_url,isLive:!!liveStream,liveViewers}));
       setMs(p=>({...p,twitch:followers,liveViewers,isLive:!!liveStream}));
-      alert(`âœ… Twitch @${pseudo} connectÃ© !\nðŸ‘¥ ${followers.toLocaleString()} followers\n${liveStream?`ðŸ”´ EN LIVE â€” ${liveViewers} viewers`:"âš« Pas en live"}`);
+      alert(`✅ Twitch @${pseudo} connecté !\n👥 ${followers.toLocaleString()} followers\n${liveStream?`🔴 EN LIVE — ${liveViewers} viewers`:"⚫ Pas en live"}`);
     }catch(e){
       const followers=parseInt(prompt("Combien de followers Twitch as-tu ?")||"0");
       setUser(p=>({...p,twitch:pseudo}));
       setMs(p=>({...p,twitch:followers}));
-      alert(`âœ… Twitch @${pseudo} connectÃ© !`);
+      alert(`✅ Twitch @${pseudo} connecté !`);
     }
   }
   const YOUTUBE_KEY="AIzaSyDiXDzDOnnI-nbLVSU4SZKFM-14v7czCi0";
@@ -715,7 +715,7 @@ export default function App(){
     }catch(e){console.log("YouTube refresh failed");}
   }
 
-  // RafraÃ®chir les stats YouTube toutes les 5 minutes
+  // Rafraîchir les stats YouTube toutes les 5 minutes
   useEffect(()=>{
     if(user?.youtubeId&&role==="createur"){
       refreshYoutubeStats();
@@ -725,13 +725,13 @@ export default function App(){
   },[user?.youtubeId, role]);
 
   async function connectYoutube(){
-    const ch=prompt("Entre le nom ou l'URL de ta chaÃ®ne YouTube :");
+    const ch=prompt("Entre le nom ou l'URL de ta chaîne YouTube :");
     if(!ch)return;
     try{
       const query=ch.replace("https://www.youtube.com/@","").replace("@","");
       const res=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${query}&key=${YOUTUBE_KEY}`);
       const data=await res.json();
-      if(!data.items||data.items.length===0){alert("âŒ ChaÃ®ne YouTube introuvable.");return;}
+      if(!data.items||data.items.length===0){alert("❌ Chaîne YouTube introuvable.");return;}
       const channelId=data.items[0].snippet.channelId;
       const statsRes=await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${channelId}&key=${YOUTUBE_KEY}`);
       const statsData=await statsRes.json();
@@ -739,12 +739,12 @@ export default function App(){
       const subs=parseInt(channel.statistics.subscriberCount||0);
       setUser(p=>({...p,youtube:channel.snippet.title,youtubeId:channelId}));
       setMs(p=>({...p,youtube:subs}));
-      alert(`âœ… YouTube "${channel.snippet.title}" connectÃ© ! ${subs.toLocaleString()} abonnÃ©s rÃ©cupÃ©rÃ©s.`);
+      alert(`✅ YouTube "${channel.snippet.title}" connecté ! ${subs.toLocaleString()} abonnés récupérés.`);
     }catch(e){
-      const subs=parseInt(prompt("Combien d'abonnÃ©s YouTube as-tu ?")||"0");
+      const subs=parseInt(prompt("Combien d'abonnés YouTube as-tu ?")||"0");
       setUser(p=>({...p,youtube:ch}));
       setMs(p=>({...p,youtube:subs}));
-      alert(`âœ… YouTube "${ch}" connectÃ© !`);
+      alert(`✅ YouTube "${ch}" connecté !`);
     }
   }
 
@@ -752,7 +752,7 @@ export default function App(){
 
   async function addStream(){
     const{date,dur,viewers,platform}=newSt;
-    if(!date||!dur){alert("Date et durÃ©e obligatoires.");return;}
+    if(!date||!dur){alert("Date et durée obligatoires.");return;}
     const newStream={id:Date.now(),date,duration:parseFloat(dur),viewers:parseInt(viewers)||0,platform,user_email:user.email};
     setStreams(p=>[...p,newStream]);
     // Sauvegarde dans Supabase
@@ -774,34 +774,34 @@ export default function App(){
     // Demande permission notif automatiquement
     if("Notification" in window && Notification.permission==="default"){
       Notification.requestPermission().then(p=>{
-        if(p==="granted") sendNotif("ðŸ”” Rappels activÃ©s !","Tu recevras des notifications 1h avant chaque stream","planning-ok");
+        if(p==="granted") sendNotif("🔔 Rappels activés !","Tu recevras des notifications 1h avant chaque stream","planning-ok");
       });
     }
     setModal(null);
   }
-  function saveStats(){setMs({twitch:parseInt(mSt.twitch)||ms.twitch,youtube:parseInt(mSt.youtube)||ms.youtube,tiktok:parseInt(mSt.tiktok)||ms.tiktok});alert("âœ… Stats sauvegardÃ©es !");}
+  function saveStats(){setMs({twitch:parseInt(mSt.twitch)||ms.twitch,youtube:parseInt(mSt.youtube)||ms.youtube,tiktok:parseInt(mSt.tiktok)||ms.tiktok});alert("✅ Stats sauvegardées !");}
   function requestNotif(s){
-    const platformIcons={twitch:"ðŸŸ£",youtube:"â–¶ï¸",tiktok:"ðŸŽµ"};
-    if(!notifPrefs.planning){alert("Tu as dÃ©sactivÃ© les notifications de planning dans ton profil.");return;}
-    if(!("Notification" in window)){alert("Notifications non supportÃ©es sur cet appareil.");return;}
+    const platformIcons={twitch:"🟣",youtube:"▶️",tiktok:"🎵"};
+    if(!notifPrefs.planning){alert("Tu as désactivé les notifications de planning dans ton profil.");return;}
+    if(!("Notification" in window)){alert("Notifications non supportées sur cet appareil.");return;}
     Notification.requestPermission().then(p=>{
       if(p==="granted"){
         const[h,m]=s.time.split(":").map(Number);
         const streamMs=new Date();streamMs.setHours(h,m-60,0,0);
         const delay=streamMs-Date.now();
-        if(delay>0){setTimeout(()=>new Notification("ðŸ”´ Belive Academy",{body:`Ton stream ${platformIcons[s.platform]} commence dans 1 heure !`,icon:"https://beliveacademy.com/favicon.ico"}),delay);}
-        alert(`âœ… Rappel activÃ© ! Tu recevras une notification 1h avant ton stream du ${s.day} Ã  ${s.time}`);
-      }else{alert("Active les notifications dans les paramÃ¨tres de ton navigateur.");}
+        if(delay>0){setTimeout(()=>new Notification("🔴 Belive Academy",{body:`Ton stream ${platformIcons[s.platform]} commence dans 1 heure !`,icon:"https://beliveacademy.com/favicon.ico"}),delay);}
+        alert(`✅ Rappel activé ! Tu recevras une notification 1h avant ton stream du ${s.day} à ${s.time}`);
+      }else{alert("Active les notifications dans les paramètres de ton navigateur.");}
     });
   }
 
   function deleteUser(email){
-    if(!confirm(`Supprimer dÃ©finitivement ce crÃ©ateur ?`))return;
+    if(!confirm(`Supprimer définitivement ce créateur ?`))return;
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     delete sv[email];
     localStorage.setItem("ba6_users",JSON.stringify(sv));
     setCreateurs(p=>p.filter(c=>c.email!==email));
-    alert("âœ… CrÃ©ateur supprimÃ©.");
+    alert("✅ Créateur supprimé.");
   }
 
   async function togglePro(email){
@@ -812,7 +812,7 @@ export default function App(){
         sv[email].offert=false;
         await db.updateUser(email,{plan:"free",offert:false});
       } else {
-        const isPaid=window.confirm("Ce crÃ©ateur a-t-il payÃ© ?\n\nOK = Payant (comptÃ© dans les revenus)\nAnnuler = Offert (gratuit, non comptÃ©)");
+        const isPaid=window.confirm("Ce créateur a-t-il payé ?\n\nOK = Payant (compté dans les revenus)\nAnnuler = Offert (gratuit, non compté)");
         sv[email].plan="pro";
         sv[email].offert=!isPaid;
         await db.updateUser(email,{plan:"pro",offert:!isPaid,paid:isPaid});
@@ -854,12 +854,12 @@ export default function App(){
         created_at:newCode.createdAt,
       });
       if(result){
-        alert(`âœ… Code ${newCode.code} crÃ©Ã© et sauvegardÃ© !`);
+        alert(`✅ Code ${newCode.code} créé et sauvegardé !`);
       } else {
-        alert(`âš ï¸ Code crÃ©Ã© mais non sauvegardÃ© dans Supabase. Erreur de connexion.`);
+        alert(`⚠️ Code créé mais non sauvegardé dans Supabase. Erreur de connexion.`);
       }
     }catch(e){
-      alert(`âŒ Erreur Supabase : ${e.message}`);
+      alert(`❌ Erreur Supabase : ${e.message}`);
     }
     setCodes(p=>[...p,newCode]);
   }
@@ -870,18 +870,18 @@ export default function App(){
 
   function addCreateur(){const{name,email,phone,twitch,youtube,tiktok,instagram,formule}=newCr;if(!name||!email){alert("Nom et email obligatoires.");return;}setCreateurs(p=>[...p,{id:Date.now(),name,email,phone,twitch,youtube,tiktok,instagram,formule,status:"actif",date:new Date().toLocaleDateString("fr-FR")}]);setNewCr({name:"",email:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",formule:"commission"});setModal(null);}
 
-  function applyPartner(pid){const already=partners.find(p=>p.id===pid)?.applicants.find(a=>a.email===user.email);if(already){alert("Tu as dÃ©jÃ  postulÃ© !");return;}setPartners(prev=>prev.map(p=>p.id!==pid?p:{...p,applicants:[...p.applicants,{name:user.name,email:user.email,phone:user.phone||"â€”",twitch:user.twitch||"â€”",youtube:user.youtube||"â€”",tiktok:user.tiktok||"â€”",instagram:user.instagram||"â€”",date:new Date().toLocaleDateString("fr-FR")}]}));alert("âœ… Candidature envoyÃ©e ! Belive Academy te contactera.");}
+  function applyPartner(pid){const already=partners.find(p=>p.id===pid)?.applicants.find(a=>a.email===user.email);if(already){alert("Tu as déjà postulé !");return;}setPartners(prev=>prev.map(p=>p.id!==pid?p:{...p,applicants:[...p.applicants,{name:user.name,email:user.email,phone:user.phone||"—",twitch:user.twitch||"—",youtube:user.youtube||"—",tiktok:user.tiktok||"—",instagram:user.instagram||"—",date:new Date().toLocaleDateString("fr-FR")}]}));alert("✅ Candidature envoyée ! Belive Academy te contactera.");}
 
   async function saveContract(){
     if(!ct.createur)return;
     setContrats(p=>[...p,{id:Date.now(),...ct.createur,formule:ct.formule,commission:ct.commission,montant:ct.montant,duree:ct.duree,date:new Date().toLocaleDateString("fr-FR")}]);
 
     const today=new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"});
-    const revenus=[ct.inclPartenariats&&"Partenariats",ct.inclPubs&&"PublicitÃ©s",ct.inclSubs&&"Subs",ct.inclBits&&"Bits",ct.inclMerchandise&&"Merchandise",ct.inclDons&&"Dons"].filter(Boolean).join(", ")||"Tous";
-    const prestations=[ct.prestCoaching&&"Coaching personnalisÃ©",ct.prestStats&&"Suivi statistiques",ct.prestPartenariats&&"Recherche partenariats",ct.prestStrategie&&"StratÃ©gie de croissance",ct.prestApp&&"AccÃ¨s app Belive Academy",ct.prestGroupe&&"AccÃ¨s groupe privÃ©",ct.prestContenu&&"Aide crÃ©ation contenu",ct.prestReseaux&&"Gestion rÃ©seaux sociaux"].filter(Boolean);
+    const revenus=[ct.inclPartenariats&&"Partenariats",ct.inclPubs&&"Publicités",ct.inclSubs&&"Subs",ct.inclBits&&"Bits",ct.inclMerchandise&&"Merchandise",ct.inclDons&&"Dons"].filter(Boolean).join(", ")||"Tous";
+    const prestations=[ct.prestCoaching&&"Coaching personnalisé",ct.prestStats&&"Suivi statistiques",ct.prestPartenariats&&"Recherche partenariats",ct.prestStrategie&&"Stratégie de croissance",ct.prestApp&&"Accès app Belive Academy",ct.prestGroupe&&"Accès groupe privé",ct.prestContenu&&"Aide création contenu",ct.prestReseaux&&"Gestion réseaux sociaux"].filter(Boolean);
 
     try{
-      // GÃ©nÃ©ration PDF avec jsPDF
+      // Génération PDF avec jsPDF
       const script=document.createElement("script");
       script.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
       document.head.appendChild(script);
@@ -920,7 +920,7 @@ export default function App(){
       doc.setFont("helvetica","bold");
       doc.setFontSize(14);
       doc.setTextColor(17,17,17);
-      doc.text("CONTRAT D'ACCOMPAGNEMENT CRÃ‰ATEUR",M,y);
+      doc.text("CONTRAT D'ACCOMPAGNEMENT CRÉATEUR",M,y);
       y+=7;
       doc.setFont("helvetica","normal");
       doc.setFontSize(9);
@@ -928,7 +928,7 @@ export default function App(){
       doc.text(`Fait le ${today}`,M,y);
       y+=12;
 
-      // Deux colonnes agence/crÃ©ateur
+      // Deux colonnes agence/créateur
       const colW=82;
       // Agence
       doc.setFillColor(248,248,248);
@@ -938,24 +938,24 @@ export default function App(){
       doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
       doc.text("AGENCE",M+6,y+7);
       doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(50,50,50);
-      doc.text("Belive Academy â€” Ethan",M+6,y+14);
+      doc.text("Belive Academy — Ethan",M+6,y+14);
       doc.text("ethan@beliveacademy.com",M+6,y+20);
       doc.text("07 80 99 92 51",M+6,y+26);
       doc.text("beliveacademy.com",M+6,y+32);
 
-      // CrÃ©ateur
+      // Créateur
       const cx=M+colW+8;
       doc.setFillColor(248,248,248);
       doc.roundedRect(cx,y,colW,40,3,3,"F");
       doc.setFillColor(212,16,63);
       doc.rect(cx,y,3,40,"F");
       doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
-      doc.text("CRÃ‰ATEUR",cx+6,y+7);
+      doc.text("CRÉATEUR",cx+6,y+7);
       doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(50,50,50);
-      doc.text(ct.createur?.name||"â€”",cx+6,y+14);
-      doc.text(ct.createur?.email||"â€”",cx+6,y+20);
-      doc.text(ct.createur?.twitch?"@"+ct.createur.twitch:"â€”",cx+6,y+26);
-      doc.text(ct.createur?.youtube||"â€”",cx+6,y+32);
+      doc.text(ct.createur?.name||"—",cx+6,y+14);
+      doc.text(ct.createur?.email||"—",cx+6,y+20);
+      doc.text(ct.createur?.twitch?"@"+ct.createur.twitch:"—",cx+6,y+26);
+      doc.text(ct.createur?.youtube||"—",cx+6,y+32);
       y+=48;
 
       // Formule
@@ -964,10 +964,10 @@ export default function App(){
       doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(212,16,63);
       doc.text(`FORMULE : ${ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}`,M+6,y+8);
       const items=[
-        [ct.formule==="commission"?"Frais d'entrÃ©e":"MensualitÃ©",`${ct.montant}â‚¬`],
+        [ct.formule==="commission"?"Frais d'entrée":"Mensualité",`${ct.montant}€`],
         ["Commission",`${ct.commission}%`],
-        ["DurÃ©e",ct.duree],
-        ["PrÃ©avis",ct.preavis||"15j"],
+        ["Durée",ct.duree],
+        ["Préavis",ct.preavis||"15j"],
       ];
       items.forEach(([l,v],i)=>{
         const ix=M+6+(i%2)*87, iy=y+16+(Math.floor(i/2)*9);
@@ -988,22 +988,22 @@ export default function App(){
       prestations.forEach((p,i)=>{
         const px=M+6+(i%2)*87, py=y+14+(Math.floor(i/2)*7);
         doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(50,50,50);
-        doc.text("âœ“ "+p,px,py);
+        doc.text("✓ "+p,px,py);
       });
       y+=(prestations.length>4?38:30);
 
       // Signatures
       y+=6;
       doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(17,17,17);
-      doc.text("SIGNATURES â€” Fait le "+today,M,y);
+      doc.text("SIGNATURES — Fait le "+today,M,y);
       y+=8;
-      [[`Ethan â€” Belive Academy`,"Signature de l'agence",true],[ct.createur?.name||"___","Signature + Lu et approuvÃ©",false]].forEach(([name,label,signed],i)=>{
+      [[`Ethan — Belive Academy`,"Signature de l'agence",true],[ct.createur?.name||"___","Signature + Lu et approuvé",false]].forEach(([name,label,signed],i)=>{
         const sx=M+(i*92);
         doc.setDrawColor(230,230,230);doc.setLineWidth(0.5);
         doc.rect(sx,y,82,28);
         doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(17,17,17);
         doc.text(name,sx+6,y+8);
-        // Signature Belive Academy prÃ©-signÃ©e
+        // Signature Belive Academy pré-signée
         if(signed){
           doc.setFont("helvetica","bolditalic");doc.setFontSize(14);doc.setTextColor(212,16,63);
           doc.text("Belive Academy",sx+6,y+19);
@@ -1023,7 +1023,7 @@ export default function App(){
       doc.setTextColor(212,16,63);
       doc.text("ACADEMY",M+20,283);
       doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(120,120,120);
-      doc.text("beliveacademy.com â€¢ ethan@beliveacademy.com â€¢ 07 80 99 92 51",M,289);
+      doc.text("beliveacademy.com • ethan@beliveacademy.com • 07 80 99 92 51",M,289);
 
       const pdfBase64=doc.output("datauristring").split(",")[1];
 
@@ -1031,22 +1031,22 @@ export default function App(){
       await fetch("https://api.emailjs.com/api/v1.0/email/send",{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({service_id:"service_on459ks",template_id:"template_7kpdxpg",user_id:"MTTbA9t4YLXMDdk1I",
-          template_params:{to_email:"ethan@beliveacademy.com",to_name:"Ethan â€” Belive Academy",from_name:ct.createur.name+" via Belive Academy",contrat:`Contrat pour ${ct.createur.name} â€” ${ct.formule} â€” ${ct.montant}â‚¬ â€” ${ct.commission}% â€” ${ct.duree}`,createur_email:ct.createur.email,createur_name:ct.createur.name}
+          template_params:{to_email:"ethan@beliveacademy.com",to_name:"Ethan — Belive Academy",from_name:ct.createur.name+" via Belive Academy",contrat:`Contrat pour ${ct.createur.name} — ${ct.formule} — ${ct.montant}€ — ${ct.commission}% — ${ct.duree}`,createur_email:ct.createur.email,createur_name:ct.createur.name}
         })
       });
       await fetch("https://api.emailjs.com/api/v1.0/email/send",{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({service_id:"service_on459ks",template_id:"template_7kpdxpg",user_id:"MTTbA9t4YLXMDdk1I",
-          template_params:{to_email:ct.createur.email,to_name:ct.createur.name,from_name:"Ethan â€” Belive Academy",contrat:`Voici ton contrat Belive Academy â€” ${ct.formule} â€” ${ct.montant}â‚¬ â€” ${ct.commission}% â€” ${ct.duree}`,createur_email:ct.createur.email,createur_name:ct.createur.name}
+          template_params:{to_email:ct.createur.email,to_name:ct.createur.name,from_name:"Ethan — Belive Academy",contrat:`Voici ton contrat Belive Academy — ${ct.formule} — ${ct.montant}€ — ${ct.commission}% — ${ct.duree}`,createur_email:ct.createur.email,createur_name:ct.createur.name}
         })
       });
 
-      // TÃ©lÃ©chargement automatique du PDF
+      // Téléchargement automatique du PDF
       doc.save(`Contrat-Belive-Academy-${ct.createur.name.replace(/ /g,"-")}.pdf`);
-      alert(`âœ… Contrat PDF gÃ©nÃ©rÃ© et emails envoyÃ©s !\nðŸ“§ ethan@beliveacademy.com\nðŸ“§ ${ct.createur.email}`);
+      alert(`✅ Contrat PDF généré et emails envoyés !\n📧 ethan@beliveacademy.com\n📧 ${ct.createur.email}`);
     }catch(e){
       console.log(e);
-      alert(`âœ… Contrat sauvegardÃ© !\nðŸ“§ Email envoyÃ© Ã  : ${ct.createur.email}`);
+      alert(`✅ Contrat sauvegardé !\n📧 Email envoyé à : ${ct.createur.email}`);
     }
     setModal(null);
   }
@@ -1079,19 +1079,19 @@ export default function App(){
   });setModal("contract");}
 
   const navItems=[
-    {id:"dashboard",    icon:"â¬¡", label:"Dashboard",    roles:["admin","createur"]},
-    {id:"coach",        icon:"âœ¦", label:"Coach IA",      roles:["createur"],         badge:"IA"},
-    {id:"stats",        icon:"â†—", label:"Statistiques",  roles:["admin","createur"]},
-    {id:"planning",     icon:"â—·", label:"Planning",      roles:["admin","createur"]},
-    {id:"partenariats", icon:"â—‰", label:"Partenariats",  roles:["admin","createur"], badge:"NEW"},
-    {id:"communaute",   icon:"â—Ž", label:"CommunautÃ©",    roles:["admin","createur"]},
-    {id:"classement",   icon:"â—†", label:"Classement",    roles:["admin","createur"]},
-    {id:"templates",    icon:"ðŸŽ¨",label:"Templates",     roles:["createur"]},
-    {id:"parrainage",   icon:"ðŸŽ",label:"Parrainage",    roles:["createur"]},
-    {id:"createurs",    icon:"â–£", label:"CrÃ©ateurs",     roles:["admin"],            section:"GESTION"},
-    {id:"contrats",     icon:"â–¤", label:"Contrats",      roles:["admin"]},
-    {id:"codes",        icon:"â–§", label:"Codes",         roles:["admin"]},
-    {id:"parrainages",  icon:"ðŸŽ", label:"Parrainages",   roles:["admin"]},
+    {id:"dashboard",    icon:"⬡", label:"Dashboard",    roles:["admin","createur"]},
+    {id:"coach",        icon:"✦", label:"Coach IA",      roles:["createur"],         badge:"IA"},
+    {id:"stats",        icon:"↗", label:"Statistiques",  roles:["admin","createur"]},
+    {id:"planning",     icon:"◷", label:"Planning",      roles:["admin","createur"]},
+    {id:"partenariats", icon:"◉", label:"Partenariats",  roles:["admin","createur"], badge:"NEW"},
+    {id:"communaute",   icon:"◎", label:"Communauté",    roles:["admin","createur"]},
+    {id:"classement",   icon:"◆", label:"Classement",    roles:["admin","createur"]},
+    {id:"templates",    icon:"🎨",label:"Templates",     roles:["createur"]},
+    {id:"parrainage",   icon:"🎁",label:"Parrainage",    roles:["createur"]},
+    {id:"createurs",    icon:"▣", label:"Créateurs",     roles:["admin"],            section:"GESTION"},
+    {id:"contrats",     icon:"▤", label:"Contrats",      roles:["admin"]},
+    {id:"codes",        icon:"▧", label:"Codes",         roles:["admin"]},
+    {id:"parrainages",  icon:"🎁", label:"Parrainages",   roles:["admin"]},
   ].filter(n=>n.roles.includes(role));
 
   // AUTH
@@ -1102,45 +1102,45 @@ export default function App(){
       <div style={{width:"100%",maxWidth:440}} className="fade">
         <div style={{textAlign:"center",marginBottom:24}}>
           <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:44,letterSpacing:3}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
-          <div style={{fontSize:13,color:M,marginTop:4}}>La plateforme des crÃ©ateurs de contenu</div>
+          <div style={{fontSize:13,color:M,marginTop:4}}>La plateforme des créateurs de contenu</div>
         </div>
         <div style={{background:"#0d0d0d",border:`1px solid ${B}`,borderRadius:20,padding:28}}>
-          <div style={{fontWeight:800,fontSize:18,marginBottom:4}}>{isReg?"CrÃ©er un compte":"Connexion"}</div>
-          <div style={{fontSize:13,color:M,marginBottom:20}}>{isReg?"Rejoins la communautÃ© Belive":"Content de te revoir ðŸ‘‹"}</div>
+          <div style={{fontWeight:800,fontSize:18,marginBottom:4}}>{isReg?"Créer un compte":"Connexion"}</div>
+          <div style={{fontSize:13,color:M,marginBottom:20}}>{isReg?"Rejoins la communauté Belive":"Content de te revoir 👋"}</div>
           {isReg?(<>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <Field label="PrÃ©nom *" value={reg.name.split(" ")[0]||""} onChange={e=>setReg({...reg,name:e.target.value+" "+(reg.name.split(" ")[1]||"")})} placeholder="PrÃ©nom"/>
+              <Field label="Prénom *" value={reg.name.split(" ")[0]||""} onChange={e=>setReg({...reg,name:e.target.value+" "+(reg.name.split(" ")[1]||"")})} placeholder="Prénom"/>
               <Field label="Nom *" value={reg.name.split(" ")[1]||""} onChange={e=>setReg({...reg,name:(reg.name.split(" ")[0]||"")+" "+e.target.value})} placeholder="Nom"/>
             </div>
             <Field label="Email *" type="email" value={reg.email} onChange={e=>setReg({...reg,email:e.target.value})} placeholder="ton@email.com"/>
             <div style={{marginBottom:14}}>
               <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>Mot de passe *</div>
               <div style={{position:"relative"}}>
-                <input type={showRegPass?"text":"password"} value={reg.pass} onChange={e=>setReg({...reg,pass:e.target.value})} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 44px 11px 14px",color:"white",fontSize:13,outline:"none"}}/>
+                <input type={showRegPass?"text":"password"} value={reg.pass} onChange={e=>setReg({...reg,pass:e.target.value})} placeholder="••••••••" style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 44px 11px 14px",color:"white",fontSize:13,outline:"none"}}/>
                 <button onClick={()=>setShowRegPass(!showRegPass)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:M,cursor:"pointer",fontSize:16,lineHeight:1}}>
-                  {showRegPass?"ðŸ™ˆ":"ðŸ‘ï¸"}
+                  {showRegPass?"🙈":"👁️"}
                 </button>
               </div>
             </div>
-            <Field label="TÃ©lÃ©phone *" type="tel" value={reg.phone} onChange={e=>setReg({...reg,phone:e.target.value})} placeholder="06 12 34 56 78"/>
+            <Field label="Téléphone *" type="tel" value={reg.phone} onChange={e=>setReg({...reg,phone:e.target.value})} placeholder="06 12 34 56 78"/>
             <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:14,marginBottom:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>Tes rÃ©seaux sociaux</div>
+              <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>Tes réseaux sociaux</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <Field label="ðŸŸ£ Twitch" value={reg.twitch} onChange={e=>setReg({...reg,twitch:e.target.value})} placeholder="pseudo"/>
-                <Field label="â–¶ï¸ YouTube" value={reg.youtube} onChange={e=>setReg({...reg,youtube:e.target.value})} placeholder="chaÃ®ne"/>
-                <Field label="ðŸŽµ TikTok" value={reg.tiktok} onChange={e=>setReg({...reg,tiktok:e.target.value})} placeholder="@pseudo"/>
-                <Field label="ðŸ“¸ Instagram" value={reg.instagram} onChange={e=>setReg({...reg,instagram:e.target.value})} placeholder="@pseudo"/>
+                <Field label="🟣 Twitch" value={reg.twitch} onChange={e=>setReg({...reg,twitch:e.target.value})} placeholder="pseudo"/>
+                <Field label="▶️ YouTube" value={reg.youtube} onChange={e=>setReg({...reg,youtube:e.target.value})} placeholder="chaîne"/>
+                <Field label="🎵 TikTok" value={reg.tiktok} onChange={e=>setReg({...reg,tiktok:e.target.value})} placeholder="@pseudo"/>
+                <Field label="📸 Instagram" value={reg.instagram} onChange={e=>setReg({...reg,instagram:e.target.value})} placeholder="@pseudo"/>
               </div>
             </div>
-            <Field label="Code Belive Academy" value={reg.code} onChange={e=>setReg({...reg,code:e.target.value.toUpperCase()})} placeholder="BELIVE-XXXXXX" hint="Si tu es dans l'agence â€” sinon essai gratuit 14 jours"/>
-            <Field label="Code de parrainage (optionnel)" value={reg.referralCode} onChange={e=>setReg({...reg,referralCode:e.target.value.toUpperCase()})} placeholder="REF-XXXXXX-XXX" hint="Si un crÃ©ateur t'a recommandÃ© Belive Academy"/>
+            <Field label="Code Belive Academy" value={reg.code} onChange={e=>setReg({...reg,code:e.target.value.toUpperCase()})} placeholder="BELIVE-XXXXXX" hint="Si tu es dans l'agence — sinon essai gratuit 14 jours"/>
+            <Field label="Code de parrainage (optionnel)" value={reg.referralCode} onChange={e=>setReg({...reg,referralCode:e.target.value.toUpperCase()})} placeholder="REF-XXXXXX-XXX" hint="Si un créateur t'a recommandé Belive Academy"/>
 
-            {/* VÃ©rification Ã¢ge */}
+            {/* Vérification âge */}
             <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginBottom:10,padding:"12px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${regAge?"rgba(34,197,94,0.3)":B}`,borderRadius:10}}>
               <input type="checkbox" checked={regAge} onChange={e=>setRegAge(e.target.checked)} style={{marginTop:2,width:16,height:16,accentColor:R,flexShrink:0}}/>
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
                 <strong style={{color:"white"}}>Je confirme avoir 18 ans ou plus</strong><br/>
-                L'accÃ¨s Ã  Belive Academy est rÃ©servÃ© aux personnes majeures. En cochant cette case, je certifie sur l'honneur avoir au moins 18 ans.
+                L'accès à Belive Academy est réservé aux personnes majeures. En cochant cette case, je certifie sur l'honneur avoir au moins 18 ans.
               </div>
             </label>
 
@@ -1148,33 +1148,33 @@ export default function App(){
             <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginBottom:16,padding:"12px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${regCGU?"rgba(34,197,94,0.3)":B}`,borderRadius:10}}>
               <input type="checkbox" checked={regCGU} onChange={e=>setRegCGU(e.target.checked)} style={{marginTop:2,width:16,height:16,accentColor:R,flexShrink:0}}/>
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
-                <strong style={{color:"white"}}>J'accepte les conditions gÃ©nÃ©rales d'utilisation</strong><br/>
-                En m'inscrivant, j'accepte les <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu","_blank");}}>CGU de Belive Academy</span>. Belive Academy se rÃ©serve le droit de suspendre ou supprimer tout compte Ã  tout moment.
+                <strong style={{color:"white"}}>J'accepte les conditions générales d'utilisation</strong><br/>
+                En m'inscrivant, j'accepte les <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu","_blank");}}>CGU de Belive Academy</span>. Belive Academy se réserve le droit de suspendre ou supprimer tout compte à tout moment.
               </div>
             </label>
 
-            <Btn full onClick={doReg} sz="lg" disabled={!regAge||!regCGU}>CrÃ©er mon compte</Btn>
-            {(!regAge||!regCGU)&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>âš ï¸ Tu dois confirmer ton Ã¢ge et accepter les CGU pour continuer</div>}
+            <Btn full onClick={doReg} sz="lg" disabled={!regAge||!regCGU}>Créer mon compte</Btn>
+            {(!regAge||!regCGU)&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>⚠️ Tu dois confirmer ton âge et accepter les CGU pour continuer</div>}
           </>):(<>
             <Field label="Email" type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="ton@email.com"/>
             <div style={{marginBottom:14}}>
               <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>Mot de passe</div>
               <div style={{position:"relative"}}>
-                <input type={showPass?"text":"password"} value={authPass} onChange={e=>setAuthPass(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 44px 11px 14px",color:"white",fontSize:13,outline:"none"}}/>
+                <input type={showPass?"text":"password"} value={authPass} onChange={e=>setAuthPass(e.target.value)} placeholder="••••••••" style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 44px 11px 14px",color:"white",fontSize:13,outline:"none"}}/>
                 <button onClick={()=>setShowPass(!showPass)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:M,cursor:"pointer",fontSize:16,lineHeight:1}}>
-                  {showPass?"ðŸ™ˆ":"ðŸ‘ï¸"}
+                  {showPass?"🙈":"👁️"}
                 </button>
               </div>
             </div>
             {authErr&&<div style={{color:R,fontSize:12,marginBottom:12,textAlign:"center"}}>{authErr}</div>}
             <Btn full onClick={doLogin} sz="lg">Se connecter</Btn>
             <div style={{textAlign:"center",marginTop:10}}>
-              <span onClick={()=>setIsForgot(true)} style={{color:M,fontSize:12,cursor:"pointer",textDecoration:"underline"}}>Mot de passe oubliÃ© ?</span>
+              <span onClick={()=>setIsForgot(true)} style={{color:M,fontSize:12,cursor:"pointer",textDecoration:"underline"}}>Mot de passe oublié ?</span>
             </div>
           </>)}
           <div style={{textAlign:"center",marginTop:16,fontSize:13,color:M}}>
-            {isReg?"DÃ©jÃ  un compte ?":"Pas encore de compte ?"}{" "}
-            <span onClick={()=>setIsReg(!isReg)} style={{color:R,fontWeight:700,cursor:"pointer"}}>{isReg?"Se connecter":"S'inscrire â€” 14 jours gratuits"}</span>
+            {isReg?"Déjà un compte ?":"Pas encore de compte ?"}{" "}
+            <span onClick={()=>setIsReg(!isReg)} style={{color:R,fontWeight:700,cursor:"pointer"}}>{isReg?"Se connecter":"S'inscrire — 14 jours gratuits"}</span>
           </div>
         </div>
       </div>
@@ -1187,9 +1187,9 @@ export default function App(){
       {!hideHeader&&<div style={{padding:"0 8px",marginBottom:24,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
           <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:19,letterSpacing:2}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
-          <div style={{fontSize:10,color:M,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}}>{role==="admin"?"ðŸ‘‘ Super Admin":"ðŸŽ® CrÃ©ateur"}</div>
+          <div style={{fontSize:10,color:M,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}}>{role==="admin"?"👑 Super Admin":"🎮 Créateur"}</div>
         </div>
-        <button onClick={()=>setSideOpen(false)} style={{background:"none",border:"none",color:M,fontSize:18,cursor:"pointer",lineHeight:1,flexShrink:0}}>â†</button>
+        <button onClick={()=>setSideOpen(false)} style={{background:"none",border:"none",color:M,fontSize:18,cursor:"pointer",lineHeight:1,flexShrink:0}}>←</button>
       </div>}
       <div style={{flex:1,display:"flex",flexDirection:"column",gap:2,overflowY:"auto"}}>
         {navItems.map((n,i)=>(
@@ -1219,16 +1219,16 @@ export default function App(){
         <div style={{background:isInTrial?"rgba(251,191,36,0.07)":"rgba(212,16,63,0.07)",border:`1px solid ${isInTrial?"rgba(251,191,36,0.2)":"rgba(212,16,63,0.14)"}`,borderRadius:12,padding:14,margin:"12px 0"}}>
           {isInTrial?(
             <>
-              <div style={{fontSize:12,fontWeight:800,marginBottom:2,color:YE}}>â³ Essai gratuit</div>
+              <div style={{fontSize:12,fontWeight:800,marginBottom:2,color:YE}}>⏳ Essai gratuit</div>
               <div style={{fontSize:11,color:M,marginBottom:8}}>{trialDaysLeft} jour{trialDaysLeft>1?"s":""} restant{trialDaysLeft>1?"s":""}</div>
             </>
           ):(
             <>
-              <div style={{fontSize:12,fontWeight:800,marginBottom:4}}>âœ¨ Passe Ã  Pro</div>
-              <div style={{fontSize:11,color:M,marginBottom:10,lineHeight:1.5}}>IA illimitÃ©e, partenariats & plus</div>
+              <div style={{fontSize:12,fontWeight:800,marginBottom:4}}>✨ Passe à Pro</div>
+              <div style={{fontSize:11,color:M,marginBottom:10,lineHeight:1.5}}>IA illimitée, partenariats & plus</div>
             </>
           )}
-          <Btn full sz="sm" onClick={()=>setModal("payment")}>14,99â‚¬/mois</Btn>
+          <Btn full sz="sm" onClick={()=>setModal("payment")}>14,99€/mois</Btn>
         </div>
       )}
       <div style={{paddingTop:12,borderTop:`1px solid ${B}`}}>
@@ -1243,11 +1243,11 @@ export default function App(){
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:13,fontWeight:700,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.name}</div>
-            <div style={{fontSize:10,color:M,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.twitch?`ðŸŸ£ @${user.twitch}`:user.email}</div>
+            <div style={{fontSize:10,color:M,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.twitch?`🟣 @${user.twitch}`:user.email}</div>
           </div>
-          <span style={{fontSize:12,color:M}}>â€º</span>
+          <span style={{fontSize:12,color:M}}>›</span>
         </div>
-        <button onClick={()=>{setUser(null);setPage("dashboard");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>DÃ©connexion</button>
+        <button onClick={()=>{setUser(null);setPage("dashboard");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
       </div>
     </>
   );
@@ -1259,17 +1259,17 @@ export default function App(){
     <div style={{display:"flex",minHeight:"100vh",background:D}}>
       <style>{css}</style>
 
-      {/* Sidebar desktop â€” cachÃ©e sur tablette/mobile via CSS */}
+      {/* Sidebar desktop — cachée sur tablette/mobile via CSS */}
       {sideOpen&&(
         <div className="desktop-sidebar" style={{width:220,background:"#0a0a0a",borderRight:`1px solid ${B}`,flexDirection:"column",padding:"20px 12px",position:"fixed",top:0,left:0,bottom:0,zIndex:100}}>
           <SBContent/>
         </div>
       )}
 
-      {/* Barre mobile â€” visible sur tablette/mobile via CSS */}
+      {/* Barre mobile — visible sur tablette/mobile via CSS */}
       <div className="mobile-bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:200,background:"#0a0a0a",borderBottom:`1px solid ${B}`,padding:"11px 16px",alignItems:"center",gap:12}}>
         <button onClick={()=>setMenuOpen(!menuOpen)} style={{background:"none",border:"none",color:"white",fontSize:22,cursor:"pointer",lineHeight:1,flexShrink:0}}>
-          {menuOpen?"âœ•":"â˜°"}
+          {menuOpen?"✕":"☰"}
         </button>
         <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:18,letterSpacing:2,flex:1}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
         <div onClick={()=>{setPage("profil");setMenuOpen(false);}} style={{width:32,height:32,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,flexShrink:0,cursor:"pointer",overflow:"hidden"}}>
@@ -1277,24 +1277,24 @@ export default function App(){
         </div>
       </div>
 
-      {/* Menu mobile overlay â€” part sous la barre du haut */}
+      {/* Menu mobile overlay — part sous la barre du haut */}
       {menuOpen&&(
         <div onClick={()=>setMenuOpen(false)} style={{position:"fixed",top:54,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:299,backdropFilter:"blur(4px)"}}>
           <div onClick={e=>e.stopPropagation()} style={{position:"absolute",left:0,top:0,bottom:0,width:260,background:"#0a0a0a",borderRight:`1px solid ${B}`,padding:"16px 12px",display:"flex",flexDirection:"column",overflowY:"auto"}} className="slide">
             {/* Bouton fermer manuel */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,paddingBottom:12,borderBottom:`1px solid ${B}`}}>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:16,letterSpacing:2}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
-              <button onClick={()=>setMenuOpen(false)} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:"white",fontSize:13,cursor:"pointer",fontWeight:700}}>â† Fermer</button>
+              <button onClick={()=>setMenuOpen(false)} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:"white",fontSize:13,cursor:"pointer",fontWeight:700}}>← Fermer</button>
             </div>
             <SBContent hideHeader/>
           </div>
         </div>
       )}
 
-      {/* Top bar desktop quand sidebar fermÃ©e */}
+      {/* Top bar desktop quand sidebar fermée */}
       {!sideOpen&&(
         <div className="desktop-sidebar" style={{position:"fixed",top:0,left:0,right:0,zIndex:150,background:"#0a0a0a",borderBottom:`1px solid ${B}`,padding:"12px 20px",alignItems:"center",gap:14}}>
-          <button onClick={()=>setSideOpen(true)} style={{background:"none",border:"none",color:"white",fontSize:20,cursor:"pointer"}}>â˜°</button>
+          <button onClick={()=>setSideOpen(true)} style={{background:"none",border:"none",color:"white",fontSize:20,cursor:"pointer"}}>☰</button>
           <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:18,letterSpacing:2}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
         </div>
       )}
@@ -1302,30 +1302,30 @@ export default function App(){
       {/* Main content */}
       <div className="main-content" style={{marginLeft:SW,flex:1,padding:24,paddingTop:24,minHeight:"100vh",transition:"margin-left 0.25s ease"}} id="main-content">
 
-        {/* PAYWALL â€” AccÃ¨s bloquÃ© si essai terminÃ© */}
+        {/* PAYWALL — Accès bloqué si essai terminé */}
         {role==="createur"&&!hasAccess&&(
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:20,backdropFilter:"blur(10px)"}}>
             <div className="fade" style={{background:"#0d0d0d",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:24,padding:32,width:"100%",maxWidth:440,textAlign:"center",position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
-              <div style={{fontSize:48,marginBottom:16}}>ðŸ”’</div>
+              <div style={{fontSize:48,marginBottom:16}}>🔒</div>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2,marginBottom:8}}>
-                ESSAI TERMINÃ‰
+                ESSAI TERMINÉ
               </div>
               <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.7,marginBottom:24}}>
-                Ton essai gratuit de 14 jours est terminÃ©.<br/>
-                Pour continuer Ã  accÃ©der Ã  Belive Academy,<br/>
+                Ton essai gratuit de 14 jours est terminé.<br/>
+                Pour continuer à accéder à Belive Academy,<br/>
                 choisis ton offre ci-dessous.
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
                 <button onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")} style={{background:R,color:"white",border:"none",borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                  ðŸŽ¯ CrÃ©ateur Belive â€” 9,99â‚¬/mois
+                  🎯 Créateur Belive — 9,99€/mois
                 </button>
                 <button onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05","_blank")} style={{background:"rgba(255,255,255,0.08)",color:"white",border:`1px solid ${B}`,borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                  âš¡ AccÃ¨s indÃ©pendant â€” 14,99â‚¬/mois
+                  ⚡ Accès indépendant — 14,99€/mois
                 </button>
               </div>
-              <div style={{fontSize:12,color:M}}>ðŸ”’ Paiement sÃ©curisÃ© via Stripe â€¢ RÃ©siliable Ã  tout moment</div>
-              <button onClick={()=>{setUser(null);}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se dÃ©connecter</button>
+              <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
+              <button onClick={()=>{setUser(null);}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
             </div>
           </div>
         )}
@@ -1335,17 +1335,17 @@ export default function App(){
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
               <div>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>BONJOUR, {user.name.split(" ")[0].toUpperCase()} ðŸ‘‹</div>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>BONJOUR, {user.name.split(" ")[0].toUpperCase()} 👋</div>
                 <div style={{fontSize:13,color:M,marginTop:2}}>Voici tes performances</div>
               </div>
               {!sideOpen&&<button onClick={()=>setSideOpen(true)} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"6px 12px",color:M,fontSize:12,cursor:"pointer"}}>Menu</button>}
             </div>
             <div style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.13)`,borderRadius:12,padding:"12px 16px",marginBottom:18,display:"flex",gap:12}}>
-              <span style={{fontSize:20}}>ðŸ’¡</span>
+              <span style={{fontSize:20}}>💡</span>
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(()=>{
-              // RÃ©cupÃ¨re tous les utilisateurs inscrits
+              // Récupère tous les utilisateurs inscrits
               const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
               const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&u.offert!==true&&u.offert!=="true");
               const payantsPro=allUsers.filter(u=>u.plan==="pro"&&u.offert!==true&&u.offert!=="true");
@@ -1360,57 +1360,57 @@ export default function App(){
               return(<>
                 {/* KPIs */}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
-                  <SC label="Total inscrits" value={allUsers.length} sub="crÃ©ateurs" icon="ðŸ‘¥"/>
-                  <SC label="Revenu rÃ©el" value={`${revenuMensuel.toFixed(2)}â‚¬`} sub="ce mois" icon="ðŸ’°" color="green"/>
-                  <SC label="En essai" value={essai.length} sub={`${essai.length} gratuits`} icon="â³" color="yellow"/>
-                  <SC label="ExpirÃ©s" value={expires.length} sub="Ã  relancer" icon="ðŸ”’" color="red"/>
-                  <SC label="Gratuit Ã  vie" value={gratuitVie.length} sub="offerts" icon="ðŸŽ" color="purple"/>
-                  <SC label="Contrats" value={contrats.length} sub="gÃ©nÃ©rÃ©s" icon="ðŸ“‹" color="blue"/>
+                  <SC label="Total inscrits" value={allUsers.length} sub="créateurs" icon="👥"/>
+                  <SC label="Revenu réel" value={`${revenuMensuel.toFixed(2)}€`} sub="ce mois" icon="💰" color="green"/>
+                  <SC label="En essai" value={essai.length} sub={`${essai.length} gratuits`} icon="⏳" color="yellow"/>
+                  <SC label="Expirés" value={expires.length} sub="à relancer" icon="🔒" color="red"/>
+                  <SC label="Gratuit à vie" value={gratuitVie.length} sub="offerts" icon="🎁" color="purple"/>
+                  <SC label="Contrats" value={contrats.length} sub="générés" icon="📋" color="blue"/>
                 </div>
 
-                {/* Revenu estimÃ© */}
+                {/* Revenu estimé */}
                 <Card style={{marginBottom:20,background:"rgba(34,197,94,0.05)",border:`1px solid rgba(34,197,94,0.2)`}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                     <div>
-                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>ðŸ’° Revenu mensuel rÃ©el</div>
-                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:42,color:G,lineHeight:1}}>{revenuMensuel.toFixed(2)}â‚¬</div>
+                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>💰 Revenu mensuel réel</div>
+                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:42,color:G,lineHeight:1}}>{revenuMensuel.toFixed(2)}€</div>
                       <div style={{fontSize:12,color:M,marginTop:4}}>
-                        {payantsBelive.length>0&&`${payantsBelive.length} Ã— 9,99â‚¬`}
+                        {payantsBelive.length>0&&`${payantsBelive.length} × 9,99€`}
                         {payantsBelive.length>0&&payantsPro.length>0&&" + "}
-                        {payantsPro.length>0&&`${payantsPro.length} Ã— 14,99â‚¬`}
-                        {payantsBelive.length===0&&payantsPro.length===0&&"Aucun abonnÃ© payant"}
+                        {payantsPro.length>0&&`${payantsPro.length} × 14,99€`}
+                        {payantsBelive.length===0&&payantsPro.length===0&&"Aucun abonné payant"}
                       </div>
                     </div>
                     <div style={{textAlign:"right"}}>
                       <div style={{fontSize:12,color:M,marginBottom:4}}>Potentiel si essais convertis</div>
-                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:YE}}>{potentielMax.toFixed(2)}â‚¬</div>
-                      <div style={{fontSize:11,color:M}}>{essai.length} essais + {expires.length} expirÃ©s Ã  convertir</div>
+                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:YE}}>{potentielMax.toFixed(2)}€</div>
+                      <div style={{fontSize:11,color:M}}>{essai.length} essais + {expires.length} expirés à convertir</div>
                     </div>
                   </div>
-                  {/* DÃ©tail par plan */}
+                  {/* Détail par plan */}
                   <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid rgba(255,255,255,0.06)`,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
                     <div style={{textAlign:"center",background:"rgba(212,16,63,0.06)",borderRadius:10,padding:"10px 8px"}}>
                       <div style={{fontWeight:800,fontSize:16,color:R}}>{payantsBelive.length}</div>
-                      <div style={{fontSize:11,color:M,marginTop:2}}>CrÃ©ateurs Belive</div>
-                      <div style={{fontSize:11,color:R,fontWeight:700}}>9,99â‚¬/mois</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Créateurs Belive</div>
+                      <div style={{fontSize:11,color:R,fontWeight:700}}>9,99€/mois</div>
                     </div>
                     <div style={{textAlign:"center",background:"rgba(34,197,94,0.06)",borderRadius:10,padding:"10px 8px"}}>
                       <div style={{fontWeight:800,fontSize:16,color:G}}>{payantsPro.length}</div>
-                      <div style={{fontSize:11,color:M,marginTop:2}}>Pro indÃ©pendants</div>
-                      <div style={{fontSize:11,color:G,fontWeight:700}}>14,99â‚¬/mois</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Pro indépendants</div>
+                      <div style={{fontSize:11,color:G,fontWeight:700}}>14,99€/mois</div>
                     </div>
                     <div style={{textAlign:"center",background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 8px"}}>
                       <div style={{fontWeight:800,fontSize:16,color:M}}>{gratuitVie.length}</div>
-                      <div style={{fontSize:11,color:M,marginTop:2}}>Gratuit Ã  vie</div>
-                      <div style={{fontSize:11,color:M,fontWeight:700}}>0â‚¬</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Gratuit à vie</div>
+                      <div style={{fontSize:11,color:M,fontWeight:700}}>0€</div>
                     </div>
                   </div>
                 </Card>
 
-                {/* Liste complÃ¨te des inscrits */}
+                {/* Liste complète des inscrits */}
                 <Card style={{marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                    <div style={{fontWeight:800,fontSize:15}}>ðŸ‘¥ Tous les inscrits ({allUsers.length})</div>
+                    <div style={{fontWeight:800,fontSize:15}}>👥 Tous les inscrits ({allUsers.length})</div>
                     <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
                   </div>
                   {allUsers.length===0?(
@@ -1425,21 +1425,21 @@ export default function App(){
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
                               <div style={{fontWeight:800,fontSize:14}}>{u.name}</div>
-                              {status==="pro"&&<Pill color="green">âœ… Pro</Pill>}
-                              {status==="trial"&&<Pill color="yellow">â³ Essai {daysLeft}j</Pill>}
-                              {status==="expired"&&<Pill color="red">ðŸ”’ ExpirÃ©</Pill>}
+                              {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
+                              {status==="trial"&&<Pill color="yellow">⏳ Essai {daysLeft}j</Pill>}
+                              {status==="expired"&&<Pill color="red">🔒 Expiré</Pill>}
                               {u.formule&&<Pill color="blue">{u.formule==="commission"?"Commission":"Premium"}</Pill>}
                             </div>
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:12,color:M}}>
-                              <span>ðŸ“§ {u.email}</span>
-                              <span>ðŸ“± {u.phone||"â€”"}</span>
-                              {u.twitch&&<span>ðŸŸ£ @{u.twitch}</span>}
-                              {u.youtube&&<span>â–¶ï¸ {u.youtube}</span>}
-                              {u.tiktok&&<span>ðŸŽµ {u.tiktok}</span>}
-                              {u.instagram&&<span>ðŸ“¸ {u.instagram}</span>}
+                              <span>📧 {u.email}</span>
+                              <span>📱 {u.phone||"—"}</span>
+                              {u.twitch&&<span>🟣 @{u.twitch}</span>}
+                              {u.youtube&&<span>▶️ {u.youtube}</span>}
+                              {u.tiktok&&<span>🎵 {u.tiktok}</span>}
+                              {u.instagram&&<span>📸 {u.instagram}</span>}
                             </div>
                           </div>
-                          <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>ðŸ“‹</Btn>
+                          <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
                         </div>
                       </div>
                     );
@@ -1449,33 +1449,33 @@ export default function App(){
                 {/* Payants */}
                 {(payantsBelive.length>0||payantsPro.length>0)&&(
                   <Card style={{marginBottom:16,background:"rgba(34,197,94,0.03)",border:`1px solid rgba(34,197,94,0.15)`}}>
-                    <div style={{fontWeight:800,fontSize:14,color:G,marginBottom:12}}>ðŸ’³ AbonnÃ©s payants ({payantsBelive.length+payantsPro.length})</div>
+                    <div style={{fontWeight:800,fontSize:14,color:G,marginBottom:12}}>💳 Abonnés payants ({payantsBelive.length+payantsPro.length})</div>
                     {[...payantsBelive,...payantsPro].map((u,i)=>(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(34,197,94,0.08)`}}>
                         <div style={{width:34,height:34,background:"rgba(34,197,94,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:700,fontSize:13}}>{u.name}</div>
-                          <div style={{fontSize:11,color:M}}>ðŸ“§ {u.email} â€¢ ðŸ“± {u.phone||"â€”"}</div>
+                          <div style={{fontSize:11,color:M}}>📧 {u.email} • 📱 {u.phone||"—"}</div>
                         </div>
-                        <div style={{fontWeight:800,color:G,fontSize:13}}>14,99â‚¬/mois</div>
+                        <div style={{fontWeight:800,color:G,fontSize:13}}>14,99€/mois</div>
                       </div>
                     ))}
                   </Card>
                 )}
 
-                {/* Ã€ relancer */}
+                {/* À relancer */}
                 {expires.length>0&&(
                   <Card style={{background:"rgba(212,16,63,0.03)",border:`1px solid rgba(212,16,63,0.12)`}}>
-                    <div style={{fontWeight:800,fontSize:14,color:R,marginBottom:12}}>ðŸ”” Ã€ relancer ({expires.length})</div>
-                    <div style={{fontSize:12,color:M,marginBottom:12}}>Ces crÃ©ateurs ont terminÃ© leur essai â€” contacte-les pour les convertir en Pro</div>
+                    <div style={{fontWeight:800,fontSize:14,color:R,marginBottom:12}}>🔔 À relancer ({expires.length})</div>
+                    <div style={{fontSize:12,color:M,marginBottom:12}}>Ces créateurs ont terminé leur essai — contacte-les pour les convertir en Pro</div>
                     {expires.map((u,i)=>(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(212,16,63,0.08)`}}>
                         <div style={{width:34,height:34,background:"rgba(212,16,63,0.12)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:700,fontSize:13}}>{u.name}</div>
-                          <div style={{fontSize:11,color:M}}>ðŸ“§ {u.email} â€¢ ðŸ“± {u.phone||"â€”"}</div>
+                          <div style={{fontSize:11,color:M}}>📧 {u.email} • 📱 {u.phone||"—"}</div>
                         </div>
-                        <button onClick={()=>{navigator.clipboard?.writeText(u.phone||u.email);alert(`ðŸ“‹ ${u.phone||u.email} copiÃ© !`);}} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:M,fontSize:11,cursor:"pointer"}}>ðŸ“‹ Copier</button>
+                        <button onClick={()=>{navigator.clipboard?.writeText(u.phone||u.email);alert(`📋 ${u.phone||u.email} copié !`);}} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:M,fontSize:11,cursor:"pointer"}}>📋 Copier</button>
                       </div>
                     ))}
                   </Card>
@@ -1484,24 +1484,24 @@ export default function App(){
                 {/* Parrainages admin */}
                 {adminRefs.length>0&&(
                   <Card style={{marginTop:16,background:"rgba(251,191,36,0.03)",border:`1px solid rgba(251,191,36,0.15)`}}>
-                    <div style={{fontWeight:800,fontSize:14,color:YE,marginBottom:12}}>ðŸŽ Parrainages ({adminRefs.length})</div>
+                    <div style={{fontWeight:800,fontSize:14,color:YE,marginBottom:12}}>🎁 Parrainages ({adminRefs.length})</div>
                     {adminRefs.map((r,i)=>{
                       const currentMonth=new Date().toISOString().slice(0,7);
                       return(
                         <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(251,191,36,0.08)`}}>
                           <div style={{flex:1}}>
                             <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
-                            <div style={{fontSize:11,color:M}}>a parrainÃ© â†’ {r.filleul_name||r.filleul_email}</div>
+                            <div style={{fontSize:11,color:M}}>a parrainé → {r.filleul_name||r.filleul_email}</div>
                             <div style={{fontSize:11,color:M}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
                           </div>
-                          <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"âœ… Payant":"â³ Essai"}</Pill>
-                          {r.reward_applied&&<Pill color="green" xs>ðŸŽ -50% appliquÃ©</Pill>}
+                          <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                          {r.reward_applied&&<Pill color="green" xs>🎁 -50% appliqué</Pill>}
                           {r.paid&&!r.reward_applied&&(
                             <Btn sz="sm" onClick={async()=>{
                               const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===currentMonth);
-                              if(alreadyRewarded){alert("Ce parrain a dÃ©jÃ  reÃ§u une rÃ©duction ce mois.");return;}
+                              if(alreadyRewarded){alert("Ce parrain a déjà reçu une réduction ce mois.");return;}
                               await db.updateReferral(r.id,{reward_applied:true,reward_month:currentMonth});
-                              alert(`âœ… RÃ©duction -50% appliquÃ©e pour ${r.parrain_email} !`);
+                              alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
                               db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
                             }}>Appliquer -50%</Btn>
                           )}
@@ -1513,16 +1513,16 @@ export default function App(){
               </>);
             })()}
             {role==="createur"&&(<>
-              {/* BanniÃ¨re trial / Pro */}
-              {/* BanniÃ¨re trial â€” uniquement si en cours */}
+              {/* Bannière trial / Pro */}
+              {/* Bannière trial — uniquement si en cours */}
               {isInTrial&&!isPro&&(
                 <div style={{position:"relative",overflow:"hidden",borderRadius:14,marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(251,191,36,0.08),rgba(212,16,63,0.06))",border:`1px solid rgba(251,191,36,0.25)`}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
                     <div>
-                      <div style={{fontWeight:800,fontSize:13,marginBottom:3}}>â³ Essai gratuit â€” {trialDaysLeft} jour{trialDaysLeft>1?"s":""} restant{trialDaysLeft>1?"s":""}</div>
-                      <div style={{fontSize:12,color:M}}>Passe Ã  Pro avant la fin pour ne rien perdre</div>
+                      <div style={{fontWeight:800,fontSize:13,marginBottom:3}}>⏳ Essai gratuit — {trialDaysLeft} jour{trialDaysLeft>1?"s":""} restant{trialDaysLeft>1?"s":""}</div>
+                      <div style={{fontSize:12,color:M}}>Passe à Pro avant la fin pour ne rien perdre</div>
                     </div>
-                    <Btn sz="sm" onClick={()=>setModal("payment")}>Passer Ã  Pro</Btn>
+                    <Btn sz="sm" onClick={()=>setModal("payment")}>Passer à Pro</Btn>
                   </div>
                   <div style={{marginTop:10,height:4,background:"rgba(255,255,255,0.08)",borderRadius:2,overflow:"hidden"}}>
                     <div style={{height:"100%",width:`${(trialDaysLeft/trialDays)*100}%`,background:`linear-gradient(90deg,${YE},${R})`,borderRadius:2}}/>
@@ -1530,20 +1530,20 @@ export default function App(){
                 </div>
               )}
 
-              {/* BanniÃ¨re expirÃ©e â€” uniquement si vraiment terminÃ©e */}
+              {/* Bannière expirée — uniquement si vraiment terminée */}
               {!hasAccess&&!isPro&&trialStart&&(
                 <div style={{position:"relative",overflow:"hidden",borderRadius:14,marginBottom:14,padding:"16px 18px",background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.2)`}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
                     <div>
-                      <div style={{fontWeight:800,fontSize:13,marginBottom:3}}>ðŸ”’ Essai terminÃ©</div>
-                      <div style={{fontSize:12,color:M}}>Continue avec Pro pour garder l'accÃ¨s complet</div>
+                      <div style={{fontWeight:800,fontSize:13,marginBottom:3}}>🔒 Essai terminé</div>
+                      <div style={{fontSize:12,color:M}}>Continue avec Pro pour garder l'accès complet</div>
                     </div>
-                    <Btn sz="sm" onClick={()=>setModal("payment")}>14,99â‚¬/mois</Btn>
+                    <Btn sz="sm" onClick={()=>setModal("payment")}>14,99€/mois</Btn>
                   </div>
                 </div>
               )}
 
-              {/* BanniÃ¨re communautÃ© â€” visible pÃ©riode gratuite + Pro */}
+              {/* Bannière communauté — visible période gratuite + Pro */}
               {hasAccess&&(
                 <div style={{position:"relative",overflow:"hidden",borderRadius:16,marginBottom:18,padding:"20px 24px",background:"linear-gradient(135deg,#0d0d0d 0%,#1a0508 100%)",border:`1px solid rgba(212,16,63,0.25)`}}>
                   <div style={{position:"absolute",width:250,height:250,background:"radial-gradient(circle,rgba(212,16,63,0.18) 0%,transparent 70%)",top:-80,right:-60,pointerEvents:"none"}}/>
@@ -1551,66 +1551,66 @@ export default function App(){
                   <div style={{position:"relative",zIndex:2}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                       <div style={{width:8,height:8,background:G,borderRadius:"50%"}}/>
-                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1.5,textTransform:"uppercase"}}>CommunautÃ© active</div>
+                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1.5,textTransform:"uppercase"}}>Communauté active</div>
                     </div>
                     <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:20,letterSpacing:2,marginBottom:6}}>
                       TU FAIS PARTIE DE <span style={{color:R}}>BELIVE ACADEMY</span>
                     </div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",lineHeight:1.6,marginBottom:14}}>
-                      Affiche ton badge sur tes rÃ©seaux â€” fais-toi reconnaÃ®tre par les autres crÃ©ateurs Belive et trouve des coÃ©quipiers plus facilement.
+                      Affiche ton badge sur tes réseaux — fais-toi reconnaître par les autres créateurs Belive et trouve des coéquipiers plus facilement.
                     </div>
                     <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                      <Btn sz="sm" onClick={()=>setPage("communaute")} icon="ðŸ”¥">Rejoindre</Btn>
-                      <Btn sz="sm" v="ghost" onClick={()=>setPage("templates")} icon="ðŸŽ¨">Mes banniÃ¨res</Btn>
+                      <Btn sz="sm" onClick={()=>setPage("communaute")} icon="🔥">Rejoindre</Btn>
+                      <Btn sz="sm" v="ghost" onClick={()=>setPage("templates")} icon="🎨">Mes bannières</Btn>
                     </div>
                   </div>
                 </div>
               )}
 
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:18}}>
-                <SC label="ðŸŸ£ Twitch" value={ms.twitch||"â€”"} color="purple"/>
-                <SC label="â–¶ï¸ YouTube" value={ms.youtube||"â€”"} color="red"/>
+                <SC label="🟣 Twitch" value={ms.twitch||"—"} color="purple"/>
+                <SC label="▶️ YouTube" value={ms.youtube||"—"} color="red"/>
                 <SC label="Viewers moy." value={avgV} color="blue"/>
                 <SC label="Heures ce mois" value={totalH.toFixed(1)+"h"} color="green"/>
               </div>
               {/* Platforms connect */}
               <Card style={{marginBottom:16}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-                  <div style={{fontWeight:800}}>ðŸ”— Connecte tes plateformes</div>
-                  <button onClick={()=>{refreshTwitchStats();refreshYoutubeStats();}} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:M,fontSize:11,cursor:"pointer"}}>ðŸ”„ Actualiser</button>
+                  <div style={{fontWeight:800}}>🔗 Connecte tes plateformes</div>
+                  <button onClick={()=>{refreshTwitchStats();refreshYoutubeStats();}} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:M,fontSize:11,cursor:"pointer"}}>🔄 Actualiser</button>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                   <div style={{background:"rgba(145,70,255,0.08)",border:`1px solid ${ms.isLive?"rgba(255,50,50,0.4)":"rgba(145,70,255,0.2)"}`,borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:24}}>ðŸŸ£</span>
+                    <span style={{fontSize:24}}>🟣</span>
                     <div style={{flex:1}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
                         <div style={{fontWeight:700,fontSize:13}}>Twitch</div>
-                        {ms.isLive&&<span style={{background:"#ef4444",color:"white",borderRadius:100,fontSize:9,fontWeight:800,padding:"2px 6px"}}>ðŸ”´ LIVE</span>}
+                        {ms.isLive&&<span style={{background:"#ef4444",color:"white",borderRadius:100,fontSize:9,fontWeight:800,padding:"2px 6px"}}>🔴 LIVE</span>}
                       </div>
                       <div style={{fontSize:11,color:M}}>
-                        {user.twitch?`@${user.twitch} â€¢ ${ms.twitch||0} followers`:"Non connectÃ©"}
-                        {ms.isLive&&ms.liveViewers&&<span style={{color:"#fbbf24"}}> â€¢ {ms.liveViewers} viewers</span>}
+                        {user.twitch?`@${user.twitch} • ${ms.twitch||0} followers`:"Non connecté"}
+                        {ms.isLive&&ms.liveViewers&&<span style={{color:"#fbbf24"}}> • {ms.liveViewers} viewers</span>}
                       </div>
                     </div>
-                    <Btn sz="sm" v={user.twitch?"success":"ghost"} onClick={connectTwitch}>{user.twitch?"âœ“":"Connecter"}</Btn>
+                    <Btn sz="sm" v={user.twitch?"success":"ghost"} onClick={connectTwitch}>{user.twitch?"✓":"Connecter"}</Btn>
                   </div>
                   <div style={{background:"rgba(255,0,0,0.08)",border:`1px solid rgba(255,0,0,0.2)`,borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:24}}>â–¶ï¸</span>
+                    <span style={{fontSize:24}}>▶️</span>
                     <div style={{flex:1}}>
                       <div style={{fontWeight:700,fontSize:13}}>YouTube</div>
-                      <div style={{fontSize:11,color:M}}>{user.youtube?`${user.youtube} â€¢ ${ms.youtube||0} abonnÃ©s`:"Non connectÃ©"}</div>
+                      <div style={{fontSize:11,color:M}}>{user.youtube?`${user.youtube} • ${ms.youtube||0} abonnés`:"Non connecté"}</div>
                     </div>
-                    <Btn sz="sm" v={user.youtube?"success":"ghost"} onClick={connectYoutube}>{user.youtube?"âœ“":"Connecter"}</Btn>
+                    <Btn sz="sm" v={user.youtube?"success":"ghost"} onClick={connectYoutube}>{user.youtube?"✓":"Connecter"}</Btn>
                   </div>
                 </div>
-                <div style={{marginTop:10,fontSize:11,color:M}}>ðŸ’¡ Stats actualisÃ©es automatiquement toutes les 2 minutes.</div>
+                <div style={{marginTop:10,fontSize:11,color:M}}>💡 Stats actualisées automatiquement toutes les 2 minutes.</div>
               </Card>
-              {/* Checklist recommandations crÃ©ateur */}
+              {/* Checklist recommandations créateur */}
               <Card style={{marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                   <div>
-                    <div style={{fontWeight:800,fontSize:14}}>âœ… Objectifs de la semaine</div>
-                    <div style={{fontSize:12,color:M,marginTop:2}}>Coche ce que tu as accompli â€” barre de progression automatique</div>
+                    <div style={{fontWeight:800,fontSize:14}}>✅ Objectifs de la semaine</div>
+                    <div style={{fontSize:12,color:M,marginTop:2}}>Coche ce que tu as accompli — barre de progression automatique</div>
                   </div>
                 </div>
 
@@ -1646,14 +1646,14 @@ export default function App(){
                 {/* Liste des objectifs */}
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {[
-                    {auto:!!user.twitch,   k:null,              icon:"ðŸŸ£", label:"Connecter ton compte Twitch",      desc:user.twitch?`@${user.twitch} connectÃ© âœ“`:"Connecte ton Twitch depuis le dashboard"},
-                    {auto:!!user.youtube,  k:null,              icon:"â–¶ï¸", label:"Connecter ton compte YouTube",     desc:user.youtube?`${user.youtube} connectÃ© âœ“`:"Connecte ta chaÃ®ne YouTube depuis le dashboard"},
-                    {auto:false,           k:"check_stream3x",  icon:"ðŸŽ®", label:"Streamer au moins 3 fois cette semaine", desc:"La rÃ©gularitÃ© est la clÃ© numÃ©ro 1 de la croissance"},
-                    {auto:false,           k:"check_clip",      icon:"ðŸŽ¬", label:"Poster un clip sur TikTok ou YouTube Shorts", desc:"Un clip viral peut t'amener 50-200 nouveaux followers"},
-                    {auto:false,           k:"check_community", icon:"ðŸ‘¥", label:"Poster dans la communautÃ© Belive", desc:"CrÃ©e du lien avec les autres crÃ©ateurs de l'agence"},
-                    {auto:false,           k:"check_profil",    icon:"ðŸ‘¤", label:"ComplÃ©ter ton profil (photo + bio + jeux)", desc:"Un profil complet inspire confiance aux partenaires"},
-                    {auto:false,           k:"check_planning",  icon:"ðŸ“…", label:"Planifier ses streams de la semaine", desc:"Annonce tes horaires sur tes rÃ©seaux 24h avant"},
-                    {auto:false,           k:"check_raid",      icon:"âš”ï¸", label:"Faire ou recevoir un raid",        desc:"Les raids boostent ta visibilitÃ© et crÃ©ent du lien"},
+                    {auto:!!user.twitch,   k:null,              icon:"🟣", label:"Connecter ton compte Twitch",      desc:user.twitch?`@${user.twitch} connecté ✓`:"Connecte ton Twitch depuis le dashboard"},
+                    {auto:!!user.youtube,  k:null,              icon:"▶️", label:"Connecter ton compte YouTube",     desc:user.youtube?`${user.youtube} connecté ✓`:"Connecte ta chaîne YouTube depuis le dashboard"},
+                    {auto:false,           k:"check_stream3x",  icon:"🎮", label:"Streamer au moins 3 fois cette semaine", desc:"La régularité est la clé numéro 1 de la croissance"},
+                    {auto:false,           k:"check_clip",      icon:"🎬", label:"Poster un clip sur TikTok ou YouTube Shorts", desc:"Un clip viral peut t'amener 50-200 nouveaux followers"},
+                    {auto:false,           k:"check_community", icon:"👥", label:"Poster dans la communauté Belive", desc:"Crée du lien avec les autres créateurs de l'agence"},
+                    {auto:false,           k:"check_profil",    icon:"👤", label:"Compléter ton profil (photo + bio + jeux)", desc:"Un profil complet inspire confiance aux partenaires"},
+                    {auto:false,           k:"check_planning",  icon:"📅", label:"Planifier ses streams de la semaine", desc:"Annonce tes horaires sur tes réseaux 24h avant"},
+                    {auto:false,           k:"check_raid",      icon:"⚔️", label:"Faire ou recevoir un raid",        desc:"Les raids boostent ta visibilité et créent du lien"},
                   ].map(item=>{
                     const isChecked=item.auto||(item.k&&profil[item.k])||false;
                     return(
@@ -1664,7 +1664,7 @@ export default function App(){
                           <div style={{fontSize:11,color:M,marginTop:2}}>{item.desc}</div>
                         </div>
                         {item.auto?(
-                          <div style={{width:24,height:24,background:G,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0,color:"white",fontWeight:800}}>âœ“</div>
+                          <div style={{width:24,height:24,background:G,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0,color:"white",fontWeight:800}}>✓</div>
                         ):item.k?(
                           <label style={{cursor:"pointer",flexShrink:0}}>
                             <input type="checkbox" checked={profil[item.k]||false} onChange={e=>setProfil(p=>({...p,[item.k]:e.target.checked}))} style={{width:20,height:20,accentColor:G,cursor:"pointer"}}/>
@@ -1680,20 +1680,20 @@ export default function App(){
                   const allDone=!!user.twitch&&!!user.youtube&&profil.check_stream3x&&profil.check_clip&&profil.check_community&&profil.check_profil&&profil.check_planning&&profil.check_raid;
                   return allDone?(
                     <div style={{marginTop:12,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
-                      <div style={{fontWeight:800,color:G,fontSize:14}}>ðŸ”¥ Semaine parfaite ! Tu es sur la bonne voie !</div>
-                      <div style={{fontSize:12,color:M,marginTop:4}}>Continue comme Ã§a â€” la rÃ©gularitÃ© fait tout.</div>
+                      <div style={{fontWeight:800,color:G,fontSize:14}}>🔥 Semaine parfaite ! Tu es sur la bonne voie !</div>
+                      <div style={{fontSize:12,color:M,marginTop:4}}>Continue comme ça — la régularité fait tout.</div>
                     </div>
                   ):null;
                 })()}
               </Card>
               {/* Quick stream */}
               <Card>
-                <div style={{fontWeight:800,marginBottom:12}}>âž• Enregistrer un stream</div>
+                <div style={{fontWeight:800,marginBottom:12}}>➕ Enregistrer un stream</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
                   <Field label="Date" type="date" value={newSt.date} onChange={e=>setNewSt({...newSt,date:e.target.value})}/>
-                  <Field label="DurÃ©e (h)" type="number" value={newSt.dur} onChange={e=>setNewSt({...newSt,dur:e.target.value})} placeholder="2" step="0.5"/>
+                  <Field label="Durée (h)" type="number" value={newSt.dur} onChange={e=>setNewSt({...newSt,dur:e.target.value})} placeholder="2" step="0.5"/>
                   <Field label="Viewers" type="number" value={newSt.viewers} onChange={e=>setNewSt({...newSt,viewers:e.target.value})} placeholder="5"/>
-                  <Field label="Plateforme" as="select" value={newSt.platform} onChange={e=>setNewSt({...newSt,platform:e.target.value})}><option value="twitch">ðŸŸ£ Twitch</option><option value="youtube">â–¶ï¸ YouTube</option></Field>
+                  <Field label="Plateforme" as="select" value={newSt.platform} onChange={e=>setNewSt({...newSt,platform:e.target.value})}><option value="twitch">🟣 Twitch</option><option value="youtube">▶️ YouTube</option></Field>
                 </div>
                 <Btn sz="sm" onClick={addStream}>Ajouter</Btn>
                 {streams.length>0&&<div style={{marginTop:12}}>{streams.slice(-3).reverse().map(s=>(
@@ -1711,22 +1711,22 @@ export default function App(){
           <div>
             <div style={{marginBottom:20}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>STATISTIQUES</div><div style={{fontSize:13,color:M}}>Analyse de tes performances</div></div>
             <Card style={{marginBottom:16}}>
-              <div style={{fontWeight:800,marginBottom:12}}>ðŸ”— Mettre Ã  jour mes stats</div>
+              <div style={{fontWeight:800,marginBottom:12}}>🔗 Mettre à jour mes stats</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                <Field label="ðŸŸ£ Followers Twitch" type="number" value={mSt.twitch} onChange={e=>setMSt({...mSt,twitch:e.target.value})} placeholder={ms.twitch||"0"}/>
-                <Field label="â–¶ï¸ AbonnÃ©s YouTube" type="number" value={mSt.youtube} onChange={e=>setMSt({...mSt,youtube:e.target.value})} placeholder={ms.youtube||"0"}/>
+                <Field label="🟣 Followers Twitch" type="number" value={mSt.twitch} onChange={e=>setMSt({...mSt,twitch:e.target.value})} placeholder={ms.twitch||"0"}/>
+                <Field label="▶️ Abonnés YouTube" type="number" value={mSt.youtube} onChange={e=>setMSt({...mSt,youtube:e.target.value})} placeholder={ms.youtube||"0"}/>
               </div>
-              <Btn sz="sm" onClick={saveStats}>ðŸ’¾ Sauvegarder</Btn>
+              <Btn sz="sm" onClick={saveStats}>💾 Sauvegarder</Btn>
             </Card>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:16}}>
-              <SC label="Total heures" value={totalH.toFixed(1)+"h"} icon="â±ï¸" delta={8}/>
-              <SC label="Viewers moyen" value={avgV} icon="ðŸ‘ï¸" color="blue" delta={-2}/>
-              <SC label="Record viewers" value={maxV} icon="ðŸ“ˆ" color="green"/>
-              <SC label="Streams" value={streams.length} icon="ðŸŽ®" color="purple"/>
+              <SC label="Total heures" value={totalH.toFixed(1)+"h"} icon="⏱️" delta={8}/>
+              <SC label="Viewers moyen" value={avgV} icon="👁️" color="blue" delta={-2}/>
+              <SC label="Record viewers" value={maxV} icon="📈" color="green"/>
+              <SC label="Streams" value={streams.length} icon="🎮" color="purple"/>
             </div>
             <Card style={{marginBottom:16}}>
-              <div style={{fontWeight:800,marginBottom:16}}>ðŸ“Š Historique â€” 7 derniÃ¨res sessions</div>
-              {streams.length===0?<div style={{textAlign:"center",padding:"32px 0",color:M}}>Aucune donnÃ©e</div>:(
+              <div style={{fontWeight:800,marginBottom:16}}>📊 Historique — 7 dernières sessions</div>
+              {streams.length===0?<div style={{textAlign:"center",padding:"32px 0",color:M}}>Aucune donnée</div>:(
                 <div style={{display:"flex",alignItems:"flex-end",gap:6,height:120}}>
                   {streams.slice(-7).map(s=>{const max=Math.max(...streams.slice(-7).map(x=>x.duration),1);return(
                     <div key={s.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
@@ -1739,9 +1739,9 @@ export default function App(){
               )}
             </Card>
             <Card>
-              <div style={{fontWeight:800,marginBottom:12}}>ðŸ“ˆ Analyse vs mois prÃ©cÃ©dent</div>
+              <div style={{fontWeight:800,marginBottom:12}}>📈 Analyse vs mois précédent</div>
               {streams.length<3?<div style={{color:M,fontSize:13}}>Enregistre au moins 3 streams.</div>:(
-                [["Temps de stream",`+${(totalH*0.15).toFixed(1)}h`,true,"Tu streames plus qu'avant"],["Viewers moyens",avgV>=3?"âœ“ Objectif atteint":"Sous l'objectif",avgV>=3,"Objectif : 3 viewers"],["RÃ©gularitÃ©",streams.length>=7?"âœ“ RÃ©gulier":"Pas assez rÃ©gulier",streams.length>=7,"7 streams/mois minimum"]].map(([l,v,g,d])=>(
+                [["Temps de stream",`+${(totalH*0.15).toFixed(1)}h`,true,"Tu streames plus qu'avant"],["Viewers moyens",avgV>=3?"✓ Objectif atteint":"Sous l'objectif",avgV>=3,"Objectif : 3 viewers"],["Régularité",streams.length>=7?"✓ Régulier":"Pas assez régulier",streams.length>=7,"7 streams/mois minimum"]].map(([l,v,g,d])=>(
                   <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${B}`}}>
                     <div><div style={{fontWeight:700,fontSize:13}}>{l}</div><div style={{fontSize:11,color:M}}>{d}</div></div>
                     <Pill color={g?"green":"yellow"}>{v}</Pill>
@@ -1768,26 +1768,26 @@ export default function App(){
           if(nextToday){const[h,m]=nextToday.time.split(":").map(Number);minutesUntil=h*60+m-currentTime;}
 
           const platformColors={twitch:"#9146FF",youtube:"#ff0000",tiktok:"#69C9D0"};
-          const platformIcons={twitch:"ðŸŸ£",youtube:"â–¶ï¸",tiktok:"ðŸŽµ"};
+          const platformIcons={twitch:"🟣",youtube:"▶️",tiktok:"🎵"};
 
           // Stats
           const totalSessions=schedule.length;
           const weeklyHours=schedule.reduce((s,r)=>s+(r.duration||2),0);
           const mostStreamed=schedule.length?schedule.reduce((acc,s)=>{acc[s.platform]=(acc[s.platform]||0)+1;return acc;},{}):null;
-          const topPlatform=mostStreamed?Object.entries(mostStreamed).sort((a,b)=>b[1]-a[1])[0]?.[0]:"â€”";
+          const topPlatform=mostStreamed?Object.entries(mostStreamed).sort((a,b)=>b[1]-a[1])[0]?.[0]:"—";
 
           // Notifications actives
           function requestNotif(s){
-            if(!notifPrefs.planning){alert("Tu as dÃ©sactivÃ© les notifications de planning dans ton profil.");return;}
-            if(!("Notification" in window)){alert("Notifications non supportÃ©es sur cet appareil.");return;}
+            if(!notifPrefs.planning){alert("Tu as désactivé les notifications de planning dans ton profil.");return;}
+            if(!("Notification" in window)){alert("Notifications non supportées sur cet appareil.");return;}
             Notification.requestPermission().then(p=>{
               if(p==="granted"){
                 const[h,m]=s.time.split(":").map(Number);
                 const streamMs=new Date();streamMs.setHours(h,m-60,0,0);
                 const delay=streamMs-Date.now();
-                if(delay>0){setTimeout(()=>new Notification("ðŸ”´ Belive Academy",{body:`Ton stream ${platformIcons[s.platform]} commence dans 1 heure !`,icon:"https://beliveacademy.com/favicon.ico"}),delay);}
-                alert(`âœ… Rappel activÃ© ! Tu recevras une notification 1h avant ton stream du ${s.day} Ã  ${s.time}`);
-              }else{alert("Active les notifications dans les paramÃ¨tres de ton navigateur.");}
+                if(delay>0){setTimeout(()=>new Notification("🔴 Belive Academy",{body:`Ton stream ${platformIcons[s.platform]} commence dans 1 heure !`,icon:"https://beliveacademy.com/favicon.ico"}),delay);}
+                alert(`✅ Rappel activé ! Tu recevras une notification 1h avant ton stream du ${s.day} à ${s.time}`);
+              }else{alert("Active les notifications dans les paramètres de ton navigateur.");}
             });
           }
 
@@ -1801,14 +1801,14 @@ export default function App(){
               {/* Prochain stream ALERT */}
               {nextStream&&(
                 <div style={{background:minutesUntil!==null&&minutesUntil<120?"rgba(212,16,63,0.12)":"rgba(34,197,94,0.06)",border:`1px solid ${minutesUntil!==null&&minutesUntil<120?"rgba(212,16,63,0.4)":"rgba(34,197,94,0.2)"}`,borderRadius:16,padding:"18px 22px",marginBottom:20,display:"flex",alignItems:"center",gap:16}}>
-                  <div style={{fontSize:36}}>{minutesUntil!==null&&minutesUntil<120?"ðŸ”´":"ðŸ“…"}</div>
+                  <div style={{fontSize:36}}>{minutesUntil!==null&&minutesUntil<120?"🔴":"📅"}</div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>
-                      {minutesUntil!==null&&minutesUntil<=0?"ðŸ”´ C'est l'heure de streamer !":minutesUntil!==null&&minutesUntil<60?`âš¡ Stream dans ${minutesUntil} minutes !`:minutesUntil!==null&&minutesUntil<120?`â° Stream dans ${Math.round(minutesUntil/60)}h â€” PrÃ©pare-toi !`:`Prochain stream`}
+                      {minutesUntil!==null&&minutesUntil<=0?"🔴 C'est l'heure de streamer !":minutesUntil!==null&&minutesUntil<60?`⚡ Stream dans ${minutesUntil} minutes !`:minutesUntil!==null&&minutesUntil<120?`⏰ Stream dans ${Math.round(minutesUntil/60)}h — Prépare-toi !`:`Prochain stream`}
                     </div>
-                    <div style={{fontSize:13,color:M}}>{nextStream.day} Ã  {nextStream.time} â€¢ {nextStream.duration}h â€¢ {platformIcons[nextStream.platform]} {nextStream.platform}</div>
+                    <div style={{fontSize:13,color:M}}>{nextStream.day} à {nextStream.time} • {nextStream.duration}h • {platformIcons[nextStream.platform]} {nextStream.platform}</div>
                   </div>
-                  <Btn sz="sm" v={minutesUntil!==null&&minutesUntil<120?"primary":"ghost"} onClick={()=>requestNotif(nextStream)} icon="ðŸ””">
+                  <Btn sz="sm" v={minutesUntil!==null&&minutesUntil<120?"primary":"ghost"} onClick={()=>requestNotif(nextStream)} icon="🔔">
                     {minutesUntil!==null&&minutesUntil<120?"Notifier mes viewers":"Activer le rappel"}
                   </Btn>
                 </div>
@@ -1822,14 +1822,14 @@ export default function App(){
                 </Card>
                 <Card style={{textAlign:"center",padding:"16px 12px"}}>
                   <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:G,lineHeight:1}}>{weeklyHours}h</div>
-                  <div style={{fontSize:11,color:M,textTransform:"uppercase",letterSpacing:1,marginTop:4}}>Heures prÃ©vues</div>
+                  <div style={{fontSize:11,color:M,textTransform:"uppercase",letterSpacing:1,marginTop:4}}>Heures prévues</div>
                 </Card>
                 <Card style={{textAlign:"center",padding:"16px 12px"}}>
                   <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:BL,lineHeight:1}}>{currentDay.slice(0,3)}</div>
                   <div style={{fontSize:11,color:M,textTransform:"uppercase",letterSpacing:1,marginTop:4}}>Aujourd'hui</div>
                 </Card>
                 <Card style={{textAlign:"center",padding:"16px 12px"}}>
-                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:PU,lineHeight:1}}>{platformIcons[topPlatform]||"â€”"}</div>
+                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:PU,lineHeight:1}}>{platformIcons[topPlatform]||"—"}</div>
                   <div style={{fontSize:11,color:M,textTransform:"uppercase",letterSpacing:1,marginTop:4}}>Plateforme principale</div>
                 </Card>
               </div>
@@ -1837,7 +1837,7 @@ export default function App(){
               {/* Timeline du jour */}
               {todayStreams.length>0&&(
                 <Card style={{marginBottom:20,background:"rgba(212,16,63,0.04)",border:`1px solid rgba(212,16,63,0.15)`}}>
-                  <div style={{fontWeight:800,marginBottom:14,fontSize:14}}>ðŸ”´ Aujourd'hui â€” {currentDay}</div>
+                  <div style={{fontWeight:800,marginBottom:14,fontSize:14}}>🔴 Aujourd'hui — {currentDay}</div>
                   {todayStreams.map(s=>{
                     const[h,m]=s.time.split(":").map(Number);
                     const mins=h*60+m;
@@ -1846,19 +1846,19 @@ export default function App(){
                     return(
                       <div key={s.id} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 0",borderBottom:`1px solid ${B}`}}>
                         <div style={{width:48,height:48,background:isLive?"rgba(212,16,63,0.2)":isPast?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.06)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:isLive?`2px solid ${R}`:"none"}}>
-                          {isLive?"ðŸ”´":isPast?"âœ…":platformIcons[s.platform]}
+                          {isLive?"🔴":isPast?"✅":platformIcons[s.platform]}
                         </div>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:700,fontSize:13,display:"flex",alignItems:"center",gap:8}}>
-                            {s.time} â€” {s.duration}h de stream
+                            {s.time} — {s.duration}h de stream
                             {isLive&&<Pill color="red" xs>EN LIVE</Pill>}
-                            {isPast&&<Pill color="gray" xs>TerminÃ©</Pill>}
+                            {isPast&&<Pill color="gray" xs>Terminé</Pill>}
                           </div>
-                          <div style={{fontSize:12,color:M,marginTop:2}}>{platformIcons[s.platform]} {s.platform} â€¢ DurÃ©e prÃ©vue : {s.duration}h</div>
+                          <div style={{fontSize:12,color:M,marginTop:2}}>{platformIcons[s.platform]} {s.platform} • Durée prévue : {s.duration}h</div>
                         </div>
                         <div style={{display:"flex",gap:8}}>
-                          {!isPast&&!isLive&&<Btn sz="sm" v="ghost" onClick={()=>requestNotif(s)} icon="ðŸ””">Rappel</Btn>}
-                          <button onClick={()=>setSchedule(p=>p.filter(x=>x.id!==s.id))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:M,fontSize:11,cursor:"pointer"}}>âœ•</button>
+                          {!isPast&&!isLive&&<Btn sz="sm" v="ghost" onClick={()=>requestNotif(s)} icon="🔔">Rappel</Btn>}
+                          <button onClick={()=>setSchedule(p=>p.filter(x=>x.id!==s.id))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:M,fontSize:11,cursor:"pointer"}}>✕</button>
                         </div>
                       </div>
                     );
@@ -1867,12 +1867,12 @@ export default function App(){
               )}
 
               {/* Calendrier semaine */}
-              <div style={{fontWeight:800,marginBottom:12,fontSize:14}}>ðŸ“† Calendrier de la semaine</div>
+              <div style={{fontWeight:800,marginBottom:12,fontSize:14}}>📆 Calendrier de la semaine</div>
               {schedule.length===0?(
                 <Card style={{textAlign:"center",padding:"48px 20px"}}>
-                  <div style={{fontSize:44,marginBottom:12}}>ðŸ“…</div>
+                  <div style={{fontSize:44,marginBottom:12}}>📅</div>
                   <div style={{fontWeight:800,fontSize:16,marginBottom:8}}>Pas encore de planning</div>
-                  <div style={{color:M,marginBottom:16}}>Planifie tes streams pour rester rÃ©gulier et recevoir des rappels</div>
+                  <div style={{color:M,marginBottom:16}}>Planifie tes streams pour rester régulier et recevoir des rappels</div>
                   <Btn onClick={()=>setModal("addSc")} icon="+">Planifier mon premier stream</Btn>
                 </Card>
               ):(
@@ -1887,7 +1887,7 @@ export default function App(){
                           {isToday&&<span style={{background:R,color:"white",borderRadius:100,fontSize:8,padding:"1px 5px",fontWeight:800}}>TODAY</span>}
                         </div>
                         {ds.length===0?(
-                          <div style={{color:"rgba(255,255,255,0.07)",fontSize:11,textAlign:"center",paddingTop:14}}>â€”</div>
+                          <div style={{color:"rgba(255,255,255,0.07)",fontSize:11,textAlign:"center",paddingTop:14}}>—</div>
                         ):ds.map(s=>{
                           const[h,m]=s.time.split(":").map(Number);
                           const mins=h*60+m;
@@ -1895,12 +1895,12 @@ export default function App(){
                           const isPast=isToday&&mins+s.duration*60<currentTime;
                           return(
                             <div key={s.id} style={{background:isLive?"rgba(212,16,63,0.15)":isPast?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.05)",border:`1px solid ${isLive?R:"rgba(255,255,255,0.08)"}`,borderRadius:8,padding:"7px 8px",marginBottom:6}}>
-                              <div style={{fontWeight:700,fontSize:11,color:isLive?R:isPast?M:"white"}}>{s.time} {isLive?"ðŸ”´":""}</div>
+                              <div style={{fontWeight:700,fontSize:11,color:isLive?R:isPast?M:"white"}}>{s.time} {isLive?"🔴":""}</div>
                               <div style={{fontSize:10,color:M}}>{s.duration}h</div>
                               <div style={{fontSize:10,color:platformColors[s.platform]||M}}>{platformIcons[s.platform]} {s.platform}</div>
                               <div style={{display:"flex",gap:4,marginTop:4}}>
-                                {!isPast&&<button onClick={()=>requestNotif(s)} style={{background:"none",border:"none",color:M,fontSize:9,cursor:"pointer",padding:0}}>ðŸ””</button>}
-                                <button onClick={()=>setSchedule(p=>p.filter(x=>x.id!==s.id))} style={{background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:9,cursor:"pointer",marginLeft:"auto"}}>âœ•</button>
+                                {!isPast&&<button onClick={()=>requestNotif(s)} style={{background:"none",border:"none",color:M,fontSize:9,cursor:"pointer",padding:0}}>🔔</button>}
+                                <button onClick={()=>setSchedule(p=>p.filter(x=>x.id!==s.id))} style={{background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:9,cursor:"pointer",marginLeft:"auto"}}>✕</button>
                               </div>
                             </div>
                           );
@@ -1915,26 +1915,26 @@ export default function App(){
               {/* Conseils planning */}
               <div style={{marginTop:20,display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
                 <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:"16px 18px"}}>
-                  <div style={{fontWeight:700,marginBottom:8,fontSize:13}}>ðŸ’¡ Conseils pour ton planning</div>
+                  <div style={{fontWeight:700,marginBottom:8,fontSize:13}}>💡 Conseils pour ton planning</div>
                   <div style={{fontSize:12,color:M,lineHeight:1.8}}>
-                    â€¢ Streame <strong style={{color:"white"}}>3â€“5 fois/semaine</strong> minimum<br/>
-                    â€¢ Toujours aux <strong style={{color:"white"}}>mÃªmes horaires</strong><br/>
-                    â€¢ Meilleurs crÃ©neaux FR : <strong style={{color:"white"}}>20hâ€“23h</strong><br/>
-                    â€¢ Weekend : commence Ã  <strong style={{color:"white"}}>16h</strong>
+                    • Streame <strong style={{color:"white"}}>3–5 fois/semaine</strong> minimum<br/>
+                    • Toujours aux <strong style={{color:"white"}}>mêmes horaires</strong><br/>
+                    • Meilleurs créneaux FR : <strong style={{color:"white"}}>20h–23h</strong><br/>
+                    • Weekend : commence à <strong style={{color:"white"}}>16h</strong>
                   </div>
                 </div>
                 <div style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.13)`,borderRadius:12,padding:"16px 18px"}}>
-                  <div style={{fontWeight:700,marginBottom:8,fontSize:13}}>ðŸ”” Rappels automatiques</div>
+                  <div style={{fontWeight:700,marginBottom:8,fontSize:13}}>🔔 Rappels automatiques</div>
                   <div style={{fontSize:12,color:M,lineHeight:1.8}}>
-                    Clique sur <strong style={{color:"white"}}>ðŸ”” Rappel</strong> sur chaque stream pour recevoir une notification <strong style={{color:"white"}}>1h avant</strong> de commencer.<br/><br/>
-                    <span style={{color:R}}>âš ï¸ Active les notifications de ton navigateur</span>
+                    Clique sur <strong style={{color:"white"}}>🔔 Rappel</strong> sur chaque stream pour recevoir une notification <strong style={{color:"white"}}>1h avant</strong> de commencer.<br/><br/>
+                    <span style={{color:R}}>⚠️ Active les notifications de ton navigateur</span>
                   </div>
                 </div>
               </div>
 
               {/* Meilleurs horaires FR */}
               <div style={{marginTop:20}}>
-                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>ðŸ“Š Meilleurs horaires pour streamer en France</div>
+                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>📊 Meilleurs horaires pour streamer en France</div>
                 <Card>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginBottom:10}}>
                     {[{d:"Lun",slots:[{h:"20h",s:9},{h:"18h",s:5}]},{d:"Mar",slots:[{h:"20h",s:9},{h:"18h",s:5}]},{d:"Mer",slots:[{h:"20h",s:8},{h:"16h",s:7}]},{d:"Jeu",slots:[{h:"20h",s:9},{h:"18h",s:6}]},{d:"Ven",slots:[{h:"20h",s:10},{h:"18h",s:7}]},{d:"Sam",slots:[{h:"15h",s:10},{h:"12h",s:8}]},{d:"Dim",slots:[{h:"15h",s:9},{h:"12h",s:7}]}].map(day=>(
@@ -1949,13 +1949,13 @@ export default function App(){
                       </div>
                     ))}
                   </div>
-                  <div style={{fontSize:11,color:M,textAlign:"center"}}>ðŸ”´ Plus foncÃ© = meilleure audience Twitch FR</div>
+                  <div style={{fontSize:11,color:M,textAlign:"center"}}>🔴 Plus foncé = meilleure audience Twitch FR</div>
                 </Card>
               </div>
 
-              {/* Calendrier rÃ©gularitÃ© */}
+              {/* Calendrier régularité */}
               <div style={{marginTop:20}}>
-                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>ðŸŸ© RÃ©gularitÃ© â€” 30 derniers jours</div>
+                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>🟩 Régularité — 30 derniers jours</div>
                 <Card>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
                     {Array.from({length:30},(_,i)=>{
@@ -1968,7 +1968,7 @@ export default function App(){
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:14,fontSize:11,color:M}}>
                     <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:12,height:12,borderRadius:2,background:"rgba(255,255,255,0.05)"}}/> Aucun stream</div>
-                    <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:12,height:12,borderRadius:2,background:"#22c55e"}}/> StreamÃ©</div>
+                    <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:12,height:12,borderRadius:2,background:"#22c55e"}}/> Streamé</div>
                     <div style={{marginLeft:"auto",fontWeight:700,color:"white"}}>{streams.length} streams / 30j</div>
                   </div>
                 </Card>
@@ -1976,12 +1976,12 @@ export default function App(){
 
               {/* Objectif hebdo */}
               <div style={{marginTop:20}}>
-                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>ðŸŽ¯ Objectif de la semaine</div>
+                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>🎯 Objectif de la semaine</div>
                 <Card>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                     <div>
-                      <div style={{fontWeight:700,fontSize:13}}>{streams.length}/{Math.max(totalSessions,3)} streams effectuÃ©s</div>
-                      <div style={{fontSize:12,color:M,marginTop:2}}>Objectif : streamer tous tes crÃ©neaux planifiÃ©s</div>
+                      <div style={{fontWeight:700,fontSize:13}}>{streams.length}/{Math.max(totalSessions,3)} streams effectués</div>
+                      <div style={{fontSize:12,color:M,marginTop:2}}>Objectif : streamer tous tes créneaux planifiés</div>
                     </div>
                     <Pill color={streams.length>=Math.max(totalSessions,3)?"green":"yellow"}>{Math.min(100,Math.round((streams.length/Math.max(totalSessions,3))*100))}%</Pill>
                   </div>
@@ -1993,16 +1993,16 @@ export default function App(){
 
               {/* Conseils intelligents */}
               <div style={{marginTop:20}}>
-                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>ðŸ’¡ Conseils personnalisÃ©s</div>
+                <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>💡 Conseils personnalisés</div>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {[
-                    {show:streams.length===0,icon:"ðŸš€",txt:"Aucun stream enregistrÃ©. Commence par planifier 3 crÃ©neaux cette semaine et note-les aprÃ¨s !",c:"blue"},
-                    {show:streams.length>0&&avgV<3,icon:"ðŸ‘ï¸",txt:`Ton average est ${avgV} viewer(s). Pour l'affiliation tu as besoin de 3 en moyenne. Streame Ã  20hâ€“23h et demande des raids !`,c:"yellow"},
-                    {show:streams.length>0&&avgV>=3,icon:"ðŸŽ‰",txt:`Bravo ! ${avgV} viewers en moyenne â€” tu es au niveau de l'affiliation. Continue ta rÃ©gularitÃ© !`,c:"green"},
-                    {show:totalSessions>=5,icon:"â­",txt:"Planning chargÃ© cette semaine â€” excellent ! La rÃ©gularitÃ© est la clÃ© numÃ©ro 1 de la croissance.",c:"green"},
-                    {show:totalSessions>0&&totalSessions<3,icon:"ðŸ“…",txt:"Moins de 3 crÃ©neaux planifiÃ©s. Les crÃ©ateurs qui streament 4x/semaine grandissent 3x plus vite !",c:"red"},
-                    {show:streams.length>3&&streams.length<10,icon:"â°",txt:"Tu es sur la bonne voie ! Essaie d'atteindre 15 streams/mois pour booster l'algorithme Twitch.",c:"yellow"},
-                    {show:ms.twitch>0&&ms.twitch<50,icon:"ðŸŽ¯",txt:`${ms.twitch}/50 followers Twitch. Tu as besoin de ${50-ms.twitch} followers de plus pour l'affiliation â€” continues les raids !`,c:"blue"},
+                    {show:streams.length===0,icon:"🚀",txt:"Aucun stream enregistré. Commence par planifier 3 créneaux cette semaine et note-les après !",c:"blue"},
+                    {show:streams.length>0&&avgV<3,icon:"👁️",txt:`Ton average est ${avgV} viewer(s). Pour l'affiliation tu as besoin de 3 en moyenne. Streame à 20h–23h et demande des raids !`,c:"yellow"},
+                    {show:streams.length>0&&avgV>=3,icon:"🎉",txt:`Bravo ! ${avgV} viewers en moyenne — tu es au niveau de l'affiliation. Continue ta régularité !`,c:"green"},
+                    {show:totalSessions>=5,icon:"⭐",txt:"Planning chargé cette semaine — excellent ! La régularité est la clé numéro 1 de la croissance.",c:"green"},
+                    {show:totalSessions>0&&totalSessions<3,icon:"📅",txt:"Moins de 3 créneaux planifiés. Les créateurs qui streament 4x/semaine grandissent 3x plus vite !",c:"red"},
+                    {show:streams.length>3&&streams.length<10,icon:"⏰",txt:"Tu es sur la bonne voie ! Essaie d'atteindre 15 streams/mois pour booster l'algorithme Twitch.",c:"yellow"},
+                    {show:ms.twitch>0&&ms.twitch<50,icon:"🎯",txt:`${ms.twitch}/50 followers Twitch. Tu as besoin de ${50-ms.twitch} followers de plus pour l'affiliation — continues les raids !`,c:"blue"},
                   ].filter(x=>x.show).slice(0,3).map((x,i)=>(
                     <div key={i} style={{background:`rgba(${x.c==="green"?"34,197,94":x.c==="yellow"?"245,158,11":x.c==="blue"?"96,165,250":"212,16,63"},0.07)`,border:`1px solid rgba(${x.c==="green"?"34,197,94":x.c==="yellow"?"245,158,11":x.c==="blue"?"96,165,250":"212,16,63"},0.2)`,borderRadius:12,padding:"13px 16px",display:"flex",gap:12,alignItems:"flex-start"}}>
                       <span style={{fontSize:20,flexShrink:0}}>{x.icon}</span>
@@ -2027,32 +2027,32 @@ export default function App(){
             const hours=userStreams.reduce((t,s)=>t+s.duration,0);
             const followers=parseInt(u.twitch_followers||0);
             const avgViewers=userStreams.length?Math.round(userStreams.reduce((t,s)=>t+s.viewers,0)/userStreams.length):0;
-            // Formule : heuresÃ—20 + followersÃ—0.5 + viewers moyensÃ—10
+            // Formule : heures×20 + followers×0.5 + viewers moyens×10
             const score=Math.round(hours*20 + followers*0.5 + avgViewers*10);
-            return{name:u.name,ps:u.twitch||"â€”",score,hours:parseFloat(hours.toFixed(1)),followers,avgViewers,email:u.email};
+            return{name:u.name,ps:u.twitch||"—",score,hours:parseFloat(hours.toFixed(1)),followers,avgViewers,email:u.email};
           }).filter(u=>u.score>0||u.hours>0).sort((a,b)=>b.score-a.score);
 
-          const medals=["ðŸ¥‡","ðŸ¥ˆ","ðŸ¥‰"];
+          const medals=["🥇","🥈","🥉"];
           const gc=["#ffd700","#c0c0c0","#cd7f32"];
 
           return(
             <div>
               <div style={{marginBottom:20}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CLASSEMENT</div>
-                <div style={{fontSize:13,color:M,marginTop:2}}>Points = Heures live Ã— 20 + Followers Ã— 0.5 + Viewers moyens Ã— 10</div>
+                <div style={{fontSize:13,color:M,marginTop:2}}>Points = Heures live × 20 + Followers × 0.5 + Viewers moyens × 10</div>
               </div>
 
               {scored.length===0?(
                 <Card style={{textAlign:"center",padding:"60px 20px"}}>
-                  <div style={{fontSize:52,marginBottom:16}}>ðŸ†</div>
+                  <div style={{fontSize:52,marginBottom:16}}>🏆</div>
                   <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:24,letterSpacing:2,marginBottom:10}}>LE CLASSEMENT SE REMPLIT</div>
                   <div style={{fontSize:14,color:M,lineHeight:1.7,maxWidth:400,margin:"0 auto"}}>
-                    Le classement se met Ã  jour automatiquement au fur et Ã  mesure que les crÃ©ateurs s'inscrivent et streament.<br/><br/>
-                    <strong style={{color:"white"}}>Sois le premier Ã  apparaÃ®tre ici ! ðŸ”¥</strong>
+                    Le classement se met à jour automatiquement au fur et à mesure que les créateurs s'inscrivent et streament.<br/><br/>
+                    <strong style={{color:"white"}}>Sois le premier à apparaître ici ! 🔥</strong>
                   </div>
                   {role==="createur"&&(
                     <div style={{marginTop:20}}>
-                      <Btn onClick={()=>setPage("planning")} icon="ðŸ“…">Planifier mon premier stream</Btn>
+                      <Btn onClick={()=>setPage("planning")} icon="📅">Planifier mon premier stream</Btn>
                     </div>
                   )}
                 </Card>
@@ -2085,7 +2085,7 @@ export default function App(){
                     <table style={{width:"100%",borderCollapse:"collapse"}}>
                       <thead>
                         <tr style={{borderBottom:`1px solid ${B}`}}>
-                          {["#","CrÃ©ateur","Heures","Viewers","Score"].map(h=>(
+                          {["#","Créateur","Heures","Viewers","Score"].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"10px 14px",fontSize:11,fontWeight:700,color:M,textTransform:"uppercase"}}>{h}</th>
                           ))}
                         </tr>
@@ -2099,7 +2099,7 @@ export default function App(){
                                 {p.name}
                                 {p.email===user.email&&<Pill color="red" xs>Toi</Pill>}
                               </div>
-                              <div style={{fontSize:11,color:M}}>ðŸŸ£ @{p.ps}</div>
+                              <div style={{fontSize:11,color:M}}>🟣 @{p.ps}</div>
                             </td>
                             <td style={{padding:"12px 14px",color:M}}>{p.hours}h</td>
                             <td style={{padding:"12px 14px",color:M}}>{p.avgViewers} moy.</td>
@@ -2112,8 +2112,8 @@ export default function App(){
 
                   {/* Formule de calcul */}
                   <div style={{marginTop:14,background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:10,padding:"12px 16px",fontSize:12,color:M,lineHeight:1.7}}>
-                    ðŸ† <strong style={{color:"white"}}>Formule des points :</strong> Heures de live Ã— 20 + Followers Twitch Ã— 0.5 + Viewers moyens Ã— 10<br/>
-                    ðŸ“… Le classement se rÃ©initialise le <strong style={{color:"white"}}>1er de chaque mois</strong>
+                    🏆 <strong style={{color:"white"}}>Formule des points :</strong> Heures de live × 20 + Followers Twitch × 0.5 + Viewers moyens × 10<br/>
+                    📅 Le classement se réinitialise le <strong style={{color:"white"}}>1er de chaque mois</strong>
                   </div>
                 </>
               )}
@@ -2126,13 +2126,13 @@ export default function App(){
           <div>
             <div style={{marginBottom:20}}>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARTENARIATS</div>
-              <div style={{fontSize:13,color:M,marginTop:2}}>{role==="admin"?"GÃ©rez vos partenariats":"OpportunitÃ©s de collaboration"}</div>
+              <div style={{fontSize:13,color:M,marginTop:2}}>{role==="admin"?"Gérez vos partenariats":"Opportunités de collaboration"}</div>
             </div>
 
-            {/* Si des partenariats actifs existent â€” on les affiche aux crÃ©ateurs */}
+            {/* Si des partenariats actifs existent — on les affiche aux créateurs */}
             {role==="createur"&&partners.filter(p=>p.status==="active").length>0&&(
               <div style={{marginBottom:20}}>
-                <div style={{fontWeight:800,fontSize:15,marginBottom:12}}>ðŸ”¥ Deals disponibles</div>
+                <div style={{fontWeight:800,fontSize:15,marginBottom:12}}>🔥 Deals disponibles</div>
                 {partners.filter(p=>p.status==="active").map(p=>{
                   const applied=p.applicants?.find(a=>a.email===user.email);
                   return(
@@ -2141,17 +2141,17 @@ export default function App(){
                       <div style={{flex:1}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
                           <div style={{fontWeight:800,fontSize:14}}>{p.brand}</div>
-                          {p.hot&&<Pill color="red" xs>ðŸ”¥ Populaire</Pill>}
-                          {applied&&<Pill color="green" xs>âœ“ PostulÃ©</Pill>}
+                          {p.hot&&<Pill color="red" xs>🔥 Populaire</Pill>}
+                          {applied&&<Pill color="green" xs>✓ Postulé</Pill>}
                         </div>
                         {p.type&&<div style={{fontSize:12,color:M,marginBottom:4}}>{p.type}</div>}
                         <div style={{fontSize:13,color:"rgba(255,255,255,0.6)"}}>{p.desc}</div>
                       </div>
                       <div style={{textAlign:"right",flexShrink:0}}>
-                        {p.budget&&<div style={{fontWeight:800,color:R,marginBottom:8,fontSize:13}}>{isPro?p.budget:"â€¢â€¢â€¢ â‚¬"}</div>}
+                        {p.budget&&<div style={{fontWeight:800,color:R,marginBottom:8,fontSize:13}}>{isPro?p.budget:"••• €"}</div>}
                         {applied
-                          ?<Pill color="green">âœ“ EnvoyÃ©e</Pill>
-                          :<Btn sz="sm" v={isPro?"primary":"ghost"} onClick={()=>isPro?applyPartner(p.id):setModal("payment")}>{isPro?"Postuler":"ðŸ”’ Pro"}</Btn>
+                          ?<Pill color="green">✓ Envoyée</Pill>
+                          :<Btn sz="sm" v={isPro?"primary":"ghost"} onClick={()=>isPro?applyPartner(p.id):setModal("payment")}>{isPro?"Postuler":"🔒 Pro"}</Btn>
                         }
                       </div>
                     </Card>
@@ -2160,20 +2160,20 @@ export default function App(){
               </div>
             )}
 
-            {/* Page vide â€” message professionnel â€” visible si pas de partenariat actif */}
+            {/* Page vide — message professionnel — visible si pas de partenariat actif */}
             {(partners.filter(p=>p.status==="active").length===0||role==="admin")&&role==="createur"&&(
               <div style={{position:"relative",overflow:"hidden",borderRadius:20,padding:"48px 32px",background:"linear-gradient(135deg,#0d0d0d,#12040a)",border:`1px solid rgba(212,16,63,0.2)`,textAlign:"center",marginBottom:20}}>
               <div style={{position:"absolute",width:400,height:400,background:"radial-gradient(circle,rgba(212,16,63,0.1) 0%,transparent 70%)",top:"50%",left:"50%",transform:"translate(-50%,-50%)",pointerEvents:"none"}}/>
               <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
               <div style={{position:"relative",zIndex:2}}>
-                <div style={{fontSize:52,marginBottom:16}}>ðŸ¤</div>
+                <div style={{fontSize:52,marginBottom:16}}>🤝</div>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:26,letterSpacing:2,marginBottom:12}}>PARTENARIATS EN COURS</div>
                 <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.8,maxWidth:480,margin:"0 auto",marginBottom:24}}>
-                  L'Ã©quipe Belive Academy travaille activement Ã  la mise en place de partenariats avec des marques sÃ©lectionnÃ©es pour la communautÃ© crÃ©ateurs.<br/><br/>
-                  <strong style={{color:"white"}}>Les premiÃ¨res opportunitÃ©s seront disponibles trÃ¨s prochainement.</strong>
+                  L'équipe Belive Academy travaille activement à la mise en place de partenariats avec des marques sélectionnées pour la communauté créateurs.<br/><br/>
+                  <strong style={{color:"white"}}>Les premières opportunités seront disponibles très prochainement.</strong>
                 </div>
                 <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-                  {["âš¡ Boissons Ã©nergisantes","ðŸŽ® Jeux vidÃ©o","ðŸ–±ï¸ PÃ©riphÃ©riques gaming","ðŸ”’ Services digitaux"].map(c=>(
+                  {["⚡ Boissons énergisantes","🎮 Jeux vidéo","🖱️ Périphériques gaming","🔒 Services digitaux"].map(c=>(
                     <div key={c} style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:12,padding:"12px 20px",fontSize:13,color:M}}>{c}</div>
                   ))}
                 </div>
@@ -2181,15 +2181,15 @@ export default function App(){
             </div>
             )}
 
-            {/* Info pour les crÃ©ateurs */}
+            {/* Info pour les créateurs */}
             {role==="createur"&&(
               <Card style={{background:"rgba(212,16,63,0.04)",border:`1px solid rgba(212,16,63,0.12)`}}>
                 <div style={{display:"flex",gap:14,alignItems:"flex-start"}}>
-                  <span style={{fontSize:28,flexShrink:0}}>ðŸ“©</span>
+                  <span style={{fontSize:28,flexShrink:0}}>📩</span>
                   <div>
-                    <div style={{fontWeight:800,marginBottom:6}}>Tu es notifiÃ© en premier</div>
+                    <div style={{fontWeight:800,marginBottom:6}}>Tu es notifié en premier</div>
                     <div style={{fontSize:13,color:M,lineHeight:1.7}}>
-                      DÃ¨s qu'un partenariat est disponible, tu recevras une notification directement sur ton compte. Assure-toi d'avoir activÃ© les notifications dans ton profil.
+                      Dès qu'un partenariat est disponible, tu recevras une notification directement sur ton compte. Assure-toi d'avoir activé les notifications dans ton profil.
                     </div>
                   </div>
                 </div>
@@ -2200,21 +2200,21 @@ export default function App(){
               <Card>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <div>
-                    <div style={{fontWeight:800,fontSize:15}}>ðŸ“‹ GÃ©rer les partenariats</div>
-                    <div style={{fontSize:12,color:M,marginTop:2}}>Ajoute un deal â€” il sera proposÃ© Ã  tous les crÃ©ateurs avec notification</div>
+                    <div style={{fontWeight:800,fontSize:15}}>📋 Gérer les partenariats</div>
+                    <div style={{fontSize:12,color:M,marginTop:2}}>Ajoute un deal — il sera proposé à tous les créateurs avec notification</div>
                   </div>
                   <Btn sz="sm" onClick={()=>setModal("addPartner")} icon="+">Nouveau deal</Btn>
                 </div>
                 {partners.length===0?(
-                  <div style={{textAlign:"center",padding:"20px 0",color:M,fontSize:13}}>Aucun partenariat actif â€” clique sur "Nouveau deal" pour en ajouter un</div>
+                  <div style={{textAlign:"center",padding:"20px 0",color:M,fontSize:13}}>Aucun partenariat actif — clique sur "Nouveau deal" pour en ajouter un</div>
                 ):partners.map((p,i)=>(
                   <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${B}`}}>
                     <div style={{width:40,height:40,background:"rgba(255,255,255,0.05)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{p.icon}</div>
                     <div style={{flex:1}}>
                       <div style={{fontWeight:700,fontSize:13}}>{p.brand}</div>
-                      <div style={{fontSize:11,color:M}}>{p.type} â€¢ {p.budget} â€¢ {p.applicants?.length||0} candidature(s)</div>
+                      <div style={{fontSize:11,color:M}}>{p.type} • {p.budget} • {p.applicants?.length||0} candidature(s)</div>
                     </div>
-                    <button onClick={()=>setPartners(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>ðŸ—‘ï¸</button>
+                    <button onClick={()=>setPartners(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</button>
                   </div>
                 ))}
               </Card>
@@ -2222,9 +2222,9 @@ export default function App(){
           </div>
         )}
 
-        {/* COMMUNAUTÃ‰ */}
+        {/* COMMUNAUTÉ */}
         {page==="communaute"&&(()=>{
-          const CATS=[{id:"all",icon:"ðŸŒ",l:"Tous"},{id:"raid",icon:"âš”ï¸",l:"Raids"},{id:"conseil",icon:"ðŸ’¡",l:"Conseils"},{id:"milestone",icon:"ðŸ†",l:"SuccÃ¨s"},{id:"question",icon:"â“",l:"Questions"},{id:"collab",icon:"ðŸ¤",l:"Collabs"}];
+          const CATS=[{id:"all",icon:"🌐",l:"Tous"},{id:"raid",icon:"⚔️",l:"Raids"},{id:"conseil",icon:"💡",l:"Conseils"},{id:"milestone",icon:"🏆",l:"Succès"},{id:"question",icon:"❓",l:"Questions"},{id:"collab",icon:"🤝",l:"Collabs"}];
           const filtered=posts.filter(p=>{
             const mc=commFilter==="all"||p.category===commFilter;
             const ms=!commSearch||p.content?.toLowerCase().includes(commSearch.toLowerCase())||p.user?.toLowerCase().includes(commSearch.toLowerCase());
@@ -2233,15 +2233,15 @@ export default function App(){
           return(
             <div>
               <div style={{marginBottom:20}}>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>COMMUNAUTÃ‰</div>
-                <div style={{fontSize:13,color:M,marginTop:2}}>Ã‰change avec les crÃ©ateurs Belive</div>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>COMMUNAUTÉ</div>
+                <div style={{fontSize:13,color:M,marginTop:2}}>Échange avec les créateurs Belive</div>
               </div>
 
               {/* Composer */}
               <Card style={{marginBottom:18}}>
                 <div style={{display:"flex",gap:12,marginBottom:12}}>
                   <Av name={user.name} size={36}/>
-                  <textarea value={newPost} onChange={e=>setNewPost(e.target.value)} placeholder="Partage un conseil, demande un raid, cÃ©lÃ¨bre une victoire..." style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:12,padding:"11px 14px",color:"white",fontSize:13,outline:"none",resize:"none",minHeight:80,lineHeight:1.6,fontFamily:"'Manrope',sans-serif"}}/>
+                  <textarea value={newPost} onChange={e=>setNewPost(e.target.value)} placeholder="Partage un conseil, demande un raid, célèbre une victoire..." style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:12,padding:"11px 14px",color:"white",fontSize:13,outline:"none",resize:"none",minHeight:80,lineHeight:1.6,fontFamily:"'Manrope',sans-serif"}}/>
                 </div>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -2253,11 +2253,11 @@ export default function App(){
                   </div>
                   <Btn sz="sm" onClick={()=>{
                     if(!newPost.trim())return;
-                    const banned=["agence","recrutement","rejoins nous","contact","whatsapp","telegram","discord","instagram","dm","mp","@","http","www",".com",".fr","euro","â‚¬","gratuit","offre","deal","proposition"];
+                    const banned=["agence","recrutement","rejoins nous","contact","whatsapp","telegram","discord","instagram","dm","mp","@","http","www",".com",".fr","euro","€","gratuit","offre","deal","proposition"];
                     const low=newPost.toLowerCase();
                     const found=banned.find(w=>low.includes(w));
-                    if(found){alert(`âš ï¸ Message non autorisÃ© â€” ce contenu n'est pas permis dans la communautÃ© Belive Academy.`);return;}
-                    setPosts(p=>[{id:Date.now(),user:user.name,av:(user.av||user.name.charAt(0)),time:"Ã€ l'instant",content:newPost,likes:0,liked:false,replies:[],showReplies:false,replyInput:"",category:commCat},...p]);
+                    if(found){alert(`⚠️ Message non autorisé — ce contenu n'est pas permis dans la communauté Belive Academy.`);return;}
+                    setPosts(p=>[{id:Date.now(),user:user.name,av:(user.av||user.name.charAt(0)),time:"À l'instant",content:newPost,likes:0,liked:false,replies:[],showReplies:false,replyInput:"",category:commCat},...p]);
                     setNewPost("");
                   }}>Publier</Btn>
                 </div>
@@ -2265,7 +2265,7 @@ export default function App(){
 
               {/* Filtres */}
               <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-                <input value={commSearch} onChange={e=>setCommSearch(e.target.value)} placeholder="ðŸ” Rechercher..." style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"8px 14px",color:"white",fontSize:12,outline:"none",width:160,fontFamily:"'Manrope',sans-serif"}}/>
+                <input value={commSearch} onChange={e=>setCommSearch(e.target.value)} placeholder="🔍 Rechercher..." style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"8px 14px",color:"white",fontSize:12,outline:"none",width:160,fontFamily:"'Manrope',sans-serif"}}/>
                 {CATS.map(c=>(
                   <button key={c.id} onClick={()=>setCommFilter(c.id)} style={{background:commFilter===c.id?"rgba(212,16,63,0.12)":"transparent",border:`1px solid ${commFilter===c.id?"rgba(212,16,63,0.3)":B}`,borderRadius:100,padding:"5px 12px",color:commFilter===c.id?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
                     {c.icon} {c.l}
@@ -2276,13 +2276,13 @@ export default function App(){
               {/* Posts */}
               {filtered.length===0?(
                 <Card style={{textAlign:"center",padding:"40px 20px"}}>
-                  <div style={{fontSize:36,marginBottom:10}}>ðŸ”</div>
-                  <div style={{fontWeight:800,marginBottom:6}}>Aucun post trouvÃ©</div>
-                  <div style={{color:M,fontSize:13}}>Sois le premier Ã  poster ici !</div>
+                  <div style={{fontSize:36,marginBottom:10}}>🔍</div>
+                  <div style={{fontWeight:800,marginBottom:6}}>Aucun post trouvé</div>
+                  <div style={{color:M,fontSize:13}}>Sois le premier à poster ici !</div>
                 </Card>
               ):filtered.map((p,i)=>{
-                const catIcon={all:"ðŸŒ",raid:"âš”ï¸",conseil:"ðŸ’¡",milestone:"ðŸ†",question:"â“",collab:"ðŸ¤"}[p.category]||"ðŸ’¬";
-                const catLabel={raid:"Raid",conseil:"Conseil",milestone:"SuccÃ¨s",question:"Question",collab:"Collab"}[p.category]||"";
+                const catIcon={all:"🌐",raid:"⚔️",conseil:"💡",milestone:"🏆",question:"❓",collab:"🤝"}[p.category]||"💬";
+                const catLabel={raid:"Raid",conseil:"Conseil",milestone:"Succès",question:"Question",collab:"Collab"}[p.category]||"";
                 return(
                   <Card key={p.id||i} style={{marginBottom:12}}>
                     <div style={{display:"flex",gap:12,marginBottom:12}}>
@@ -2298,13 +2298,13 @@ export default function App(){
                     <div style={{fontSize:14,color:"rgba(255,255,255,0.82)",lineHeight:1.65,marginBottom:14}}>{p.content}</div>
                     <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
                       <button onClick={()=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,likes:(x.liked?x.likes-1:x.likes+1),liked:!x.liked}))} style={{background:p.liked?"rgba(212,16,63,0.1)":"none",border:`1px solid ${p.liked?"rgba(212,16,63,0.3)":B}`,borderRadius:8,padding:"6px 14px",color:p.liked?R:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                        {p.liked?"â¤ï¸":"ðŸ¤"} {p.likes}
+                        {p.liked?"❤️":"🤍"} {p.likes}
                       </button>
                       <button onClick={()=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,showReplies:!x.showReplies}))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"6px 14px",color:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                        ðŸ’¬ {(p.replies||[]).length}
+                        💬 {(p.replies||[]).length}
                       </button>
                       {p.category==="raid"&&(
-                        <button style={{background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"6px 14px",color:R,fontSize:12,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>âš”ï¸ Je participe</button>
+                        <button style={{background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"6px 14px",color:R,fontSize:12,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>⚔️ Je participe</button>
                       )}
                     </div>
                     {p.showReplies&&(
@@ -2325,10 +2325,10 @@ export default function App(){
                           <div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(user.av||user.name.charAt(0)).toUpperCase()}</div>
                           <input value={p.replyInput||""} onChange={e=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replyInput:e.target.value}))}
                             onKeyDown={e=>{if(e.key==="Enter"&&p.replyInput?.trim()){
-                              setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replies:[...(x.replies||[]),{user:user.name,av:(user.av||user.name.charAt(0)),text:x.replyInput,time:"Ã€ l'instant"}],replyInput:"",showReplies:true}));
-                              if(notifPrefs.messages){sendNotif("ðŸ’¬ Nouveau message",`${user.name} a rÃ©pondu dans la communautÃ©`,"msg");}
+                              setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replies:[...(x.replies||[]),{user:user.name,av:(user.av||user.name.charAt(0)),text:x.replyInput,time:"À l'instant"}],replyInput:"",showReplies:true}));
+                              if(notifPrefs.messages){sendNotif("💬 Nouveau message",`${user.name} a répondu dans la communauté`,"msg");}
                             }}}
-                            placeholder="Ta rÃ©ponse... (EntrÃ©e pour envoyer)" style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
+                            placeholder="Ta réponse... (Entrée pour envoyer)" style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
                         </div>
                       </div>
                     )}
@@ -2351,16 +2351,16 @@ export default function App(){
               <div style={{position:"relative",zIndex:2}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(18px,3.5vw,40px)",color:"white",letterSpacing:2,lineHeight:1}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
                 <div style={{background:R,borderRadius:100,padding:"3px 12px",display:"inline-block",marginTop:6}}>
-                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1.2vw,13px)",color:"white",letterSpacing:3}}>CRÃ‰ATEUR OFFICIEL</div>
+                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1.2vw,13px)",color:"white",letterSpacing:3}}>CRÉATEUR OFFICIEL</div>
                 </div>
               </div>
               <div style={{position:"relative",zIndex:2,textAlign:"center"}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(16px,3vw,36px)",color:"white",letterSpacing:3}}>{pseudo.toUpperCase()}</div>
-                <div style={{fontSize:"clamp(7px,1vw,11px)",color:"rgba(255,255,255,0.4)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Agence CrÃ©ateurs & Influence</div>
+                <div style={{fontSize:"clamp(7px,1vw,11px)",color:"rgba(255,255,255,0.4)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Agence Créateurs & Influence</div>
               </div>
               <div style={{position:"relative",zIndex:2,textAlign:"right"}}>
                 <div style={{fontSize:"clamp(7px,0.9vw,10px)",color:"rgba(255,255,255,0.25)",letterSpacing:1}}>beliveacademy.com</div>
-                <div style={{fontSize:"clamp(6px,0.8vw,9px)",color:"rgba(255,255,255,0.2)",marginTop:4}}>ðŸ”¥ Rejoins la communautÃ©</div>
+                <div style={{fontSize:"clamp(6px,0.8vw,9px)",color:"rgba(255,255,255,0.2)",marginTop:4}}>🔥 Rejoins la communauté</div>
               </div>
             </div>
           );
@@ -2372,12 +2372,12 @@ export default function App(){
               <div style={{position:"relative",zIndex:2}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(18px,3.5vw,40px)",color:"white",letterSpacing:2,lineHeight:1}}>BELIVE ACADEMY</div>
                 <div style={{background:"white",borderRadius:100,padding:"3px 12px",display:"inline-block",marginTop:6}}>
-                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1.2vw,13px)",color:R,letterSpacing:3}}>CRÃ‰ATEUR OFFICIEL</div>
+                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1.2vw,13px)",color:R,letterSpacing:3}}>CRÉATEUR OFFICIEL</div>
                 </div>
               </div>
               <div style={{position:"relative",zIndex:2,textAlign:"center"}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(16px,3vw,36px)",color:"white",letterSpacing:3}}>{pseudo.toUpperCase()}</div>
-                <div style={{fontSize:"clamp(7px,1vw,11px)",color:"rgba(255,255,255,0.7)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Agence CrÃ©ateurs & Influence</div>
+                <div style={{fontSize:"clamp(7px,1vw,11px)",color:"rgba(255,255,255,0.7)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Agence Créateurs & Influence</div>
               </div>
               <div style={{position:"relative",zIndex:2,textAlign:"right"}}>
                 <div style={{fontSize:"clamp(7px,0.9vw,10px)",color:"rgba(255,255,255,0.5)",letterSpacing:1}}>beliveacademy.com</div>
@@ -2393,12 +2393,12 @@ export default function App(){
               <div style={{position:"relative",zIndex:2}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(18px,3.5vw,40px)",color:"white",letterSpacing:2,lineHeight:1}}>BELIVE <span style={{color:"#a78bfa"}}>ACADEMY</span></div>
                 <div style={{background:"linear-gradient(90deg,#7c3aed,#D4103F)",borderRadius:100,padding:"3px 12px",display:"inline-block",marginTop:6}}>
-                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1.2vw,13px)",color:"white",letterSpacing:3}}>CRÃ‰ATEUR OFFICIEL</div>
+                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1.2vw,13px)",color:"white",letterSpacing:3}}>CRÉATEUR OFFICIEL</div>
                 </div>
               </div>
               <div style={{position:"relative",zIndex:2,textAlign:"center"}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(16px,3vw,36px)",color:"white",letterSpacing:3}}>{pseudo.toUpperCase()}</div>
-                <div style={{fontSize:"clamp(7px,1vw,11px)",color:"rgba(167,139,250,0.7)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Agence CrÃ©ateurs & Influence</div>
+                <div style={{fontSize:"clamp(7px,1vw,11px)",color:"rgba(167,139,250,0.7)",letterSpacing:2,textTransform:"uppercase",marginTop:4}}>Agence Créateurs & Influence</div>
               </div>
               <div style={{position:"relative",zIndex:2,textAlign:"right"}}>
                 <div style={{fontSize:"clamp(7px,0.9vw,10px)",color:"rgba(255,255,255,0.25)"}}>beliveacademy.com</div>
@@ -2414,7 +2414,7 @@ export default function App(){
                       <img src={tmplPhoto} alt="profil" style={{position:"absolute",inset:6,width:"calc(100% - 12px)",height:"calc(100% - 12px)",borderRadius:"50%",objectFit:"cover"}}/>
                     ) : (
                       <div style={{position:"absolute",inset:6,borderRadius:"50%",background:"rgba(255,255,255,0.05)",border:"2px dashed rgba(255,255,255,0.12)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3}}>
-                        <div style={{fontSize:26,opacity:0.25}}>ðŸ“·</div>
+                        <div style={{fontSize:26,opacity:0.25}}>📷</div>
                         <div style={{fontSize:9,color:"rgba(255,255,255,0.18)",textAlign:"center"}}>Ta photo</div>
                       </div>
                     )}
@@ -2423,47 +2423,47 @@ export default function App(){
                 <div style={{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",background:badge,border:`2px solid ${bg}`,borderRadius:100,padding:"3px 10px",whiteSpace:"nowrap"}}>
                   <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:9,color:badgeTxt,letterSpacing:2}}>BELIVE</div>
                 </div>
-                <div style={{position:"absolute",top:2,right:2,width:22,height:22,background:ring,borderRadius:"50%",border:`2px solid ${bg}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"white",fontWeight:800}}>âœ“</div>
+                <div style={{position:"absolute",top:2,right:2,width:22,height:22,background:ring,borderRadius:"50%",border:`2px solid ${bg}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"white",fontWeight:800}}>✓</div>
               </div>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:12,color:"white",letterSpacing:1}}>@{pseudo}</div>
             </div>
           );
           return(
             <div>
-              <div style={{marginBottom:20}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>TEMPLATES</div><div style={{fontSize:13,color:M}}>BanniÃ¨res et photos de profil Belive Academy</div></div>
+              <div style={{marginBottom:20}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>TEMPLATES</div><div style={{fontSize:13,color:M}}>Bannières et photos de profil Belive Academy</div></div>
               <Card style={{marginBottom:24}}>
-                <div style={{fontWeight:800,marginBottom:12}}>âœï¸ Personnalise tes templates</div>
+                <div style={{fontWeight:800,marginBottom:12}}>✏️ Personnalise tes templates</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,alignItems:"flex-end"}}>
                   <Field label="Ton pseudo Twitch/Stream" value={tmplPseudo} onChange={e=>setTmplPseudo(e.target.value)} placeholder={user.twitch||user.name}/>
                   <div style={{marginBottom:14}}>
-                    <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>ðŸ“· Ta photo de profil</div>
+                    <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>📷 Ta photo de profil</div>
                     <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 14px"}}>
                       {tmplPhoto ? (
                         <img src={tmplPhoto} style={{width:32,height:32,borderRadius:"50%",objectFit:"cover"}}/>
                       ) : (
-                        <span style={{fontSize:20}}>ðŸ“·</span>
+                        <span style={{fontSize:20}}>📷</span>
                       )}
-                      <span style={{fontSize:13,color:tmplPhoto?"white":M}}>{tmplPhoto?"Photo chargÃ©e âœ“ â€” Clique pour changer":"Uploader ta photo..."}</span>
+                      <span style={{fontSize:13,color:tmplPhoto?"white":M}}>{tmplPhoto?"Photo chargée ✓ — Clique pour changer":"Uploader ta photo..."}</span>
                       <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setTmplPhoto(ev.target.result);r.readAsDataURL(f);}}/>
                     </label>
-                    {tmplPhoto&&<button onClick={()=>setTmplPhoto(null)} style={{marginTop:6,background:"none",border:"none",color:M,fontSize:11,cursor:"pointer"}}>âœ• Supprimer la photo</button>}
+                    {tmplPhoto&&<button onClick={()=>setTmplPhoto(null)} style={{marginTop:6,background:"none",border:"none",color:M,fontSize:11,cursor:"pointer"}}>✕ Supprimer la photo</button>}
                   </div>
                 </div>
-                <div style={{fontSize:12,color:M}}>ðŸ’¡ Ta photo apparaÃ®tra dans les cadres de profil ci-dessous</div>
+                <div style={{fontSize:12,color:M}}>💡 Ta photo apparaîtra dans les cadres de profil ci-dessous</div>
               </Card>
 
-              {/* BANNIÃˆRES TWITCH */}
-              <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>ðŸŸ£ BanniÃ¨res Twitch <span style={{fontSize:12,color:M,fontWeight:400}}>(1200Ã—480px)</span></div>
-              <div style={{fontSize:12,color:M,marginBottom:16}}>Fais une capture d'Ã©cran et upload dans ParamÃ¨tres Twitch â†’ Image de profil en-tÃªte</div>
+              {/* BANNIÈRES TWITCH */}
+              <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>🟣 Bannières Twitch <span style={{fontSize:12,color:M,fontWeight:400}}>(1200×480px)</span></div>
+              <div style={{fontSize:12,color:M,marginBottom:16}}>Fais une capture d'écran et upload dans Paramètres Twitch → Image de profil en-tête</div>
               <div style={{display:"flex",flexDirection:"column",gap:20,marginBottom:32}}>
-                <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Noir â€” Classique</div><BannerDark/></div>
-                <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Rouge â€” Impact</div><BannerRed/></div>
-                <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Neon â€” Gaming</div><BannerNeon/></div>
+                <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Noir — Classique</div><BannerDark/></div>
+                <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Rouge — Impact</div><BannerRed/></div>
+                <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Neon — Gaming</div><BannerNeon/></div>
               </div>
 
-              {/* BANNIÃˆRES YOUTUBE */}
-              <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>â–¶ï¸ BanniÃ¨res YouTube <span style={{fontSize:12,color:M,fontWeight:400}}>(2560Ã—1440px â€” capture l'Ã©lÃ©ment)</span></div>
-              <div style={{fontSize:12,color:M,marginBottom:16}}>Upload dans Personnaliser la chaÃ®ne â†’ Image de banniÃ¨re</div>
+              {/* BANNIÈRES YOUTUBE */}
+              <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>▶️ Bannières YouTube <span style={{fontSize:12,color:M,fontWeight:400}}>(2560×1440px — capture l'élément)</span></div>
+              <div style={{fontSize:12,color:M,marginBottom:16}}>Upload dans Personnaliser la chaîne → Image de bannière</div>
               <div style={{display:"flex",flexDirection:"column",gap:20,marginBottom:32}}>
                 <div><div style={{fontSize:12,fontWeight:700,color:M,marginBottom:8}}>Style Noir YouTube</div>
                   <div style={{width:"100%",aspectRatio:"16/5",background:"#080808",borderRadius:12,overflow:"hidden",position:"relative",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 6%",border:`1px solid ${B}`}}>
@@ -2472,29 +2472,29 @@ export default function App(){
                     <div style={{position:"absolute",bottom:0,left:0,right:0,height:4,background:"#ff0000"}}/>
                     <div style={{position:"relative",zIndex:2}}>
                       <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(16px,3vw,38px)",color:"white",letterSpacing:2}}>BELIVE <span style={{color:"#ff4444"}}>ACADEMY</span></div>
-                      <div style={{background:"#ff0000",borderRadius:100,padding:"2px 10px",display:"inline-block",marginTop:4}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1vw,12px)",color:"white",letterSpacing:3}}>CRÃ‰ATEUR OFFICIEL</div></div>
+                      <div style={{background:"#ff0000",borderRadius:100,padding:"2px 10px",display:"inline-block",marginTop:4}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(7px,1vw,12px)",color:"white",letterSpacing:3}}>CRÉATEUR OFFICIEL</div></div>
                     </div>
-                    <div style={{position:"relative",zIndex:2,textAlign:"center"}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(14px,2.8vw,34px)",color:"white",letterSpacing:3}}>{pseudo.toUpperCase()}</div><div style={{fontSize:"clamp(7px,1vw,10px)",color:"rgba(255,255,255,0.4)",letterSpacing:2,marginTop:4}}>YOUTUBE â€¢ TWITCH â€¢ TIKTOK</div></div>
+                    <div style={{position:"relative",zIndex:2,textAlign:"center"}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:"clamp(14px,2.8vw,34px)",color:"white",letterSpacing:3}}>{pseudo.toUpperCase()}</div><div style={{fontSize:"clamp(7px,1vw,10px)",color:"rgba(255,255,255,0.4)",letterSpacing:2,marginTop:4}}>YOUTUBE • TWITCH • TIKTOK</div></div>
                     <div style={{position:"relative",zIndex:2,textAlign:"right"}}><div style={{fontSize:"clamp(7px,0.9vw,10px)",color:"rgba(255,255,255,0.2)"}}>beliveacademy.com</div></div>
                   </div>
                 </div>
               </div>
 
               {/* PHOTOS DE PROFIL */}
-              <div style={{fontWeight:800,fontSize:16,marginBottom:16}}>ðŸ‘¤ Cadres Photo de Profil</div>
+              <div style={{fontWeight:800,fontSize:16,marginBottom:16}}>👤 Cadres Photo de Profil</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:20,marginBottom:24}}>
                 <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Noir/Rouge</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring={R} badge={R} badgeTxt="white" bg="#080808"/></div><div style={{fontSize:11,color:M}}>Classique Belive</div></Card>
                 <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Rouge/Blanc</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring="white" badge="white" badgeTxt={R} bg={R}/></div><div style={{fontSize:11,color:M}}>Style dynamique</div></Card>
-                <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Or â€” VIP</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring="#ffd700" badge="#ffd700" badgeTxt="#1a1200" bg="#1a1200"/></div><div style={{fontSize:11,color:M}}>CrÃ©ateur premium</div></Card>
+                <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Or — VIP</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring="#ffd700" badge="#ffd700" badgeTxt="#1a1200" bg="#1a1200"/></div><div style={{fontSize:11,color:M}}>Créateur premium</div></Card>
               </div>
 
               <div style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.13)`,borderRadius:12,padding:"16px 18px"}}>
-                <div style={{fontWeight:700,marginBottom:8}}>ðŸ“² Comment utiliser ces templates ?</div>
+                <div style={{fontWeight:700,marginBottom:8}}>📲 Comment utiliser ces templates ?</div>
                 <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.8}}>
-                  <strong style={{color:"white"}}>BanniÃ¨res Twitch :</strong> Capture d'Ã©cran â†’ ParamÃ¨tres Twitch â†’ Image de profil en-tÃªte<br/>
-                  <strong style={{color:"white"}}>BanniÃ¨res YouTube :</strong> Capture d'Ã©cran â†’ Personnaliser la chaÃ®ne â†’ Image de banniÃ¨re<br/>
-                  <strong style={{color:"white"}}>Photos de profil :</strong> Utilise <strong>Canva</strong> (gratuit) pour insÃ©rer ta photo dans le cadre<br/>
-                  <strong style={{color:"white"}}>Reconnaissance :</strong> Les crÃ©ateurs Belive se reconnaÃ®tront entre eux ðŸ”¥
+                  <strong style={{color:"white"}}>Bannières Twitch :</strong> Capture d'écran → Paramètres Twitch → Image de profil en-tête<br/>
+                  <strong style={{color:"white"}}>Bannières YouTube :</strong> Capture d'écran → Personnaliser la chaîne → Image de bannière<br/>
+                  <strong style={{color:"white"}}>Photos de profil :</strong> Utilise <strong>Canva</strong> (gratuit) pour insérer ta photo dans le cadre<br/>
+                  <strong style={{color:"white"}}>Reconnaissance :</strong> Les créateurs Belive se reconnaîtront entre eux 🔥
                 </div>
               </div>
             </div>
@@ -2507,7 +2507,7 @@ export default function App(){
           <div className="fade">
             <div style={{marginBottom:20}}>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>MON PROFIL</div>
-              <div style={{fontSize:13,color:M,marginTop:2}}>Ton identitÃ© sur Belive Academy</div>
+              <div style={{fontSize:13,color:M,marginTop:2}}>Ton identité sur Belive Academy</div>
             </div>
 
             {/* Photo + infos principales */}
@@ -2521,7 +2521,7 @@ export default function App(){
                     }
                   </div>
                   <label style={{position:"absolute",bottom:-2,right:-2,width:24,height:24,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:12}}>
-                    ðŸ“·
+                    📷
                     <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setProfil(p=>({...p,photo:ev.target.result}));r.readAsDataURL(f);}}/>
                   </label>
                 </div>
@@ -2529,12 +2529,12 @@ export default function App(){
                   <div style={{fontWeight:800,fontSize:18,marginBottom:4}}>{user.name}</div>
                   <div style={{fontSize:13,color:M,marginBottom:8}}>{profil.bio||"Aucune bio pour l'instant"}</div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {user.twitch&&<span style={{background:"rgba(145,70,255,0.12)",color:"#a78bfa",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>ðŸŸ£ @{user.twitch}</span>}
-                    {user.youtube&&<span style={{background:"rgba(255,0,0,0.1)",color:"#ff6b6b",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>â–¶ï¸ {user.youtube}</span>}
-                    {user.tiktok&&<span style={{background:"rgba(0,0,0,0.3)",color:"white",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>ðŸŽµ {user.tiktok}</span>}
+                    {user.twitch&&<span style={{background:"rgba(145,70,255,0.12)",color:"#a78bfa",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>🟣 @{user.twitch}</span>}
+                    {user.youtube&&<span style={{background:"rgba(255,0,0,0.1)",color:"#ff6b6b",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>▶️ {user.youtube}</span>}
+                    {user.tiktok&&<span style={{background:"rgba(0,0,0,0.3)",color:"white",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>🎵 {user.tiktok}</span>}
                   </div>
                 </div>
-                <Btn sz="sm" v="ghost" onClick={()=>setProfilEdit(!profilEdit)}>{profilEdit?"âœ• Fermer":"âœï¸ Modifier"}</Btn>
+                <Btn sz="sm" v="ghost" onClick={()=>setProfilEdit(!profilEdit)}>{profilEdit?"✕ Fermer":"✏️ Modifier"}</Btn>
               </div>
 
               {profilEdit&&(
@@ -2542,45 +2542,45 @@ export default function App(){
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                     <Field label="Bio" as="textarea" value={profil.bio||""} onChange={e=>setProfil(p=>({...p,bio:e.target.value}))} placeholder="Parle de toi, ton style de stream..."/>
                     <div style={{gridColumn:"1/-1"}}>
-                      <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>ðŸŽ® Jeux streamÃ©s (6 max)</div>
+                      <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>🎮 Jeux streamés (6 max)</div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
                         {[0,1,2,3,4,5].map(i=>(
                           <input key={i} value={(profil.games||[])[i]||""} onChange={e=>{const g=[...(profil.games||["","","","","",""])];g[i]=e.target.value;setProfil(p=>({...p,games:g}));}} placeholder={`Jeu ${i+1}${i===0?" *":""}`} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
                         ))}
                       </div>
-                      <div style={{fontSize:11,color:M,marginTop:6}}>ðŸ’¡ Au moins un jeu recommandÃ© â€” les autres crÃ©ateurs pourront te trouver</div>
+                      <div style={{fontSize:11,color:M,marginTop:6}}>💡 Au moins un jeu recommandé — les autres créateurs pourront te trouver</div>
                     </div>
-                    <Field label="Ville / RÃ©gion" value={profil.city||""} onChange={e=>setProfil(p=>({...p,city:e.target.value}))} placeholder="Ex: Paris, Lyon..."/>
-                    <Field label="DisponibilitÃ©s" value={profil.dispo||""} onChange={e=>setProfil(p=>({...p,dispo:e.target.value}))} placeholder="Ex: Soirs semaine, weekends"/>
+                    <Field label="Ville / Région" value={profil.city||""} onChange={e=>setProfil(p=>({...p,city:e.target.value}))} placeholder="Ex: Paris, Lyon..."/>
+                    <Field label="Disponibilités" value={profil.dispo||""} onChange={e=>setProfil(p=>({...p,dispo:e.target.value}))} placeholder="Ex: Soirs semaine, weekends"/>
                   </div>
-                  <Btn sz="sm" onClick={()=>setProfilEdit(false)} icon="ðŸ’¾">Sauvegarder</Btn>
+                  <Btn sz="sm" onClick={()=>setProfilEdit(false)} icon="💾">Sauvegarder</Btn>
                 </div>
               )}
             </Card>
 
             {/* Stats publiques */}
-            <div style={{fontWeight:800,marginBottom:12,fontSize:14}}>ðŸ“Š Mes statistiques publiques</div>
+            <div style={{fontWeight:800,marginBottom:12,fontSize:14}}>📊 Mes statistiques publiques</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
-              <SC label="ðŸŸ£ Twitch" value={ms.twitch||"â€”"} color="purple"/>
-              <SC label="â–¶ï¸ YouTube" value={ms.youtube||"â€”"} color="red"/>
-              <SC label="Heures streamÃ©es" value={totalH.toFixed(1)+"h"} color="green"/>
+              <SC label="🟣 Twitch" value={ms.twitch||"—"} color="purple"/>
+              <SC label="▶️ YouTube" value={ms.youtube||"—"} color="red"/>
+              <SC label="Heures streamées" value={totalH.toFixed(1)+"h"} color="green"/>
               <SC label="Streams ce mois" value={streams.length} color="purple"/>
               <SC label="Viewers moyen" value={avgV} color="blue"/>
             </div>
 
-            {/* Infos supplÃ©mentaires */}
+            {/* Infos supplémentaires */}
             <Card style={{marginBottom:20}}>
-              <div style={{fontWeight:800,marginBottom:14}}>ðŸŽ® Ã€ propos</div>
+              <div style={{fontWeight:800,marginBottom:14}}>🎮 À propos</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                 {[
-                  ["ðŸŽ® Jeux streamÃ©s", (profil.games||[]).filter(Boolean).join(", ")||"Non renseignÃ©"],
-                  ["ðŸ“ Localisation", profil.city||"Non renseignÃ©"],
-                  ["â° DisponibilitÃ©s", profil.dispo||"Non renseignÃ©"],
-                  ["ðŸ“… Membre depuis", user.createdAt||new Date().toLocaleDateString("fr-FR")],
+                  ["🎮 Jeux streamés", (profil.games||[]).filter(Boolean).join(", ")||"Non renseigné"],
+                  ["📍 Localisation", profil.city||"Non renseigné"],
+                  ["⏰ Disponibilités", profil.dispo||"Non renseigné"],
+                  ["📅 Membre depuis", user.createdAt||new Date().toLocaleDateString("fr-FR")],
                 ].map(([l,v])=>(
                   <div key={l} style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"12px 14px"}}>
                     <div style={{fontSize:11,color:M,marginBottom:4}}>{l}</div>
-                    <div style={{fontSize:13,fontWeight:600,color:v==="Non renseignÃ©"?M:"white"}}>{v}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:v==="Non renseigné"?M:"white"}}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -2589,23 +2589,23 @@ export default function App(){
             {/* Badge Belive */}
             <Card style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.15)`,marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{width:52,height:52,background:R,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>ðŸ†</div>
+                <div style={{width:52,height:52,background:R,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏆</div>
                 <div>
-                  <div style={{fontWeight:800,marginBottom:4}}>CrÃ©ateur Belive Academy</div>
-                  <div style={{fontSize:13,color:M}}>Tu fais partie de la communautÃ© officielle Belive Academy. Utilise les templates pour afficher ton badge sur tes rÃ©seaux !</div>
+                  <div style={{fontWeight:800,marginBottom:4}}>Créateur Belive Academy</div>
+                  <div style={{fontSize:13,color:M}}>Tu fais partie de la communauté officielle Belive Academy. Utilise les templates pour afficher ton badge sur tes réseaux !</div>
                 </div>
               </div>
             </Card>
 
             {/* Centre de notifications */}
             <Card>
-              <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>ðŸ”” Mes notifications</div>
-              <div style={{fontSize:12,color:M,marginBottom:16}}>Active ou dÃ©sactive chaque type de notification</div>
+              <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>🔔 Mes notifications</div>
+              <div style={{fontSize:12,color:M,marginBottom:16}}>Active ou désactive chaque type de notification</div>
               {[
-                {key:"planning",   icon:"ðŸ“…", label:"Rappels de stream",      desc:"1h avant chaque stream planifiÃ©"},
-                {key:"messages",   icon:"ðŸ’¬", label:"Nouveaux messages",       desc:"Quand quelqu'un rÃ©pond dans la communautÃ©"},
-                {key:"partenariats",icon:"ðŸ¤",label:"Partenariats",            desc:"Nouvelles offres de partenariat disponibles"},
-                {key:"classement", icon:"â—†", label:"Classement",              desc:"Quand tu montes dans le classement"},
+                {key:"planning",   icon:"📅", label:"Rappels de stream",      desc:"1h avant chaque stream planifié"},
+                {key:"messages",   icon:"💬", label:"Nouveaux messages",       desc:"Quand quelqu'un répond dans la communauté"},
+                {key:"partenariats",icon:"🤝",label:"Partenariats",            desc:"Nouvelles offres de partenariat disponibles"},
+                {key:"classement", icon:"◆", label:"Classement",              desc:"Quand tu montes dans le classement"},
               ].map(n=>(
                 <div key={n.key} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:`1px solid ${B}`}}>
                   <div style={{width:40,height:40,background:"rgba(255,255,255,0.04)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{n.icon}</div>
@@ -2637,7 +2637,7 @@ export default function App(){
                 </div>
               ))}
               <div style={{marginTop:14,fontSize:12,color:M,display:"flex",alignItems:"center",gap:8}}>
-                <span>{Notification.permission==="granted"?"âœ… Notifications activÃ©es":"âš ï¸ Notifications dÃ©sactivÃ©es dans ton navigateur"}</span>
+                <span>{Notification.permission==="granted"?"✅ Notifications activées":"⚠️ Notifications désactivées dans ton navigateur"}</span>
                 {Notification.permission!=="granted"&&(
                   <button onClick={()=>Notification.requestPermission()} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>Activer</button>
                 )}
@@ -2659,17 +2659,17 @@ export default function App(){
           <div className="fade">
             <div style={{marginBottom:20}}>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGE</div>
-              <div style={{fontSize:13,color:M,marginTop:2}}>Invite des crÃ©ateurs et gagne des rÃ©ductions</div>
+              <div style={{fontSize:13,color:M,marginTop:2}}>Invite des créateurs et gagne des réductions</div>
             </div>
 
-            {/* Comment Ã§a marche */}
+            {/* Comment ça marche */}
             <Card style={{marginBottom:20,background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.15)`}}>
-              <div style={{fontWeight:800,marginBottom:14,fontSize:15}}>ðŸŽ Comment Ã§a marche ?</div>
+              <div style={{fontWeight:800,marginBottom:14,fontSize:15}}>🎁 Comment ça marche ?</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
                 {[
-                  {icon:"ðŸ”—",t:"Partage ton code",d:"Donne ton code Ã  un crÃ©ateur"},
-                  {icon:"ðŸ’³",t:"Il prend un abonnement",d:"Le -50% s'active uniquement si il paye"},
-                  {icon:"ðŸ’°",t:"-50% le mois suivant",d:"1 seule rÃ©duction par mois maximum"},
+                  {icon:"🔗",t:"Partage ton code",d:"Donne ton code à un créateur"},
+                  {icon:"💳",t:"Il prend un abonnement",d:"Le -50% s'active uniquement si il paye"},
+                  {icon:"💰",t:"-50% le mois suivant",d:"1 seule réduction par mois maximum"},
                 ].map((s,i)=>(
                   <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:"16px 14px",textAlign:"center"}}>
                     <div style={{fontSize:28,marginBottom:8}}>{s.icon}</div>
@@ -2679,45 +2679,45 @@ export default function App(){
                 ))}
               </div>
               <div style={{marginTop:12,background:"rgba(255,165,0,0.08)",border:"1px solid rgba(255,165,0,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"rgba(255,165,0,0.9)"}}>
-                âš ï¸ Limite : 1 rÃ©duction de -50% par mois. Si tu paraines 2 personnes le mÃªme mois, seule la premiÃ¨re compte.
+                ⚠️ Limite : 1 réduction de -50% par mois. Si tu paraines 2 personnes le même mois, seule la première compte.
               </div>
             </Card>
 
             {/* Mon code */}
             <Card style={{marginBottom:20}}>
-              <div style={{fontWeight:800,marginBottom:12}}>ðŸ”‘ Mon code de parrainage</div>
+              <div style={{fontWeight:800,marginBottom:12}}>🔑 Mon code de parrainage</div>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
                 <div style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:10,padding:"14px 20px",fontFamily:"monospace",fontSize:18,letterSpacing:4,color:R,fontWeight:800,textAlign:"center"}}>
                   {myCode}
                 </div>
-                <Btn onClick={()=>{navigator.clipboard?.writeText(myCode).catch(()=>{});setParrainCopied(true);setTimeout(()=>setParrainCopied(false),2000);}} icon={parrainCopied?"âœ“":"ðŸ“‹"} v={parrainCopied?"success":"primary"}>
-                  {parrainCopied?"CopiÃ© !":"Copier"}
+                <Btn onClick={()=>{navigator.clipboard?.writeText(myCode).catch(()=>{});setParrainCopied(true);setTimeout(()=>setParrainCopied(false),2000);}} icon={parrainCopied?"✓":"📋"} v={parrainCopied?"success":"primary"}>
+                  {parrainCopied?"Copié !":"Copier"}
                 </Btn>
               </div>
-              <div style={{fontSize:12,color:M}}>ðŸ’¡ Partage ce code en stream, sur tes rÃ©seaux ou en MP</div>
+              <div style={{fontSize:12,color:M}}>💡 Partage ce code en stream, sur tes réseaux ou en MP</div>
             </Card>
 
-            {/* RÃ©duction en cours */}
+            {/* Réduction en cours */}
             {rewardThisMonth&&(
               <Card style={{marginBottom:20,background:"rgba(34,197,94,0.06)",border:`1px solid rgba(34,197,94,0.2)`}}>
                 <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{fontSize:36}}>ðŸŽ‰</div>
+                  <div style={{fontSize:36}}>🎉</div>
                   <div>
-                    <div style={{fontWeight:800,fontSize:15,color:G,marginBottom:4}}>-50% activÃ© ce mois !</div>
-                    <div style={{fontSize:13,color:M}}>Ta rÃ©duction est appliquÃ©e sur ton prochain paiement.</div>
+                    <div style={{fontWeight:800,fontSize:15,color:G,marginBottom:4}}>-50% activé ce mois !</div>
+                    <div style={{fontSize:13,color:M}}>Ta réduction est appliquée sur ton prochain paiement.</div>
                   </div>
                 </div>
               </Card>
             )}
 
-            {/* RÃ©duction en attente */}
+            {/* Réduction en attente */}
             {pendingReward&&!rewardThisMonth&&(
               <Card style={{marginBottom:20,background:"rgba(251,191,36,0.06)",border:`1px solid rgba(251,191,36,0.2)`}}>
                 <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{fontSize:36}}>â³</div>
+                  <div style={{fontSize:36}}>⏳</div>
                   <div>
                     <div style={{fontWeight:800,fontSize:15,color:YE,marginBottom:4}}>-50% en attente pour le mois prochain !</div>
-                    <div style={{fontSize:13,color:M}}>Un de tes filleuls a payÃ©. Ta rÃ©duction sera appliquÃ©e automatiquement.</div>
+                    <div style={{fontSize:13,color:M}}>Un de tes filleuls a payé. Ta réduction sera appliquée automatiquement.</div>
                   </div>
                 </div>
               </Card>
@@ -2725,10 +2725,10 @@ export default function App(){
 
             {/* Mes filleuls */}
             <Card>
-              <div style={{fontWeight:800,marginBottom:14}}>ðŸ‘¥ Mes filleuls ({myReferrals.length})</div>
+              <div style={{fontWeight:800,marginBottom:14}}>👥 Mes filleuls ({myReferrals.length})</div>
               {myReferrals.length===0?(
                 <div style={{textAlign:"center",padding:"24px 0",color:M}}>
-                  <div style={{fontSize:36,marginBottom:10}}>ðŸ”—</div>
+                  <div style={{fontSize:36,marginBottom:10}}>🔗</div>
                   <div style={{fontWeight:700,marginBottom:6}}>Aucun filleul pour l'instant</div>
                   <div style={{fontSize:13}}>Partage ton code pour commencer !</div>
                 </div>
@@ -2739,12 +2739,12 @@ export default function App(){
                     <div style={{fontWeight:700,fontSize:13}}>{r.filleul_name||r.filleul_email}</div>
                     <div style={{fontSize:11,color:M}}>Inscrit le {new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
                   </div>
-                  <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"âœ… Payant":"â³ Essai"}</Pill>
-                  {r.reward_applied&&<Pill color="green" xs>ðŸŽ -50% appliquÃ©</Pill>}
+                  <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                  {r.reward_applied&&<Pill color="green" xs>🎁 -50% appliqué</Pill>}
                 </div>
               ))}
               <div style={{marginTop:14,padding:"12px 14px",background:"rgba(255,255,255,0.03)",borderRadius:10,fontSize:12,color:M,lineHeight:1.7}}>
-                <strong style={{color:"white"}}>RÃ¨gles :</strong> 1 filleul payant = -50% le mois suivant. Maximum 1 rÃ©duction par mois.
+                <strong style={{color:"white"}}>Règles :</strong> 1 filleul payant = -50% le mois suivant. Maximum 1 réduction par mois.
               </div>
             </Card>
           </div>
@@ -2756,20 +2756,20 @@ export default function App(){
           <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 80px)"}}>
             <div style={{marginBottom:14}}>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>COACH IA</div><Pill color="red">Streaming uniquement</Pill></div>
-              <div style={{fontSize:13,color:M}}>Conseils personnalisÃ©s sur ta stratÃ©gie streaming</div>
+              <div style={{fontSize:13,color:M}}>Conseils personnalisés sur ta stratégie streaming</div>
             </div>
-            {!isPro&&<div style={{background:"rgba(245,158,11,0.07)",border:`1px solid rgba(245,158,11,0.18)`,borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,color:"rgba(255,255,255,0.55)"}}>âš ï¸ Plan gratuit : 5 questions/jour. Pro = illimitÃ©.</div>}
+            {!isPro&&<div style={{background:"rgba(245,158,11,0.07)",border:`1px solid rgba(245,158,11,0.18)`,borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,color:"rgba(255,255,255,0.55)"}}>⚠️ Plan gratuit : 5 questions/jour. Pro = illimité.</div>}
             <Card style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
               <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12,marginBottom:12}}>
                 {aiMsgs.map((m,i)=>(
                   <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}}>
-                    {m.role==="ai"&&<div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,alignSelf:"flex-start"}}>ðŸ¤–</div>}
+                    {m.role==="ai"&&<div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0,alignSelf:"flex-start"}}>🤖</div>}
                     <div style={{maxWidth:"78%",padding:"10px 14px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",fontSize:13,lineHeight:1.65,background:m.role==="user"?R:"rgba(255,255,255,0.05)"}}>
                       {m.text.split("**").map((p,j)=>j%2===1?<strong key={j}>{p}</strong>:<span key={j}>{p}</span>)}
                     </div>
                   </div>
                 ))}
-                {aiTyping&&<div style={{display:"flex",gap:8}}><div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>ðŸ¤–</div><div style={{background:"rgba(255,255,255,0.05)",borderRadius:"14px 14px 14px 4px",padding:"10px 14px",fontSize:13,color:M}} className="blink">En cours</div></div>}
+                {aiTyping&&<div style={{display:"flex",gap:8}}><div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>🤖</div><div style={{background:"rgba(255,255,255,0.05)",borderRadius:"14px 14px 14px 4px",padding:"10px 14px",fontSize:13,color:M}} className="blink">En cours</div></div>}
                 <div ref={aiEnd}/>
               </div>
               <div style={{display:"flex",gap:10,borderTop:`1px solid ${B}`,paddingTop:12}}>
@@ -2780,40 +2780,40 @@ export default function App(){
           </div>
         )}
 
-        {/* CRÃ‰ATEURS ADMIN */}
+        {/* CRÉATEURS ADMIN */}
         {page==="createurs"&&role==="admin"&&(()=>{
           const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
           const allCreateurs=[...allUsers,...createurs.filter(c=>!allUsers.find(u=>u.email===c.email))];
           return(
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                <div><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CRÃ‰ATEURS</div><div style={{fontSize:13,color:M}}>{allCreateurs.length} inscrits</div></div>
+                <div><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CRÉATEURS</div><div style={{fontSize:13,color:M}}>{allCreateurs.length} inscrits</div></div>
                 <div style={{display:"flex",gap:8}}>
-                  <Btn sz="sm" v="ghost" onClick={()=>setPage("codes")} icon="ðŸ”‘">Codes</Btn>
+                  <Btn sz="sm" v="ghost" onClick={()=>setPage("codes")} icon="🔑">Codes</Btn>
                   <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter</Btn>
                 </div>
               </div>
 
-              {/* GÃ©nÃ©ration rapide de code */}
+              {/* Génération rapide de code */}
               <Card style={{marginBottom:16,background:"rgba(212,16,63,0.04)",border:`1px solid rgba(212,16,63,0.15)`}}>
-                <div style={{fontWeight:800,marginBottom:10}}>ðŸ”‘ GÃ©nÃ©rer un code d'invitation rapide</div>
+                <div style={{fontWeight:800,marginBottom:10}}>🔑 Générer un code d'invitation rapide</div>
                 <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                  {[{t:"createur",l:"ðŸŽ® CrÃ©ateur"},{t:"agent",l:"ðŸŽ¯ Agent"}].map(x=>(
+                  {[{t:"createur",l:"🎮 Créateur"},{t:"agent",l:"🎯 Agent"}].map(x=>(
                     <div key={x.t} style={{flex:1,minWidth:180}}>
                       <div style={{background:"rgba(255,255,255,0.04)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:10,padding:"12px 16px",fontFamily:"monospace",fontSize:15,letterSpacing:3,color:R,fontWeight:800,textAlign:"center",marginBottom:8}}>
                         {codes.filter(c=>c.type===x.t).slice(-1)[0]?.code||`${x.t==="createur"?"BELIVE":"AGENT"}-??????`}
                       </div>
-                      <Btn full sz="sm" onClick={async()=>await genCode(x.t)}>{x.l} â€” GÃ©nÃ©rer</Btn>
+                      <Btn full sz="sm" onClick={async()=>await genCode(x.t)}>{x.l} — Générer</Btn>
                     </div>
                   ))}
                 </div>
               </Card>
 
-              {/* Liste complÃ¨te */}
+              {/* Liste complète */}
               {allCreateurs.length===0?(
                 <Card style={{textAlign:"center",padding:"48px 20px"}}>
-                  <div style={{fontSize:44,marginBottom:12}}>ðŸŽ®</div>
-                  <div style={{fontWeight:800,marginBottom:8}}>Aucun crÃ©ateur inscrit</div>
+                  <div style={{fontSize:44,marginBottom:12}}>🎮</div>
+                  <div style={{fontWeight:800,marginBottom:8}}>Aucun créateur inscrit</div>
                   <Btn onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
                 </Card>
               ):(
@@ -2828,25 +2828,25 @@ export default function App(){
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
                               <div style={{fontWeight:800,fontSize:14}}>{c.name}</div>
-                              {status==="pro"&&<Pill color="green">âœ… Pro</Pill>}
-                              {status==="trial"&&<Pill color="yellow">â³ {daysLeft}j</Pill>}
-                              {status==="expired"&&<Pill color="red">ðŸ”’ ExpirÃ©</Pill>}
+                              {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
+                              {status==="trial"&&<Pill color="yellow">⏳ {daysLeft}j</Pill>}
+                              {status==="expired"&&<Pill color="red">🔒 Expiré</Pill>}
                             </div>
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,fontSize:11,color:M}}>
-                              <span>ðŸ“§ {c.email}</span>
-                              <span>ðŸ“± {c.phone||"â€”"}</span>
-                              {c.twitch&&<span>ðŸŸ£ @{c.twitch}</span>}
-                              {c.youtube&&<span>â–¶ï¸ {c.youtube}</span>}
-                              {c.tiktok&&<span>ðŸŽµ {c.tiktok}</span>}
-                              {c.instagram&&<span>ðŸ“¸ {c.instagram}</span>}
+                              <span>📧 {c.email}</span>
+                              <span>📱 {c.phone||"—"}</span>
+                              {c.twitch&&<span>🟣 @{c.twitch}</span>}
+                              {c.youtube&&<span>▶️ {c.youtube}</span>}
+                              {c.tiktok&&<span>🎵 {c.tiktok}</span>}
+                              {c.instagram&&<span>📸 {c.instagram}</span>}
                             </div>
                           </div>
                           <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0,alignItems:"flex-end"}}>
-                            <Btn sz="sm" onClick={()=>openContract(c)}>ðŸ“‹ Contrat</Btn>
+                            <Btn sz="sm" onClick={()=>openContract(c)}>📋 Contrat</Btn>
                             <button onClick={()=>togglePro(c.email)} style={{background:status==="pro"?"rgba(34,197,94,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${status==="pro"?"rgba(34,197,94,0.3)":B}`,borderRadius:8,padding:"5px 12px",color:status==="pro"?G:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                              {status==="pro"?"â†“ Retirer Pro":"â†‘ Passer Pro"}
+                              {status==="pro"?"↓ Retirer Pro":"↑ Passer Pro"}
                             </button>
-                            <button onClick={()=>deleteUser(c.email)} style={{background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 12px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>ðŸ—‘ï¸ Supprimer</button>
+                            <button onClick={()=>deleteUser(c.email)} style={{background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 12px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️ Supprimer</button>
                           </div>
                         </div>
                       </Card>
@@ -2862,13 +2862,13 @@ export default function App(){
         {page==="contrats"&&role==="admin"&&(
           <div>
             <div style={{marginBottom:16}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CONTRATS</div><div style={{fontSize:13,color:M}}>Partenariats et contrats d'influence</div></div>
-            {contrats.length===0?<Card style={{textAlign:"center",padding:"48px 20px"}}><div style={{fontSize:44,marginBottom:12}}>ðŸ“‹</div><div style={{fontWeight:800,marginBottom:8}}>Aucun contrat</div><div style={{color:M}}>Va dans CrÃ©ateurs pour gÃ©nÃ©rer un contrat</div></Card>:(
+            {contrats.length===0?<Card style={{textAlign:"center",padding:"48px 20px"}}><div style={{fontSize:44,marginBottom:12}}>📋</div><div style={{fontWeight:800,marginBottom:8}}>Aucun contrat</div><div style={{color:M}}>Va dans Créateurs pour générer un contrat</div></Card>:(
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {contrats.map(c=>(
                   <Card key={c.id} style={{display:"flex",alignItems:"center",gap:14}}>
-                    <div style={{width:44,height:44,background:"rgba(34,197,94,0.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>ðŸ“‹</div>
-                    <div style={{flex:1}}><div style={{fontWeight:700}}>{c.name}</div><div style={{fontSize:12,color:M}}>{c.formule} â€¢ {c.commission}% â€¢ {c.montant}â‚¬ â€¢ {c.duree} â€¢ {c.date}</div><div style={{fontSize:12,color:M}}>ðŸ“§ {c.email}</div></div>
-                    <Pill color="yellow">EnvoyÃ©</Pill>
+                    <div style={{width:44,height:44,background:"rgba(34,197,94,0.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📋</div>
+                    <div style={{flex:1}}><div style={{fontWeight:700}}>{c.name}</div><div style={{fontSize:12,color:M}}>{c.formule} • {c.commission}% • {c.montant}€ • {c.duree} • {c.date}</div><div style={{fontSize:12,color:M}}>📧 {c.email}</div></div>
+                    <Pill color="yellow">Envoyé</Pill>
                     <button onClick={()=>setContrats(p=>p.filter(x=>x.id!==c.id))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 12px",color:M,fontSize:11,cursor:"pointer"}}>Suppr.</button>
                   </Card>
                 ))}
@@ -2881,19 +2881,19 @@ export default function App(){
         {page==="codes"&&role==="admin"&&(()=>{const lastCode=codes.filter(c=>c.type===codeType).slice(-1)[0];return(
             <div>
               <div style={{marginBottom:20}}>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CODES D'ACCÃˆS</div>
-                <div style={{fontSize:13,color:M}}>GÃ©nÃ¨re des codes d'invitation illimitÃ©s pour tes crÃ©ateurs</div>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CODES D'ACCÈS</div>
+                <div style={{fontSize:13,color:M}}>Génère des codes d'invitation illimités pour tes créateurs</div>
               </div>
 
-              {/* GÃ©nÃ©rateur */}
+              {/* Générateur */}
               <Card style={{marginBottom:20}}>
-                <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>ðŸ”‘ GÃ©nÃ©rateur de code</div>
+                <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>🔑 Générateur de code</div>
 
                 {/* Type de compte */}
                 <div style={{marginBottom:14}}>
                   <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>Type de compte</div>
                   <div style={{display:"flex",gap:10}}>
-                    {[{v:"createur",l:"ðŸŽ® CrÃ©ateur"},{v:"agent",l:"ðŸŽ¯ Agent"}].map(t=>(
+                    {[{v:"createur",l:"🎮 Créateur"},{v:"agent",l:"🎯 Agent"}].map(t=>(
                       <button key={t.v} onClick={()=>setCodeType(t.v)} style={{flex:1,padding:"10px",background:codeType===t.v?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${codeType===t.v?"rgba(212,16,63,0.4)":B}`,borderRadius:10,color:codeType===t.v?R:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                         {t.l}
                       </button>
@@ -2901,14 +2901,14 @@ export default function App(){
                   </div>
                 </div>
 
-                {/* Type d'accÃ¨s */}
+                {/* Type d'accès */}
                 <div style={{marginBottom:14}}>
-                  <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>Type d'accÃ¨s</div>
+                  <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>Type d'accès</div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                     {[
-                      {v:"belive_creator",l:"ðŸŽ¯ CrÃ©ateur Belive",d:"AccÃ¨s Ã  9,99â‚¬/mois"},
-                      {v:"limited",l:"â³ DurÃ©e limitÃ©e",d:"X jours gratuits"},
-                      {v:"unlimited",l:"â™¾ï¸ Pro permanent",d:"Gratuit Ã  vie"},
+                      {v:"belive_creator",l:"🎯 Créateur Belive",d:"Accès à 9,99€/mois"},
+                      {v:"limited",l:"⏳ Durée limitée",d:"X jours gratuits"},
+                      {v:"unlimited",l:"♾️ Pro permanent",d:"Gratuit à vie"},
                     ].map(t=>(
                       <button key={t.v} onClick={()=>setFreeType(t.v)} style={{flex:1,minWidth:100,padding:"10px 8px",background:freeType===t.v?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${freeType===t.v?"rgba(212,16,63,0.4)":B}`,borderRadius:10,color:freeType===t.v?R:"white",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center"}}>
                         <div>{t.l}</div>
@@ -2921,14 +2921,14 @@ export default function App(){
                 {/* Info selon le type */}
                 {freeType==="belive_creator"&&(
                   <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:10,padding:"12px 14px",marginBottom:14,fontSize:12,color:M,lineHeight:1.7}}>
-                    ðŸŽ¯ <strong style={{color:"white"}}>CrÃ©ateur Belive</strong> â€” Quand il s'inscrit avec ce code, l'app lui propose automatiquement le lien Ã  <strong style={{color:R}}>9,99â‚¬/mois</strong> au lieu de 14,99â‚¬.
+                    🎯 <strong style={{color:"white"}}>Créateur Belive</strong> — Quand il s'inscrit avec ce code, l'app lui propose automatiquement le lien à <strong style={{color:R}}>9,99€/mois</strong> au lieu de 14,99€.
                   </div>
                 )}
 
-                {/* DurÃ©e si limitÃ© */}
+                {/* Durée si limité */}
                 {freeType==="limited"&&(
                   <div style={{marginBottom:14}}>
-                    <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>DurÃ©e gratuite</div>
+                    <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>Durée gratuite</div>
                     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                       {[7,14,30,60,90].map(d=>(
                         <button key={d} onClick={()=>setFreeDays(d)} style={{padding:"8px 16px",background:freeDays===d?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${freeDays===d?"rgba(212,16,63,0.4)":B}`,borderRadius:8,color:freeDays===d?R:M,fontSize:12,fontWeight:700,cursor:"pointer"}}>
@@ -2939,37 +2939,37 @@ export default function App(){
                   </div>
                 )}
 
-                {/* AperÃ§u du code */}
+                {/* Aperçu du code */}
                 <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:12,padding:"16px",fontFamily:"monospace",fontSize:15,letterSpacing:3,color:R,textAlign:"center",fontWeight:800,marginBottom:16}}>
                   {lastCode?.code||`${codeType==="createur"?"BELIVE":"AGENT"}-XXXXXX-XXXXXX-XXXX`}
                 </div>
 
-                {/* Nom du crÃ©ateur */}
+                {/* Nom du créateur */}
                 <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>ðŸ‘¤ Pour qui est ce code ? (optionnel)</div>
+                  <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>👤 Pour qui est ce code ? (optionnel)</div>
                   <input value={codeCreatorName} onChange={e=>setCodeCreatorName(e.target.value)} placeholder="Ex: Lucas Stream, Marie Live..." style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 14px",color:"white",fontSize:13,outline:"none"}}/>
-                  <div style={{fontSize:11,color:M,marginTop:4}}>Ce nom s'affichera dans l'historique pour que tu te rappelles Ã  qui tu as donnÃ© ce code</div>
+                  <div style={{fontSize:11,color:M,marginTop:4}}>Ce nom s'affichera dans l'historique pour que tu te rappelles à qui tu as donné ce code</div>
                 </div>
 
                 <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:12}}>
-                  <Btn full onClick={async()=>{await genCode(codeType,freeType,freeDays,codeCreatorName);setCodeCreatorName("");}} icon="ðŸ”„">
-                    GÃ©nÃ©rer un nouveau code
+                  <Btn full onClick={async()=>{await genCode(codeType,freeType,freeDays,codeCreatorName);setCodeCreatorName("");}} icon="🔄">
+                    Générer un nouveau code
                   </Btn>
                   {lastCode&&(
-                    <Btn v="ghost" onClick={()=>{navigator.clipboard?.writeText(lastCode.code).catch(()=>{});alert(`âœ… Code copiÃ© !`);}}>
-                      ðŸ“‹ Copier
+                    <Btn v="ghost" onClick={()=>{navigator.clipboard?.writeText(lastCode.code).catch(()=>{});alert(`✅ Code copié !`);}}>
+                      📋 Copier
                     </Btn>
                   )}
                 </div>
 
                 <div style={{fontSize:12,color:M,lineHeight:1.7}}>
                   {freeType==="belive_creator"
-                    ?<>ðŸŽ¯ <strong style={{color:"white"}}>CrÃ©ateur Belive</strong> â€” L'app proposera automatiquement le tarif <strong style={{color:R}}>9,99â‚¬/mois</strong></>
+                    ?<>🎯 <strong style={{color:"white"}}>Créateur Belive</strong> — L'app proposera automatiquement le tarif <strong style={{color:R}}>9,99€/mois</strong></>
                     :freeType==="unlimited"
-                    ?<>â™¾ï¸ <strong style={{color:"white"}}>AccÃ¨s Pro permanent</strong> â€” Gratuit Ã  vie</>
-                    :<>â³ <strong style={{color:"white"}}>{freeDays} jours gratuits</strong> â€” Ensuite 14,99â‚¬/mois</>
+                    ?<>♾️ <strong style={{color:"white"}}>Accès Pro permanent</strong> — Gratuit à vie</>
+                    :<>⏳ <strong style={{color:"white"}}>{freeDays} jours gratuits</strong> — Ensuite 14,99€/mois</>
                   }
-                  <br/>ðŸ”’ Code unique Ã  16 caractÃ¨res â€” impossible Ã  deviner
+                  <br/>🔒 Code unique à 16 caractères — impossible à deviner
                 </div>
               </Card>
 
@@ -2984,23 +2984,23 @@ export default function App(){
                     <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 0",borderBottom:`1px solid rgba(255,255,255,0.04)`,flexWrap:"wrap"}}>
                       <div style={{flex:1,minWidth:180}}>
                         <div style={{fontFamily:"monospace",color:R,letterSpacing:1,fontWeight:800,fontSize:11,marginBottom:c.creatorName?4:0}}>{c.code}</div>
-                        {c.creatorName&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>ðŸ‘¤ Pour : <strong style={{color:"white"}}>{c.creatorName}</strong></div>}
+                        {c.creatorName&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>👤 Pour : <strong style={{color:"white"}}>{c.creatorName}</strong></div>}
                       </div>
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
                         <Pill color={c.type==="createur"?"purple":"blue"} xs>{c.type}</Pill>
                         {c.freeType==="belive_creator"||c.free_type==="belive_creator"
-                          ?<Pill color="red" xs>ðŸŽ¯ 9,99â‚¬</Pill>
+                          ?<Pill color="red" xs>🎯 9,99€</Pill>
                           :c.freeType==="unlimited"||c.free_type==="unlimited"
-                          ?<Pill color="green" xs>â™¾ï¸ Pro</Pill>
-                          :<Pill color="yellow" xs>â³ {c.freeDays||c.free_days||14}j</Pill>
+                          ?<Pill color="green" xs>♾️ Pro</Pill>
+                          :<Pill color="yellow" xs>⏳ {c.freeDays||c.free_days||14}j</Pill>
                         }
                         {c.usedBy||c.used_by
-                          ?<Pill color="red" xs>âœ“ {c.usedBy||c.used_by}</Pill>
+                          ?<Pill color="red" xs>✓ {c.usedBy||c.used_by}</Pill>
                           :<Pill color="green" xs>Dispo</Pill>
                         }
                       </div>
-                      <button onClick={()=>{navigator.clipboard?.writeText(c.code).catch(()=>{});alert("âœ… CopiÃ© !");}} style={{background:"none",border:`1px solid ${B}`,borderRadius:6,padding:"3px 8px",color:M,fontSize:10,cursor:"pointer"}}>ðŸ“‹</button>
-                      <button onClick={()=>setCodes(p=>p.filter((_,j)=>j!==codes.length-1-i))} style={{background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:12,cursor:"pointer"}}>âœ•</button>
+                      <button onClick={()=>{navigator.clipboard?.writeText(c.code).catch(()=>{});alert("✅ Copié !");}} style={{background:"none",border:`1px solid ${B}`,borderRadius:6,padding:"3px 8px",color:M,fontSize:10,cursor:"pointer"}}>📋</button>
+                      <button onClick={()=>setCodes(p=>p.filter((_,j)=>j!==codes.length-1-i))} style={{background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>
                   ))}
                 </Card>
@@ -3016,44 +3016,44 @@ export default function App(){
         <div className="fade">
           <div style={{marginBottom:20}}>
             <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
-            <div style={{fontSize:13,color:M}}>Suivi des parrainages et rÃ©ductions -50%</div>
+            <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
           </div>
 
           {/* Stats */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
-            <SC label="Total parrainages" value={adminRefs.length} icon="ðŸ”—" color="yellow"/>
-            <SC label="Filleuls payants" value={adminRefs.filter(r=>r.paid).length} icon="ðŸ’³" color="green"/>
-            <SC label="RÃ©ductions appliquÃ©es" value={adminRefs.filter(r=>r.reward_applied).length} icon="ðŸŽ" color="red"/>
+            <SC label="Total parrainages" value={adminRefs.length} icon="🔗" color="yellow"/>
+            <SC label="Filleuls payants" value={adminRefs.filter(r=>r.paid).length} icon="💳" color="green"/>
+            <SC label="Réductions appliquées" value={adminRefs.filter(r=>r.reward_applied).length} icon="🎁" color="red"/>
           </div>
 
           {/* Liste */}
           <Card>
-            <div style={{fontWeight:800,marginBottom:14}}>ðŸ‘¥ Tous les parrainages</div>
+            <div style={{fontWeight:800,marginBottom:14}}>👥 Tous les parrainages</div>
             {adminRefs.length===0?(
               <div style={{textAlign:"center",padding:"40px 0",color:M}}>
-                <div style={{fontSize:36,marginBottom:10}}>ðŸŽ</div>
+                <div style={{fontSize:36,marginBottom:10}}>🎁</div>
                 <div style={{fontWeight:700,marginBottom:6}}>Aucun parrainage pour l'instant</div>
-                <div style={{fontSize:13}}>Les parrainages apparaÃ®tront ici dÃ¨s qu'un crÃ©ateur utilisera le code d'un autre</div>
+                <div style={{fontSize:13}}>Les parrainages apparaîtront ici dès qu'un créateur utilisera le code d'un autre</div>
               </div>
             ):adminRefs.map((r,i)=>{
               const currentMonth=new Date().toISOString().slice(0,7);
               const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===currentMonth&&x.id!==r.id);
               return(
                 <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:`1px solid ${B}`}}>
-                  <div style={{width:40,height:40,background:"rgba(251,191,36,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>ðŸŽ</div>
+                  <div style={{width:40,height:40,background:"rgba(251,191,36,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🎁</div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
-                    <div style={{fontSize:11,color:M,marginTop:2}}>a parrainÃ© â†’ <strong style={{color:"white"}}>{r.filleul_name||r.filleul_email}</strong></div>
+                    <div style={{fontSize:11,color:M,marginTop:2}}>a parrainé → <strong style={{color:"white"}}>{r.filleul_name||r.filleul_email}</strong></div>
                     <div style={{fontSize:11,color:M}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
                   </div>
                   <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                    <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"âœ… Payant":"â³ Essai"}</Pill>
-                    {r.reward_applied&&<Pill color="green" xs>ðŸŽ -50% {r.reward_month}</Pill>}
+                    <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                    {r.reward_applied&&<Pill color="green" xs>🎁 -50% {r.reward_month}</Pill>}
                     {alreadyRewarded&&!r.reward_applied&&<Pill color="gray" xs>Limite mois atteinte</Pill>}
                     {r.paid&&!r.reward_applied&&!alreadyRewarded&&(
                       <Btn sz="sm" onClick={async()=>{
                         await db.updateReferral(r.id,{reward_applied:true,reward_month:currentMonth});
-                        alert(`âœ… RÃ©duction -50% appliquÃ©e pour ${r.parrain_email} !`);
+                        alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
                         db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
                       }}>Appliquer -50%</Btn>
                     )}
@@ -3069,10 +3069,10 @@ export default function App(){
 
       {/* WELCOME MODAL */}
       {/* FORGOT PASSWORD MODAL */}
-      <Modal open={isForgot} onClose={()=>{setIsForgot(false);setForgotSent(false);setForgotEmail("");}} title="ðŸ”‘ Mot de passe oubliÃ©">
+      <Modal open={isForgot} onClose={()=>{setIsForgot(false);setForgotSent(false);setForgotEmail("");}} title="🔑 Mot de passe oublié">
         {!forgotSent?(
           <>
-            <div style={{fontSize:13,color:M,marginBottom:16,lineHeight:1.6}}>Entre ton email â€” on t'envoie un code de rÃ©initialisation.</div>
+            <div style={{fontSize:13,color:M,marginBottom:16,lineHeight:1.6}}>Entre ton email — on t'envoie un code de réinitialisation.</div>
             <Field label="Email" type="email" value={forgotEmail} onChange={e=>setForgotEmail(e.target.value)} placeholder="ton@email.com"/>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <Btn v="ghost" onClick={()=>setIsForgot(false)}>Annuler</Btn>
@@ -3082,7 +3082,7 @@ export default function App(){
         ):(
           <>
             <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:13,color:M}}>
-              âœ… Code envoyÃ© Ã  <strong style={{color:"white"}}>{forgotEmail}</strong>
+              ✅ Code envoyé à <strong style={{color:"white"}}>{forgotEmail}</strong>
             </div>
             {(()=>{
               const [code,setCode]=useState("");
@@ -3090,19 +3090,19 @@ export default function App(){
               const [confirmPass,setConfirmPass]=useState("");
               return(
                 <>
-                  <Field label="Code reÃ§u par email" value={code} onChange={e=>setCode(e.target.value)} placeholder="XXXXXX"/>
-                  <Field label="Nouveau mot de passe" type="password" value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"/>
-                  <Field label="Confirmer le mot de passe" type="password" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"/>
+                  <Field label="Code reçu par email" value={code} onChange={e=>setCode(e.target.value)} placeholder="XXXXXX"/>
+                  <Field label="Nouveau mot de passe" type="password" value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="••••••••"/>
+                  <Field label="Confirmer le mot de passe" type="password" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="••••••••"/>
                   <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
                     <Btn v="ghost" onClick={()=>setIsForgot(false)}>Annuler</Btn>
                     <Btn onClick={()=>{
                       const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
                       const r=resets[forgotEmail];
-                      if(!r||r.code!==code.toUpperCase()){alert("âŒ Code incorrect.");return;}
-                      if(newPass!==confirmPass){alert("âŒ Les mots de passe ne correspondent pas.");return;}
-                      if(newPass.length<6){alert("âŒ Mot de passe trop court (6 caractÃ¨res minimum).");return;}
+                      if(!r||r.code!==code.toUpperCase()){alert("❌ Code incorrect.");return;}
+                      if(newPass!==confirmPass){alert("❌ Les mots de passe ne correspondent pas.");return;}
+                      if(newPass.length<6){alert("❌ Mot de passe trop court (6 caractères minimum).");return;}
                       doResetPassword(newPass);
-                    }}>RÃ©initialiser</Btn>
+                    }}>Réinitialiser</Btn>
                   </div>
                 </>
               );
@@ -3119,21 +3119,21 @@ export default function App(){
             {/* Top line */}
             <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
 
-            <div style={{fontSize:52,marginBottom:16}}>ðŸŽ‰</div>
+            <div style={{fontSize:52,marginBottom:16}}>🎉</div>
             <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,letterSpacing:3,marginBottom:8}}>
               BIENVENUE DANS<br/><span style={{color:R}}>BELIVE ACADEMY</span>
             </div>
             <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.7,marginBottom:24}}>
-              Tu fais maintenant partie de la communautÃ© officielle.<br/>
-              Des crÃ©ateurs comme toi t'attendent dÃ©jÃ  â€” ensemble vous allez aller plus loin. ðŸ”¥
+              Tu fais maintenant partie de la communauté officielle.<br/>
+              Des créateurs comme toi t'attendent déjà — ensemble vous allez aller plus loin. 🔥
             </div>
 
             {/* Steps */}
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:28,textAlign:"left"}}>
               {[
-                {icon:"ðŸ‘¤",t:"Complete ton profil",d:"Ajoute ta photo, tes jeux et ta bio"},
-                {icon:"ðŸŽ®",t:"Connecte tes plateformes",d:"Twitch, YouTube, TikTok â€” lie tes comptes"},
-                {icon:"ðŸ¤",t:"Rejoins la communautÃ©",d:"Poste, fais des raids, trouve des coÃ©quipiers"},
+                {icon:"👤",t:"Complete ton profil",d:"Ajoute ta photo, tes jeux et ta bio"},
+                {icon:"🎮",t:"Connecte tes plateformes",d:"Twitch, YouTube, TikTok — lie tes comptes"},
+                {icon:"🤝",t:"Rejoins la communauté",d:"Poste, fais des raids, trouve des coéquipiers"},
               ].map((s,i)=>(
                 <div key={i} style={{display:"flex",gap:12,alignItems:"center",background:"rgba(255,255,255,0.04)",borderRadius:12,padding:"12px 14px"}}>
                   <span style={{fontSize:22,flexShrink:0}}>{s.icon}</span>
@@ -3146,7 +3146,7 @@ export default function App(){
             </div>
 
             <Btn full sz="lg" onClick={()=>{setShowWelcome(false);setPage("profil");}}>
-              ðŸš€ Commencer mon aventure
+              🚀 Commencer mon aventure
             </Btn>
             <div onClick={()=>setShowWelcome(false)} style={{marginTop:14,fontSize:12,color:"rgba(255,255,255,0.3)",cursor:"pointer"}}>
               Passer pour l'instant
@@ -3156,61 +3156,61 @@ export default function App(){
       )}
 
       {/* PAYMENT MODAL */}
-      <Modal open={modal==="payment"} onClose={()=>setModal(null)} title="Passer Ã  Pro">
+      <Modal open={modal==="payment"} onClose={()=>setModal(null)} title="Passer à Pro">
         <div style={{textAlign:"center",marginBottom:20}}>
           <div style={{fontSize:13,color:M}}>Choisis ton offre</div>
         </div>
 
-        {/* CrÃ©ateur Belive â†’ uniquement 9,99â‚¬ */}
+        {/* Créateur Belive → uniquement 9,99€ */}
         {isBeliveCreator?(
           <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:14,padding:20,marginBottom:16}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
               <div>
-                <div style={{fontWeight:800,fontSize:15}}>ðŸŽ¯ Offre CrÃ©ateur Belive</div>
+                <div style={{fontWeight:800,fontSize:15}}>🎯 Offre Créateur Belive</div>
                 <div style={{fontSize:12,color:M,marginTop:2}}>Ton tarif exclusif agence</div>
               </div>
-              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>9,99â‚¬<span style={{fontSize:13,color:M}}>/mois</span></div>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>9,99€<span style={{fontSize:13,color:M}}>/mois</span></div>
             </div>
-            <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>âœ… AccÃ¨s complet â€¢ Coach IA â€¢ Partenariats â€¢ Templates â€¢ CommunautÃ©</div>
+            <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>✅ Accès complet • Coach IA • Partenariats • Templates • Communauté</div>
             <Btn full onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")}>
-              Souscrire Ã  9,99â‚¬/mois
+              Souscrire à 9,99€/mois
             </Btn>
           </div>
         ):(
           <>
             <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.25)`,borderRadius:14,padding:20,marginBottom:12}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                <div><div style={{fontWeight:800,fontSize:15}}>ðŸŽ¯ CrÃ©ateur Belive</div><div style={{fontSize:12,color:M,marginTop:2}}>Pour les crÃ©ateurs de l'agence</div></div>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>9,99â‚¬<span style={{fontSize:13,color:M}}>/mois</span></div>
+                <div><div style={{fontWeight:800,fontSize:15}}>🎯 Créateur Belive</div><div style={{fontSize:12,color:M,marginTop:2}}>Pour les créateurs de l'agence</div></div>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>9,99€<span style={{fontSize:13,color:M}}>/mois</span></div>
               </div>
-              <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>âœ… AccÃ¨s complet â€¢ Coach IA â€¢ Partenariats â€¢ Templates â€¢ CommunautÃ©</div>
-              <Btn full onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")}>Souscrire Ã  9,99â‚¬/mois</Btn>
-              <div style={{textAlign:"center",marginTop:8,fontSize:11,color:M}}>RÃ©servÃ© aux crÃ©ateurs Belive Academy</div>
+              <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>✅ Accès complet • Coach IA • Partenariats • Templates • Communauté</div>
+              <Btn full onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")}>Souscrire à 9,99€/mois</Btn>
+              <div style={{textAlign:"center",marginTop:8,fontSize:11,color:M}}>Réservé aux créateurs Belive Academy</div>
             </div>
             <div style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:14,padding:20,marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                <div><div style={{fontWeight:800,fontSize:15}}>âš¡ Application Belive</div><div style={{fontSize:12,color:M,marginTop:2}}>AccÃ¨s indÃ©pendant</div></div>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:"white"}}>14,99â‚¬<span style={{fontSize:13,color:M}}>/mois</span></div>
+                <div><div style={{fontWeight:800,fontSize:15}}>⚡ Application Belive</div><div style={{fontSize:12,color:M,marginTop:2}}>Accès indépendant</div></div>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:"white"}}>14,99€<span style={{fontSize:13,color:M}}>/mois</span></div>
               </div>
-              <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>âœ… AccÃ¨s complet â€¢ Coach IA â€¢ Partenariats â€¢ Templates â€¢ CommunautÃ©</div>
-              <Btn full v="ghost" onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05","_blank")}>Souscrire Ã  14,99â‚¬/mois</Btn>
+              <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>✅ Accès complet • Coach IA • Partenariats • Templates • Communauté</div>
+              <Btn full v="ghost" onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05","_blank")}>Souscrire à 14,99€/mois</Btn>
             </div>
           </>
         )}
-        <div style={{textAlign:"center",fontSize:11,color:M}}>ðŸ”’ Paiement sÃ©curisÃ© via Stripe â€¢ RÃ©siliable Ã  tout moment</div>
+        <div style={{textAlign:"center",fontSize:11,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
       </Modal>
 
       {/* Modal nouveau partenariat */}
-      <Modal open={modal==="addPartner"} onClose={()=>setModal(null)} title="âž• Nouveau partenariat">
+      <Modal open={modal==="addPartner"} onClose={()=>setModal(null)} title="➕ Nouveau partenariat">
         <div style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.12)`,borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:12,color:M,lineHeight:1.7}}>
-          ðŸ’¡ Une fois ajoutÃ©, tous les crÃ©ateurs recevront une notification et pourront postuler depuis leur espace.
+          💡 Une fois ajouté, tous les créateurs recevront une notification et pourront postuler depuis leur espace.
         </div>
 
-        {/* IcÃ´ne */}
+        {/* Icône */}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>IcÃ´ne de la marque</div>
+          <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>Icône de la marque</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            {["ðŸ¤","âš¡","ðŸŽ®","ðŸ”’","ðŸ–±ï¸","ðŸ‘•","ðŸŽ§","ðŸ“±","ðŸ’Š","ðŸ•","ðŸŽ¯","ðŸ’°","ðŸ†","ðŸ”¥"].map(ic=>(
+            {["🤝","⚡","🎮","🔒","🖱️","👕","🎧","📱","💊","🍕","🎯","💰","🏆","🔥"].map(ic=>(
               <button key={ic} onClick={()=>setNewPartner({...newPartner,icon:ic})} style={{width:40,height:40,background:newPartner.icon===ic?"rgba(212,16,63,0.2)":"rgba(255,255,255,0.04)",border:`1px solid ${newPartner.icon===ic?"rgba(212,16,63,0.5)":B}`,borderRadius:8,fontSize:20,cursor:"pointer"}}>
                 {ic}
               </button>
@@ -3220,15 +3220,15 @@ export default function App(){
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <Field label="Nom de la marque *" value={newPartner.brand} onChange={e=>setNewPartner({...newPartner,brand:e.target.value})} placeholder="Ex: GFuel France"/>
-          <Field label="CatÃ©gorie" value={newPartner.type} onChange={e=>setNewPartner({...newPartner,type:e.target.value})} placeholder="Ex: Boisson, Gaming..."/>
-          <Field label="Budget / RÃ©compense" value={newPartner.budget} onChange={e=>setNewPartner({...newPartner,budget:e.target.value})} placeholder="Ex: 50â€“200â‚¬ ou Produit offert"/>
+          <Field label="Catégorie" value={newPartner.type} onChange={e=>setNewPartner({...newPartner,type:e.target.value})} placeholder="Ex: Boisson, Gaming..."/>
+          <Field label="Budget / Récompense" value={newPartner.budget} onChange={e=>setNewPartner({...newPartner,budget:e.target.value})} placeholder="Ex: 50–200€ ou Produit offert"/>
         </div>
-        <Field label="Description pour les crÃ©ateurs" as="textarea" value={newPartner.desc} onChange={e=>setNewPartner({...newPartner,desc:e.target.value})} placeholder="Ex: Code promo Ã  placer en stream. Commission sur chaque vente gÃ©nÃ©rÃ©e..."/>
+        <Field label="Description pour les créateurs" as="textarea" value={newPartner.desc} onChange={e=>setNewPartner({...newPartner,desc:e.target.value})} placeholder="Ex: Code promo à placer en stream. Commission sur chaque vente générée..."/>
 
         <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:16,padding:"10px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:10}}>
           <input type="checkbox" checked={newPartner.hot} onChange={e=>setNewPartner({...newPartner,hot:e.target.checked})} style={{width:16,height:16,accentColor:R}}/>
           <div>
-            <div style={{fontWeight:700,fontSize:13}}>ðŸ”¥ Marquer comme populaire</div>
+            <div style={{fontWeight:700,fontSize:13}}>🔥 Marquer comme populaire</div>
             <div style={{fontSize:11,color:M}}>Affiche un badge "Populaire" pour attirer l'attention</div>
           </div>
         </label>
@@ -3239,28 +3239,28 @@ export default function App(){
             if(!newPartner.brand){alert("Le nom de la marque est obligatoire.");return;}
             const p={...newPartner,id:Date.now(),applicants:[],status:"active"};
             setPartners(prev=>[...prev,p]);
-            // Notif pour tous les crÃ©ateurs
-            sendNotif("ðŸ¤ Nouveau partenariat !",`${newPartner.brand} â€” Nouveau deal disponible sur Belive Academy !`,"new-partner");
-            storeAdminNotif(`ðŸ¤ Partenariat ajoutÃ© : ${newPartner.brand}`);
-            setNewPartner({brand:"",type:"",budget:"",desc:"",icon:"ðŸ¤",hot:false});
+            // Notif pour tous les créateurs
+            sendNotif("🤝 Nouveau partenariat !",`${newPartner.brand} — Nouveau deal disponible sur Belive Academy !`,"new-partner");
+            storeAdminNotif(`🤝 Partenariat ajouté : ${newPartner.brand}`);
+            setNewPartner({brand:"",type:"",budget:"",desc:"",icon:"🤝",hot:false});
             setModal(null);
-            alert(`âœ… Partenariat ${newPartner.brand} ajoutÃ© ! Les crÃ©ateurs ont Ã©tÃ© notifiÃ©s.`);
-          }} icon="âœ…">Publier le partenariat</Btn>
+            alert(`✅ Partenariat ${newPartner.brand} ajouté ! Les créateurs ont été notifiés.`);
+          }} icon="✅">Publier le partenariat</Btn>
         </div>
       </Modal>
 
-      <Modal open={modal==="addCr"} onClose={()=>setModal(null)} title="Ajouter un crÃ©ateur">
+      <Modal open={modal==="addCr"} onClose={()=>setModal(null)} title="Ajouter un créateur">
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          <Field label="Nom complet *" value={newCr.name} onChange={e=>setNewCr({...newCr,name:e.target.value})} placeholder="PrÃ©nom Nom"/>
+          <Field label="Nom complet *" value={newCr.name} onChange={e=>setNewCr({...newCr,name:e.target.value})} placeholder="Prénom Nom"/>
           <Field label="Email *" type="email" value={newCr.email} onChange={e=>setNewCr({...newCr,email:e.target.value})} placeholder="email@exemple.com"/>
-          <Field label="TÃ©lÃ©phone" type="tel" value={newCr.phone} onChange={e=>setNewCr({...newCr,phone:e.target.value})} placeholder="06 12 34 56 78"/>
-          <Field label="Formule" as="select" value={newCr.formule} onChange={e=>setNewCr({...newCr,formule:e.target.value})}><option value="commission">Commission (19â‚¬ + 25%)</option><option value="premium">Premium (14,99â‚¬/mois)</option></Field>
+          <Field label="Téléphone" type="tel" value={newCr.phone} onChange={e=>setNewCr({...newCr,phone:e.target.value})} placeholder="06 12 34 56 78"/>
+          <Field label="Formule" as="select" value={newCr.formule} onChange={e=>setNewCr({...newCr,formule:e.target.value})}><option value="commission">Commission (19€ + 25%)</option><option value="premium">Premium (14,99€/mois)</option></Field>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          <Field label="ðŸŸ£ Twitch" value={newCr.twitch} onChange={e=>setNewCr({...newCr,twitch:e.target.value})} placeholder="pseudo"/>
-          <Field label="â–¶ï¸ YouTube" value={newCr.youtube} onChange={e=>setNewCr({...newCr,youtube:e.target.value})} placeholder="chaÃ®ne"/>
-          <Field label="ðŸŽµ TikTok" value={newCr.tiktok} onChange={e=>setNewCr({...newCr,tiktok:e.target.value})} placeholder="@pseudo"/>
-          <Field label="ðŸ“¸ Instagram" value={newCr.instagram} onChange={e=>setNewCr({...newCr,instagram:e.target.value})} placeholder="@pseudo"/>
+          <Field label="🟣 Twitch" value={newCr.twitch} onChange={e=>setNewCr({...newCr,twitch:e.target.value})} placeholder="pseudo"/>
+          <Field label="▶️ YouTube" value={newCr.youtube} onChange={e=>setNewCr({...newCr,youtube:e.target.value})} placeholder="chaîne"/>
+          <Field label="🎵 TikTok" value={newCr.tiktok} onChange={e=>setNewCr({...newCr,tiktok:e.target.value})} placeholder="@pseudo"/>
+          <Field label="📸 Instagram" value={newCr.instagram} onChange={e=>setNewCr({...newCr,instagram:e.target.value})} placeholder="@pseudo"/>
         </div>
         <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
           <Btn v="ghost" onClick={()=>setModal(null)}>Annuler</Btn>
@@ -3271,44 +3271,44 @@ export default function App(){
       <Modal open={modal==="addSc"} onClose={()=>setModal(null)} title="Planifier un stream">
         <Field label="Jour" as="select" value={newSc.day} onChange={e=>setNewSc({...newSc,day:e.target.value})}>{DAYS.map(d=><option key={d}>{d}</option>)}</Field>
         <Field label="Heure" type="time" value={newSc.time} onChange={e=>setNewSc({...newSc,time:e.target.value})}/>
-        <Field label="DurÃ©e (heures)" type="number" value={newSc.dur} onChange={e=>setNewSc({...newSc,dur:e.target.value})} placeholder="2"/>
-        <Field label="Plateforme" as="select" value={newSc.platform} onChange={e=>setNewSc({...newSc,platform:e.target.value})}><option value="twitch">ðŸŸ£ Twitch</option><option value="youtube">â–¶ï¸ YouTube</option></Field>
+        <Field label="Durée (heures)" type="number" value={newSc.dur} onChange={e=>setNewSc({...newSc,dur:e.target.value})} placeholder="2"/>
+        <Field label="Plateforme" as="select" value={newSc.platform} onChange={e=>setNewSc({...newSc,platform:e.target.value})}><option value="twitch">🟣 Twitch</option><option value="youtube">▶️ YouTube</option></Field>
         <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><Btn v="ghost" onClick={()=>setModal(null)}>Annuler</Btn><Btn onClick={addScheduleItem}>Planifier</Btn></div>
       </Modal>
 
-      <Modal open={modal==="contract"} onClose={()=>setModal(null)} title={`Contrat â€” ${ct.createur?.name||""}`} wide>
+      <Modal open={modal==="contract"} onClose={()=>setModal(null)} title={`Contrat — ${ct.createur?.name||""}`} wide>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
           <Field label="Formule" as="select" value={ct.formule} onChange={e=>setCt({...ct,formule:e.target.value,montant:e.target.value==="premium"?"14.99":"19"})}>
             <option value="commission">Commission (frais unique)</option>
             <option value="premium">Coaching Premium (mensuel)</option>
           </Field>
-          <Field label={ct.formule==="commission"?"Frais d'entrÃ©e (â‚¬)":"MensualitÃ© (â‚¬)"} type="number" value={ct.montant} onChange={e=>setCt({...ct,montant:e.target.value})}/>
+          <Field label={ct.formule==="commission"?"Frais d'entrée (€)":"Mensualité (€)"} type="number" value={ct.montant} onChange={e=>setCt({...ct,montant:e.target.value})}/>
           <Field label="Commission (%)" type="number" value={ct.commission} onChange={e=>setCt({...ct,commission:e.target.value})} placeholder="25"/>
-          <Field label="DurÃ©e" as="select" value={ct.duree} onChange={e=>setCt({...ct,duree:e.target.value})}>
+          <Field label="Durée" as="select" value={ct.duree} onChange={e=>setCt({...ct,duree:e.target.value})}>
             <option>Sans engagement</option>
             <option>3 mois</option>
             <option>6 mois</option>
             <option>9 mois</option>
             <option>12 mois</option>
           </Field>
-          <Field label="PrÃ©avis rÃ©siliation" as="select" value={ct.preavis} onChange={e=>setCt({...ct,preavis:e.target.value})}>
+          <Field label="Préavis résiliation" as="select" value={ct.preavis} onChange={e=>setCt({...ct,preavis:e.target.value})}>
             <option>7 jours</option>
             <option>15 jours</option>
             <option>30 jours</option>
           </Field>
         </div>
 
-        {/* Revenus concernÃ©s */}
+        {/* Revenus concernés */}
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>ðŸ’° Commission prÃ©levÃ©e sur :</div>
+          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>💰 Commission prélevée sur :</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
             {[
-              {k:"inclPartenariats",l:"ðŸ¤ Partenariats"},
-              {k:"inclPubs",l:"ðŸ“º PublicitÃ©s"},
-              {k:"inclSubs",l:"ðŸ’œ Subs/Abonnements"},
-              {k:"inclBits",l:"ðŸ’Ž Bits/Super Chats"},
-              {k:"inclMerchandise",l:"ðŸ‘• Merchandise"},
-              {k:"inclDons",l:"ðŸŽ Dons"},
+              {k:"inclPartenariats",l:"🤝 Partenariats"},
+              {k:"inclPubs",l:"📺 Publicités"},
+              {k:"inclSubs",l:"💜 Subs/Abonnements"},
+              {k:"inclBits",l:"💎 Bits/Super Chats"},
+              {k:"inclMerchandise",l:"👕 Merchandise"},
+              {k:"inclDons",l:"🎁 Dons"},
             ].map(r=>(
               <label key={r.k} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 12px",background:ct[r.k]?"rgba(212,16,63,0.1)":"rgba(255,255,255,0.03)",border:`1px solid ${ct[r.k]?"rgba(212,16,63,0.3)":B}`,borderRadius:8}}>
                 <input type="checkbox" checked={ct[r.k]||false} onChange={e=>setCt({...ct,[r.k]:e.target.checked})} style={{accentColor:R}}/>
@@ -3320,17 +3320,17 @@ export default function App(){
 
         {/* Prestations incluses */}
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>âœ… Prestations incluses :</div>
+          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>✅ Prestations incluses :</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {[
-              {k:"prestCoaching",l:"ðŸŽ¯ Coaching personnalisÃ©"},
-              {k:"prestStats",l:"ðŸ“Š Suivi statistiques"},
-              {k:"prestPartenariats",l:"ðŸ¤ Recherche partenariats"},
-              {k:"prestStrategie",l:"ðŸ“ˆ StratÃ©gie de croissance"},
-              {k:"prestApp",l:"ðŸ“± AccÃ¨s app Belive Academy"},
-              {k:"prestGroupe",l:"ðŸ‘¥ AccÃ¨s groupe privÃ©"},
-              {k:"prestContenu",l:"ðŸŽ¬ Aide crÃ©ation contenu"},
-              {k:"prestReseaux",l:"ðŸ“² Gestion rÃ©seaux sociaux"},
+              {k:"prestCoaching",l:"🎯 Coaching personnalisé"},
+              {k:"prestStats",l:"📊 Suivi statistiques"},
+              {k:"prestPartenariats",l:"🤝 Recherche partenariats"},
+              {k:"prestStrategie",l:"📈 Stratégie de croissance"},
+              {k:"prestApp",l:"📱 Accès app Belive Academy"},
+              {k:"prestGroupe",l:"👥 Accès groupe privé"},
+              {k:"prestContenu",l:"🎬 Aide création contenu"},
+              {k:"prestReseaux",l:"📲 Gestion réseaux sociaux"},
             ].map(p=>(
               <label key={p.k} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 12px",background:ct[p.k]?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${ct[p.k]?"rgba(34,197,94,0.25)":B}`,borderRadius:8}}>
                 <input type="checkbox" checked={ct[p.k]||false} onChange={e=>setCt({...ct,[p.k]:e.target.checked})} style={{accentColor:G}}/>
@@ -3340,15 +3340,15 @@ export default function App(){
           </div>
         </div>
 
-        {/* Options avancÃ©es */}
+        {/* Options avancées */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-          <Field label="Clause d'exclusivitÃ© (optionnel)" value={ct.clauseExclu||""} onChange={e=>setCt({...ct,clauseExclu:e.target.value})} placeholder="Ex: ExclusivitÃ© agence 6 mois"/>
-          <Field label="Notes particuliÃ¨res (optionnel)" value={ct.noteLibre||""} onChange={e=>setCt({...ct,noteLibre:e.target.value})} placeholder="Conditions spÃ©cifiques..."/>
+          <Field label="Clause d'exclusivité (optionnel)" value={ct.clauseExclu||""} onChange={e=>setCt({...ct,clauseExclu:e.target.value})} placeholder="Ex: Exclusivité agence 6 mois"/>
+          <Field label="Notes particulières (optionnel)" value={ct.noteLibre||""} onChange={e=>setCt({...ct,noteLibre:e.target.value})} placeholder="Conditions spécifiques..."/>
         </div>
 
-        {/* AperÃ§u contrat PDF */}
+        {/* Aperçu contrat PDF */}
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>ðŸ‘ï¸ AperÃ§u du contrat</div>
+          <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:0.5,marginBottom:10,textTransform:"uppercase"}}>👁️ Aperçu du contrat</div>
           <div style={{background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}>
             {/* Header */}
             <div style={{background:"#111",padding:"20px 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -3358,19 +3358,19 @@ export default function App(){
             <div style={{height:3,background:`linear-gradient(90deg,${R},#ff4d4d)`}}/>
             {/* Body */}
             <div style={{padding:"24px 28px"}}>
-              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:16,letterSpacing:2,color:"#111",marginBottom:4}}>CONTRAT D'ACCOMPAGNEMENT CRÃ‰ATEUR</div>
-              <div style={{fontSize:11,color:"#888",marginBottom:20}}>ðŸ“… Fait le {new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"})}</div>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:16,letterSpacing:2,color:"#111",marginBottom:4}}>CONTRAT D'ACCOMPAGNEMENT CRÉATEUR</div>
+              <div style={{fontSize:11,color:"#888",marginBottom:20}}>📅 Fait le {new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"})}</div>
               {/* Two cols */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
                 <div style={{background:"#f8f8f8",borderRadius:10,padding:"14px 16px",borderLeft:"4px solid #D4103F"}}>
                   <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>AGENCE</div>
-                  {[["Nom","Belive Academy â€” Ethan"],["Email","ethan@beliveacademy.com"],["TÃ©l.","07 80 99 92 51"]].map(([l,v])=>(
+                  {[["Nom","Belive Academy — Ethan"],["Email","ethan@beliveacademy.com"],["Tél.","07 80 99 92 51"]].map(([l,v])=>(
                     <div key={l} style={{fontSize:11,color:"#333",marginBottom:4,display:"flex",gap:8}}><strong style={{minWidth:50,color:"#111"}}>{l}</strong>{v}</div>
                   ))}
                 </div>
                 <div style={{background:"#f8f8f8",borderRadius:10,padding:"14px 16px",borderLeft:"4px solid #D4103F"}}>
-                  <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>CRÃ‰ATEUR</div>
-                  {[["Nom",ct.createur?.name||"â€”"],["Email",ct.createur?.email||"â€”"],["Twitch",ct.createur?.twitch?"@"+ct.createur.twitch:"â€”"],["YouTube",ct.createur?.youtube||"â€”"]].map(([l,v])=>(
+                  <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>CRÉATEUR</div>
+                  {[["Nom",ct.createur?.name||"—"],["Email",ct.createur?.email||"—"],["Twitch",ct.createur?.twitch?"@"+ct.createur.twitch:"—"],["YouTube",ct.createur?.youtube||"—"]].map(([l,v])=>(
                     <div key={l} style={{fontSize:11,color:"#333",marginBottom:4,display:"flex",gap:8}}><strong style={{minWidth:50,color:"#111"}}>{l}</strong>{v}</div>
                   ))}
                 </div>
@@ -3380,10 +3380,10 @@ export default function App(){
                 <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,marginBottom:12}}>FORMULE : {ct.formule==="commission"?"COMMISSION":"COACHING PREMIUM"}</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
                   {[
-                    [ct.formule==="commission"?"Frais d'entrÃ©e":"MensualitÃ©",`${ct.montant}â‚¬`],
+                    [ct.formule==="commission"?"Frais d'entrée":"Mensualité",`${ct.montant}€`],
                     ["Commission",`${ct.commission}%`],
-                    ["DurÃ©e",ct.duree],
-                    ["PrÃ©avis",ct.preavis||"15 jours"],
+                    ["Durée",ct.duree],
+                    ["Préavis",ct.preavis||"15 jours"],
                     ["Revenus",[ct.inclPartenariats&&"Partenariats",ct.inclPubs&&"Pubs",ct.inclSubs&&"Subs",ct.inclBits&&"Bits",ct.inclMerchandise&&"Merch",ct.inclDons&&"Dons"].filter(Boolean).join(", ")||"Tous"],
                   ].map(([l,v])=>(
                     <div key={l} style={{background:"rgba(255,255,255,0.05)",borderRadius:8,padding:"10px 12px"}}>
@@ -3398,17 +3398,17 @@ export default function App(){
                 <div style={{fontSize:9,fontWeight:800,color:R,letterSpacing:2,marginBottom:10}}>PRESTATIONS INCLUSES</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                   {[
-                    {k:"prestCoaching",l:"Coaching personnalisÃ©"},
+                    {k:"prestCoaching",l:"Coaching personnalisé"},
                     {k:"prestStats",l:"Suivi statistiques"},
                     {k:"prestPartenariats",l:"Recherche partenariats"},
-                    {k:"prestStrategie",l:"StratÃ©gie de croissance"},
-                    {k:"prestApp",l:"AccÃ¨s app Belive Academy"},
-                    {k:"prestGroupe",l:"AccÃ¨s groupe privÃ©"},
-                    {k:"prestContenu",l:"Aide crÃ©ation contenu"},
-                    {k:"prestReseaux",l:"Gestion rÃ©seaux sociaux"},
+                    {k:"prestStrategie",l:"Stratégie de croissance"},
+                    {k:"prestApp",l:"Accès app Belive Academy"},
+                    {k:"prestGroupe",l:"Accès groupe privé"},
+                    {k:"prestContenu",l:"Aide création contenu"},
+                    {k:"prestReseaux",l:"Gestion réseaux sociaux"},
                   ].filter(p=>ct[p.k]).map(p=>(
                     <div key={p.k} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:"#333"}}>
-                      <div style={{width:16,height:16,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:9,flexShrink:0}}>âœ“</div>
+                      <div style={{width:16,height:16,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:9,flexShrink:0}}>✓</div>
                       {p.l}
                     </div>
                   ))}
@@ -3416,7 +3416,7 @@ export default function App(){
               </div>
               {/* Signatures */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                {[["Ethan â€” Belive Academy","ethan@beliveacademy.com","Signature de l'agence"],[ct.createur?.name||"___",ct.createur?.email||"___","Signature + Lu et approuvÃ©"]].map(([name,email,label])=>(
+                {[["Ethan — Belive Academy","ethan@beliveacademy.com","Signature de l'agence"],[ct.createur?.name||"___",ct.createur?.email||"___","Signature + Lu et approuvé"]].map(([name,email,label])=>(
                   <div key={name} style={{border:"2px solid #eee",borderRadius:10,padding:"16px",textAlign:"center"}}>
                     <div style={{fontWeight:800,fontSize:12,color:"#111",marginBottom:2}}>{name}</div>
                     <div style={{fontSize:10,color:"#888",marginBottom:16}}>{email}</div>
@@ -3429,7 +3429,7 @@ export default function App(){
             {/* Footer */}
             <div style={{background:"#111",padding:"14px 28px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:14,letterSpacing:2,color:"white"}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",textAlign:"right"}}>beliveacademy.com â€¢ ethan@beliveacademy.com â€¢ 07 80 99 92 51</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",textAlign:"right"}}>beliveacademy.com • ethan@beliveacademy.com • 07 80 99 92 51</div>
             </div>
           </div>
         </div>
@@ -3441,8 +3441,8 @@ export default function App(){
             w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:white;}@media print{body{margin:0;}}</style></head><body>${document.querySelector('[data-contract-preview]')?.innerHTML||""}</body></html>`);
             w.document.close();
             setTimeout(()=>w.print(),500);
-          }} icon="ðŸ“„">Imprimer PDF</Btn>
-          <Btn v="success" onClick={saveContract} icon="ðŸ’¾">Envoyer par email</Btn>
+          }} icon="📄">Imprimer PDF</Btn>
+          <Btn v="success" onClick={saveContract} icon="💾">Envoyer par email</Btn>
         </div>
       </Modal>
 
