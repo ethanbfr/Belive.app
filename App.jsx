@@ -408,7 +408,7 @@ export default function App(){
   }, []);
 
   // Créer un abonnement via Supabase
-  async function createSubscription(priceId = 'price_14_99') {
+  async function createSubscription(priceId = 'cNicN430LdLj88zgru1wY05') {
     if (!user?.email) {
       alert('Erreur: email manquant');
       return;
@@ -436,6 +436,23 @@ export default function App(){
     } catch (error) {
       console.error('Erreur:', error);
       alert('Erreur lors de la création de l\'abonnement');
+    }
+  }
+
+  // Fonction pour créer un abonnement agence (9.99€)
+  async function createAgencySubscription() {
+    await createSubscription('00waEW7h15eNdsT1wA1wY04');
+  }
+
+  // Fonction pour créer un abonnement selon le code
+  async function createSubscriptionWithCode(code) {
+    // Vérifier si c'est un code d'agence pour utiliser le prix 9.99€
+    const agencyCodes = ['AGENCE2025', 'BELIVEAG', 'CREATOR2025']; // Mettez vos vrais codes ici
+    
+    if (agencyCodes.includes(code.toUpperCase())) {
+      await createAgencySubscription();
+    } else {
+      await createSubscription(); // Prix par défaut 14.99€
     }
   }
 
