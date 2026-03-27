@@ -567,7 +567,7 @@ export default function App(){
     const{name,email,pass,phone,twitch,youtube,tiktok,instagram,code}=reg;
     if(!name||!email||!pass||!phone){alert("Nom, email, mot de passe et téléphone obligatoires.");return;}
     if(!regAge){alert("⚠️ Tu dois confirmer avoir 18 ans ou plus.");return;}
-    if(!regCGU){alert("⚠️ Tu dois accepter les conditions générales d'utilisation.");return;}
+    if(!regCGU){alert("⚠️ Tu dois accepter les CGU et la politique de confidentialité.");return;}
     let r2="createur";
     let plan="free";
     let trialDaysFromCode=14;
@@ -1144,17 +1144,21 @@ export default function App(){
               </div>
             </label>
 
-            {/* CGU */}
+            {/* CGU + confidentialité */}
             <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginBottom:16,padding:"12px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${regCGU?"rgba(34,197,94,0.3)":B}`,borderRadius:10}}>
               <input type="checkbox" checked={regCGU} onChange={e=>setRegCGU(e.target.checked)} style={{marginTop:2,width:16,height:16,accentColor:R,flexShrink:0}}/>
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
-                <strong style={{color:"white"}}>J'accepte les conditions générales d'utilisation</strong><br/>
-                En m'inscrivant, j'accepte les <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu","_blank");}}>CGU de Belive Academy</span>. Belive Academy se réserve le droit de suspendre ou supprimer tout compte à tout moment.
+                <strong style={{color:"white"}}>J'accepte les CGU et la politique de confidentialité</strong><br/>
+                En m'inscrivant, j'accepte les{" "}
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu","_blank");}}>CGU</span>
+                {" "}et la{" "}
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/politique-de-confidentialite","_blank");}}>politique de confidentialité</span>
+                {" "}de Belive Academy.
               </div>
             </label>
 
             <Btn full onClick={doReg} sz="lg" disabled={!regAge||!regCGU}>Créer mon compte</Btn>
-            {(!regAge||!regCGU)&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>⚠️ Tu dois confirmer ton âge et accepter les CGU pour continuer</div>}
+            {(!regAge||!regCGU)&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>⚠️ Tu dois confirmer ton âge et accepter les CGU + la confidentialité pour continuer</div>}
           </>):(<>
             <Field label="Email" type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="ton@email.com"/>
             <div style={{marginBottom:14}}>
@@ -1791,11 +1795,88 @@ export default function App(){
             });
           }
 
+          function getSharePlanningText(){
+            if(!schedule.length){
+              return `📅 Planning de stream ${user.name}\nAucun stream planifié pour le moment.`;
+            }
+            const ordered=[...schedule].sort((a,b)=>{
+              const d=DAYS.indexOf(a.day)-DAYS.indexOf(b.day);
+              if(d!==0)return d;
+              return (a.time||"00:00").localeCompare(b.time||"00:00");
+            });
+            const lines=ordered.map(s=>`- ${s.day} ${s.time} • ${s.duration}h • ${platformIcons[s.platform]||"🎮"} ${s.platform}`);
+            return `📅 Planning de stream de ${user.name}\n\n${lines.join("\n")}\n\nSuivez-moi en live !`;
+          }
+
+          function sharePlanning(){
+            const text=getSharePlanningText();
+            if(navigator.share){
+              navigator.share({title:`Planning de ${user.name}`,text}).catch(()=>{});
+              return;
+            }
+            navigator.clipboard?.writeText(text).then(()=>{
+              alert("✅ Planning copié ! Tu peux le coller où tu veux (Discord, Instagram, etc.).");
+            }).catch(()=>{
+              alert("⚠️ Impossible de copier automatiquement. Copie manuelle requise.");
+            });
+          }
+
+          function downloadPlanningICS(){
+            if(!schedule.length){alert("Ajoute au moins un stream pour télécharger le calendrier.");return;}
+            const mapDay={Lundi:1,Mardi:2,Mercredi:3,Jeudi:4,Vendredi:5,Samedi:6,Dimanche:0};
+            const toUTC=(d)=>`${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}T${String(d.getUTCHours()).padStart(2,"0")}${String(d.getUTCMinutes()).padStart(2,"0")}00Z`;
+            const escapeICS=(s)=>String(s||"").replace(/\\/g,"\\\\").replace(/,/g,"\\,").replace(/;/g,"\\;").replace(/\n/g,"\\n");
+            const nowDate=new Date();
+            const events=[...schedule].map((s,i)=>{
+              const targetDay=mapDay[s.day]??1;
+              const base=new Date(nowDate);
+              const diff=(targetDay-base.getDay()+7)%7;
+              base.setDate(base.getDate()+diff);
+              const [h,m]=(s.time||"20:00").split(":").map(Number);
+              base.setHours(h||20,m||0,0,0);
+              const start=new Date(base);
+              const end=new Date(base);
+              end.setMinutes(end.getMinutes()+Math.max(30,(Number(s.duration)||2)*60));
+              return [
+                "BEGIN:VEVENT",
+                `UID:${Date.now()}-${i}@beliveacademy.com`,
+                `DTSTAMP:${toUTC(new Date())}`,
+                `DTSTART:${toUTC(start)}`,
+                `DTEND:${toUTC(end)}`,
+                `SUMMARY:${escapeICS(`${platformIcons[s.platform]||"🎮"} Stream ${user.name}`)}`,
+                `DESCRIPTION:${escapeICS(`Live ${s.platform} • ${s.day} ${s.time}`)}`,
+                "END:VEVENT"
+              ].join("\r\n");
+            });
+            const icsContent=[
+              "BEGIN:VCALENDAR",
+              "VERSION:2.0",
+              "PRODID:-//Belive Academy//Planning//FR",
+              "CALSCALE:GREGORIAN",
+              "METHOD:PUBLISH",
+              ...events,
+              "END:VCALENDAR"
+            ].join("\r\n");
+            const blob=new Blob([icsContent],{type:"text/calendar;charset=utf-8"});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement("a");
+            a.href=url;
+            a.download=`planning-${(user.name||"createur").replace(/\s+/g,"-").toLowerCase()}.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+
           return(
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
                 <div><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PLANNING</div><div style={{fontSize:13,color:M}}>Ton calendrier de streams</div></div>
-                <Btn sz="sm" onClick={()=>setModal("addSc")} icon="+">Planifier un stream</Btn>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                  <Btn sz="sm" v="ghost" onClick={sharePlanning} icon="🔗">Partager</Btn>
+                  <Btn sz="sm" v="ghost" onClick={downloadPlanningICS} icon="📥">Télécharger</Btn>
+                  <Btn sz="sm" onClick={()=>setModal("addSc")} icon="+">Planifier un stream</Btn>
+                </div>
               </div>
 
               {/* Prochain stream ALERT */}
