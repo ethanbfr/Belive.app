@@ -37,6 +37,11 @@ const db = {
   getReferralsByParrain: (email)  => supabase("GET",    "referrals", null, `parrain_email=eq.${encodeURIComponent(email)}`),
   addReferral:    (data)          => supabase("POST",   "referrals", data),
   updateReferral: (id, data)      => supabase("PATCH",  "referrals", data, `id=eq.${id}`),
+  // Partenariats
+  getPartners:    ()              => supabase("GET",    "partners", null),
+  addPartner:     (data)          => supabase("POST",   "partners", data),
+  updatePartner:  (id, data)      => supabase("PATCH",  "partners", data, `id=eq.${id}`),
+  deletePartner:  (id)            => supabase("DELETE", "partners", null, `id=eq.${id}`),
 };
 
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
@@ -708,6 +713,12 @@ const STRIPE_URLS = {
       }).catch(()=>{});
       // Charger les parrainages admin
       db.getReferrals().then(data=>{if(data&&data.length>0)setAdminRefs(data);}).catch(()=>{});
+      // Charger les partenariats depuis Supabase
+      db.getPartners().then(data=>{
+        if(data&&data.length>0){
+          setPartners(data);
+        }
+      }).catch(()=>{});
     }
   },[role]);
   const totalH=streams.reduce((s,r)=>s+r.duration,0);
@@ -1193,7 +1204,80 @@ const STRIPE_URLS = {
 
   function addCreateur(){const{name,email,phone,twitch,youtube,tiktok,instagram,formule}=newCr;if(!name||!email){alert("Nom et email obligatoires.");return;}setCreateurs(p=>[...p,{id:Date.now(),name,email,phone,twitch,youtube,tiktok,instagram,formule,status:"actif",date:new Date().toLocaleDateString("fr-FR")}]);setNewCr({name:"",email:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",formule:"commission"});setModal(null);}
 
-  function applyPartner(pid){const already=partners.find(p=>p.id===pid)?.applicants.find(a=>a.email===user.email);if(already){alert("Tu as déjà postulé !");return;}setPartners(prev=>prev.map(p=>p.id!==pid?p:{...p,applicants:[...p.applicants,{name:user.name,email:user.email,phone:user.phone||"—",twitch:user.twitch||"—",youtube:user.youtube||"—",tiktok:user.tiktok||"—",instagram:user.instagram||"—",date:new Date().toLocaleDateString("fr-FR")}]}));alert("✅ Candidature envoyée ! Belive Academy te contactera.");}
+  function applyPartner(pid){
+  const partner = partners.find(p=>p.id===pid);
+  if(!partner) return;
+  
+  // Vérifier si le créateur a accès à ce partenariat
+  if(partner.accessEnabled === false) {
+    alert("❌ Ce partenariat n'est pas accessible aux créateurs pour le moment.");
+    return;
+  }
+  
+  const already=partner.applicants.find(a=>a.email===user.email);
+  if(already){
+    alert("Tu as déjà postulé !");
+    return;
+  }
+  
+  // Mettre à jour localement
+  setPartners(prev=>prev.map(p=>p.id!==pid?p:{...p,applicants:[...p.applicants,{name:user.name,email:user.email,phone:user.phone||"—",twitch:user.twitch||"—",youtube:user.youtube||"—",tiktok:user.tiktok||"—",instagram:user.instagram||"—",date:new Date().toLocaleDateString("fr-FR")}]}));
+  
+  // Sauvegarder dans Supabase
+  try {
+    const updatedPartner = {...partner, applicants: [...partner.applicants, {name:user.name,email:user.email,phone:user.phone||"—",twitch:user.twitch||"—",youtube:user.youtube||"—",tiktok:user.tiktok||"—",instagram:user.instagram||"—",date:new Date().toLocaleDateString("fr-FR")}]};
+    db.updatePartner(pid, {applicants: updatedPartner.applicants});
+    alert("✅ Candidature envoyée ! Belive Academy te contactera.");
+  } catch(e) {
+    alert("⚠️ Candidature envoyée localement. Erreur de sauvegarde.");
+  }
+}
+
+  // Fonctions admin pour gérer les partenariats
+  async function addNewPartner(partnerData) {
+    try {
+      const result = await db.addPartner(partnerData);
+      if(result) {
+        setPartners(p=>[...p, {...partnerData, id: result[0]?.id || Date.now()}]);
+        alert("✅ Partenariat créé et sauvegardé !");
+        return true;
+      } else {
+        alert("⚠️ Partenariat créé mais non sauvegardé dans Supabase.");
+        return false;
+      }
+    } catch(e) {
+      alert(`❌ Erreur Supabase : ${e.message}`);
+      return false;
+    }
+  }
+
+  async function updatePartnerAccess(id, accessEnabled) {
+    try {
+      await db.updatePartner(id, { accessEnabled });
+      setPartners(p=>p.map(partner => 
+        partner.id === id ? {...partner, accessEnabled} : partner
+      ));
+      alert(`✅ Accès du partenariat ${accessEnabled ? 'activé' : 'désactivé'} !`);
+      return true;
+    } catch(e) {
+      alert(`❌ Erreur mise à jour : ${e.message}`);
+      return false;
+    }
+  }
+
+  async function deletePartnerFromDB(id) {
+    if(!confirm("Supprimer définitivement ce partenariat ?")) return false;
+    
+    try {
+      await db.deletePartner(id);
+      setPartners(p=>p.filter(p=>p.id!==id));
+      alert("✅ Partenariat supprimé !");
+      return true;
+    } catch(e) {
+      alert(`❌ Erreur suppression : ${e.message}`);
+      return false;
+    }
+  }
 
   async function saveContract(){
     if(!ct.createur)return;
@@ -2811,6 +2895,8 @@ const STRIPE_URLS = {
                         {p.budget&&<div style={{fontWeight:800,color:R,marginBottom:8,fontSize:13}}>{isPro?p.budget:"••• €"}</div>}
                         {applied
                           ?<Pill color="green">✓ Envoyée</Pill>
+                          :p.accessEnabled === false
+                          ?<Pill color="gray" xs>🔒 Non accessible</Pill>
                           :<Btn sz="sm" v={isPro?"primary":"ghost"} onClick={()=>isPro?applyPartner(p.id):setModal("payment")}>{isPro?"Postuler":"🔒 Pro"}</Btn>
                         }
                       </div>
