@@ -350,7 +350,6 @@ export default function App(){
   const [parrainCopied,setParrainCopied]=useState(false);
   const [profil,setProfil]=useState(()=>JSON.parse(localStorage.getItem("ba6_profil")||"{}"));
   const [profilEdit,setProfilEdit]=useState(false);
-  const [legalDoc,setLegalDoc]=useState(null);
   const monCodeParrain=user?"BELIVE-"+user.name.toUpperCase().replace(/ /g,"").slice(0,4)+"2025":"";
 
   const [aiMsgs,setAiMsgs]=useState([{role:"ai",text:"Bonjour ! Je suis ton coach streaming IA 🎮\nPose-moi tes questions sur la croissance, la monétisation ou ta stratégie."}]);
@@ -1176,9 +1175,9 @@ export default function App(){
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
                 <strong style={{color:"white"}}>J'accepte les CGU et la politique de confidentialité</strong><br/>
                 En m'inscrivant, j'accepte les{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();setLegalDoc("cgu");}}>CGU</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu","_blank");}}>CGU</span>
                 {" "}et la{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();setLegalDoc("privacy");}}>politique de confidentialité</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/politique-de-confidentialite","_blank");}}>politique de confidentialité</span>
                 {" "}de Belive Academy.
               </div>
             </label>
@@ -3584,5 +3583,6 @@ export default function App(){
         </div>
       </Modal>
 
-      <Modal open={legalDoc==="cgu"} onClose={()=>setLegalDoc(null)} title="Conditions Générales d'Utilisation">
- 
+    </div>
+  );
+}
