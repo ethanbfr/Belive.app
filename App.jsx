@@ -1177,7 +1177,7 @@ export default function App(){
                 En m'inscrivant, j'accepte les{" "}
                 <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu.html","_blank");}}>CGU</span>
                 {" "}et la{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/politique-de-confidentialite.html","_blank");}}>politique de confidentialité</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/politique.html","_blank");}}>politique de confidentialité</span>
                 {" "}de Belive Academy.
               </div>
             </label>
