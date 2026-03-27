@@ -303,9 +303,6 @@ export default function App(){
   const [isForgot,setIsForgot]=useState(false);
   const [forgotEmail,setForgotEmail]=useState("");
   const [forgotSent,setForgotSent]=useState(false);
-  const [resetCode,setResetCode]=useState("");
-  const [resetNewPass,setResetNewPass]=useState("");
-  const [resetConfirmPass,setResetConfirmPass]=useState("");
   const [showRegPass,setShowRegPass]=useState(false);
   const [page,setPage]=useState("dashboard");
   const [sideOpen,setSideOpen]=useState(true);
@@ -1308,7 +1305,9 @@ export default function App(){
         {/* PAYWALL — Accès bloqué si essai terminé */}
         {role==="createur"&&!hasAccess&&(
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:20,backdropFilter:"blur(10px)"}}>
-<div className="fade">              <div style={{fontSize:48,marginBottom:16}}>🔒</div>
+            <div className="fade" style={{background:"#0d0d0d",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:24,padding:32,width:"100%",maxWidth:440,textAlign:"center",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
+              <div style={{fontSize:48,marginBottom:16}}>🔒</div>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2,marginBottom:8}}>
                 ESSAI TERMINÉ
               </div>
@@ -3010,13 +3009,15 @@ export default function App(){
           );
         })()}
 
-        {/* PARRAINAGES ADMIN */}
-        {page==="parrainages"&&role==="admin"&&(
-          <div className="fade">
-            <div style={{marginBottom:20}}>
-              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
-              <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
-            </div>
+      </div>
+
+      {/* PARRAINAGES ADMIN */}
+      {page==="parrainages"&&role==="admin"&&(
+        <div className="fade">
+          <div style={{marginBottom:20}}>
+            <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
+            <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
+          </div>
 
           {/* Stats */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
@@ -3084,21 +3085,23 @@ export default function App(){
               ✅ Code envoyé à <strong style={{color:"white"}}>{forgotEmail}</strong>
             </div>
             {(()=>{
+              const [code,setCode]=useState("");
+              const [newPass,setNewPass]=useState("");
+              const [confirmPass,setConfirmPass]=useState("");
               return(
                 <>
-                  <Field label="Code reçu par email" value={resetCode} onChange={e=>setResetCode(e.target.value)} placeholder="XXXXXX"/>
-                  <Field label="Nouveau mot de passe" type="password" value={resetNewPass} onChange={e=>setResetNewPass(e.target.value)} placeholder="••••••••"/>
-                  <Field label="Confirmer le mot de passe" type="password" value={resetConfirmPass} onChange={e=>setResetConfirmPass(e.target.value)} placeholder="••••••••"/>
+                  <Field label="Code reçu par email" value={code} onChange={e=>setCode(e.target.value)} placeholder="XXXXXX"/>
+                  <Field label="Nouveau mot de passe" type="password" value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="••••••••"/>
+                  <Field label="Confirmer le mot de passe" type="password" value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="••••••••"/>
                   <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
                     <Btn v="ghost" onClick={()=>setIsForgot(false)}>Annuler</Btn>
                     <Btn onClick={()=>{
                       const resets=JSON.parse(localStorage.getItem("ba6_resets")||"{}");
                       const r=resets[forgotEmail];
-                      if(!r||r.code!==resetCode.toUpperCase()){alert("❌ Code incorrect.");return;}
-                      if(resetNewPass!==resetConfirmPass){alert("❌ Les mots de passe ne correspondent pas.");return;}
-                      if(resetNewPass.length<6){alert("❌ Mot de passe trop court (6 caractères minimum).");return;}
-                      doResetPassword(resetNewPass);
-                      setResetCode("");setResetNewPass("");setResetConfirmPass("");
+                      if(!r||r.code!==code.toUpperCase()){alert("❌ Code incorrect.");return;}
+                      if(newPass!==confirmPass){alert("❌ Les mots de passe ne correspondent pas.");return;}
+                      if(newPass.length<6){alert("❌ Mot de passe trop court (6 caractères minimum).");return;}
+                      doResetPassword(newPass);
                     }}>Réinitialiser</Btn>
                   </div>
                 </>
