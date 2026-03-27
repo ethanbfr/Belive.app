@@ -328,6 +328,8 @@ export default function App(){
   const [newCr,setNewCr]=useState({name:"",email:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",formule:"commission"});
   const [newSt,setNewSt]=useState({date:"",dur:"",viewers:"",platform:"twitch"});
   const [newSc,setNewSc]=useState({day:"Lundi",time:"20:00",dur:"2",platform:"twitch"});
+  const [planningMode,setPlanningMode]=useState("single");
+  const [weekSc,setWeekSc]=useState({days:{Lundi:true,Mardi:true,Mercredi:true,Jeudi:true,Vendredi:true,Samedi:false,Dimanche:false},time:"20:00",dur:"2",platform:"twitch"});
   const [newPartner,setNewPartner]=useState({brand:"",type:"",budget:"",desc:"",icon:"🤝",hot:false});
   const [codeType,setCodeType]=useState("createur");
   const [freeType,setFreeType]=useState("limited");
@@ -778,6 +780,29 @@ export default function App(){
       });
     }
     setModal(null);
+  }
+  function addWeekScheduleItems(){
+    const selectedDays=DAYS.filter(d=>weekSc.days[d]);
+    if(selectedDays.length===0){alert("Sélectionne au moins un jour.");return;}
+    if(!weekSc.time||!weekSc.dur){alert("Heure et durée obligatoires.");return;}
+    const duration=parseFloat(weekSc.dur);
+    const baseId=Date.now();
+    const newItems=selectedDays.map((day,idx)=>({
+      id:baseId+idx,
+      day,
+      time:weekSc.time,
+      dur:weekSc.dur,
+      duration,
+      platform:weekSc.platform,
+    }));
+    setSchedule(p=>[...p,...newItems]);
+    if("Notification" in window && Notification.permission==="default"){
+      Notification.requestPermission().then(p=>{
+        if(p==="granted") sendNotif("🔔 Rappels activés !","Tu recevras des notifications 1h avant chaque stream","planning-ok");
+      });
+    }
+    setModal(null);
+    alert(`✅ ${newItems.length} stream(s) planifié(s) pour la semaine.`);
   }
   function saveStats(){setMs({twitch:parseInt(mSt.twitch)||ms.twitch,youtube:parseInt(mSt.youtube)||ms.youtube,tiktok:parseInt(mSt.tiktok)||ms.tiktok});alert("✅ Stats sauvegardées !");}
   function requestNotif(s){
@@ -3350,11 +3375,42 @@ export default function App(){
       </Modal>
 
       <Modal open={modal==="addSc"} onClose={()=>setModal(null)} title="Planifier un stream">
-        <Field label="Jour" as="select" value={newSc.day} onChange={e=>setNewSc({...newSc,day:e.target.value})}>{DAYS.map(d=><option key={d}>{d}</option>)}</Field>
-        <Field label="Heure" type="time" value={newSc.time} onChange={e=>setNewSc({...newSc,time:e.target.value})}/>
-        <Field label="Durée (heures)" type="number" value={newSc.dur} onChange={e=>setNewSc({...newSc,dur:e.target.value})} placeholder="2"/>
-        <Field label="Plateforme" as="select" value={newSc.platform} onChange={e=>setNewSc({...newSc,platform:e.target.value})}><option value="twitch">🟣 Twitch</option><option value="youtube">▶️ YouTube</option></Field>
-        <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><Btn v="ghost" onClick={()=>setModal(null)}>Annuler</Btn><Btn onClick={addScheduleItem}>Planifier</Btn></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+          <button onClick={()=>setPlanningMode("single")} style={{padding:"9px 10px",background:planningMode==="single"?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${planningMode==="single"?"rgba(212,16,63,0.4)":B}`,borderRadius:10,color:planningMode==="single"?R:"white",fontWeight:700,cursor:"pointer"}}>Un seul jour</button>
+          <button onClick={()=>setPlanningMode("week")} style={{padding:"9px 10px",background:planningMode==="week"?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${planningMode==="week"?"rgba(212,16,63,0.4)":B}`,borderRadius:10,color:planningMode==="week"?R:"white",fontWeight:700,cursor:"pointer"}}>Toute la semaine</button>
+        </div>
+
+        {planningMode==="single"?(
+          <>
+            <Field label="Jour" as="select" value={newSc.day} onChange={e=>setNewSc({...newSc,day:e.target.value})}>{DAYS.map(d=><option key={d}>{d}</option>)}</Field>
+            <Field label="Heure" type="time" value={newSc.time} onChange={e=>setNewSc({...newSc,time:e.target.value})}/>
+            <Field label="Durée (heures)" type="number" value={newSc.dur} onChange={e=>setNewSc({...newSc,dur:e.target.value})} placeholder="2"/>
+            <Field label="Plateforme" as="select" value={newSc.platform} onChange={e=>setNewSc({...newSc,platform:e.target.value})}><option value="twitch">🟣 Twitch</option><option value="youtube">▶️ YouTube</option></Field>
+          </>
+        ):(
+          <>
+            <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>Jours à planifier</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:10}}>
+              {DAYS.map(d=>(
+                <button key={d} onClick={()=>setWeekSc(p=>({...p,days:{...p.days,[d]:!p.days[d]}}))} style={{padding:"8px 6px",background:weekSc.days[d]?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${weekSc.days[d]?"rgba(212,16,63,0.35)":B}`,borderRadius:8,color:weekSc.days[d]?R:M,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  {d.slice(0,3)}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+              <Btn sz="sm" v="ghost" onClick={()=>setWeekSc(p=>({...p,days:{Lundi:true,Mardi:true,Mercredi:true,Jeudi:true,Vendredi:true,Samedi:false,Dimanche:false}}))}>Lun-Ven</Btn>
+              <Btn sz="sm" v="ghost" onClick={()=>setWeekSc(p=>({...p,days:{Lundi:false,Mardi:false,Mercredi:false,Jeudi:false,Vendredi:false,Samedi:true,Dimanche:true}}))}>Weekend</Btn>
+              <Btn sz="sm" v="ghost" onClick={()=>setWeekSc(p=>({...p,days:{Lundi:true,Mardi:true,Mercredi:true,Jeudi:true,Vendredi:true,Samedi:true,Dimanche:true}}))}>Tous</Btn>
+            </div>
+            <Field label="Heure commune" type="time" value={weekSc.time} onChange={e=>setWeekSc({...weekSc,time:e.target.value})}/>
+            <Field label="Durée commune (heures)" type="number" value={weekSc.dur} onChange={e=>setWeekSc({...weekSc,dur:e.target.value})} placeholder="2"/>
+            <Field label="Plateforme commune" as="select" value={weekSc.platform} onChange={e=>setWeekSc({...weekSc,platform:e.target.value})}><option value="twitch">🟣 Twitch</option><option value="youtube">▶️ YouTube</option></Field>
+          </>
+        )}
+        <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+          <Btn v="ghost" onClick={()=>setModal(null)}>Annuler</Btn>
+          <Btn onClick={planningMode==="single"?addScheduleItem:addWeekScheduleItems}>{planningMode==="single"?"Planifier":"Planifier la semaine"}</Btn>
+        </div>
       </Modal>
 
       <Modal open={modal==="contract"} onClose={()=>setModal(null)} title={`Contrat — ${ct.createur?.name||""}`} wide>
