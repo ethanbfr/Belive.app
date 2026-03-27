@@ -365,6 +365,7 @@ export default function App(){
   const [parrainCopied,setParrainCopied]=useState(false);
   const [profil,setProfil]=useState(()=>JSON.parse(localStorage.getItem("ba6_profil")||"{}"));
   const [profilEdit,setProfilEdit]=useState(false);
+  const [showSubscriptionSection,setShowSubscriptionSection]=useState(false);
   const monCodeParrain=user?"BELIVE-"+user.name.toUpperCase().replace(/ /g,"").slice(0,4)+"2025":"";
 
   const [aiMsgs,setAiMsgs]=useState([{role:"ai",text:"Bonjour ! Je suis ton coach streaming IA 🎮\nPose-moi tes questions sur la croissance, la monétisation ou ta stratégie."}]);
@@ -1117,6 +1118,44 @@ export default function App(){
     clauseExclu:"",
     noteLibre:"",
   });setModal("contract");}
+
+  async function cancelSubscription(){
+    if(!confirm("⚠️ Tu es sûr de vouloir annuler ton abonnement ?\n\nTu perdras l'accès à toutes les fonctionnalités premium à la fin de la période en cours.")) return;
+    
+    try{
+      // Appel à votre backend pour annuler l'abonnement Stripe
+      const response=await fetch("https://votre-backend.com/cancel-subscription",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          email:user.email,
+          userId:user.id
+        })
+      });
+      
+      if(response.ok){
+        // Mettre à jour le statut dans la base de données
+        await db.updateUser(user.email,{plan:"free",paid:false,cancelledAt:new Date().toISOString()});
+        
+        // Mettre à jour l'état local
+        const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+        if(sv[user.email]){
+          sv[user.email].plan="free";
+          sv[user.email].paid=false;
+          sv[user.email].cancelledAt=new Date().toISOString();
+        }
+        localStorage.setItem("ba6_users",JSON.stringify(sv));
+        
+        setUser({...user,plan:"free",paid:false,cancelledAt:new Date().toISOString()});
+        
+        alert("✅ Ton abonnement a été annulé. Tu continueras à bénéficier des avantages jusqu'à la fin de ta période en cours.");
+      }else{
+        alert("❌ Une erreur est survenue. Contacte le support : ethan@beliveacademy.com");
+      }
+    }catch(e){
+      alert("❌ Erreur de connexion. Contacte le support : ethan@beliveacademy.com");
+    }
+  }
 
   const navItems=[
     {id:"dashboard",    icon:"⬡", label:"Dashboard",    roles:["admin","createur"]},
@@ -2984,6 +3023,125 @@ export default function App(){
                   <button onClick={()=>Notification.requestPermission()} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>Activer</button>
                 )}
               </div>
+            </Card>
+
+            {/* Section Abonnement */}
+            <Card>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div>
+                  <div style={{fontWeight:800,fontSize:15}}>💳 Mon Abonnement</div>
+                  <div style={{fontSize:12,color:M,marginTop:2}}>
+                    {user.plan==="pro"?"Abonnement Premium actif" : 
+                     user.plan==="belive_creator"?"Créateur Belive" :
+                     isInTrial?`Essai gratuit - ${trialDaysLeft}j restants` :
+                     "Compte gratuit"}
+                  </div>
+                </div>
+                <button 
+                  onClick={()=>setShowSubscriptionSection(!showSubscriptionSection)}
+                  style={{background:"none",border:"none",color:M,cursor:"pointer",fontSize:20,lineHeight:1}}
+                >
+                  {showSubscriptionSection?"▼":"▶"}
+                </button>
+              </div>
+
+              {showSubscriptionSection && (
+                <div style={{borderTop:`1px solid ${B}`,paddingTop:16}}>
+                  {/* Statut actuel */}
+                  <div style={{background:user.plan==="pro"?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:12,padding:16,marginBottom:16}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+                      <div style={{width:40,height:40,background:user.plan==="pro"?G:"rgba(255,255,255,0.1)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
+                        {user.plan==="pro"?"⭐":"🎁"}
+                      </div>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:14,color:user.plan==="pro"?G:"white"}}>
+                          {user.plan==="pro"?"Premium" : user.plan==="belive_creator"?"Créateur Belive" : "Essai Gratuit"}
+                        </div>
+                        <div style={{fontSize:11,color:M}}>
+                          {user.plan==="pro"?"14,99€/mois" : 
+                           user.plan==="belive_creator"?"Offert" :
+                           isInTrial?"Passe à Premium pour continuer" : 
+                           "Fonctionnalités limitées"}
+                        </div>
+                      </div>
+                    </div>
+                    {user.plan==="pro" && (
+                      <div style={{fontSize:12,color:M,marginTop:8}}>
+                        Prochain paiement : {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString("fr-FR")}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Avantages selon le plan */}
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontWeight:700,fontSize:13,marginBottom:12,color:"white"}}>
+                      🎯 Tes avantages {user.plan==="pro"?"Premium" : "actuels"}
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                      {[
+                        {feature:"Accès illimité au Coach IA",available:user.plan==="pro"||isInTrial},
+                        {feature:"Statistiques détaillées",available:user.plan==="pro"||isInTrial},
+                        {feature:"Planning avancé",available:user.plan==="pro"||isInTrial},
+                        {feature:"Partenariats exclusifs",available:user.plan==="pro"||isInTrial},
+                        {feature:"Templates personnalisés",available:user.plan==="pro"||isInTrial},
+                        {feature:"Support prioritaire",available:user.plan==="pro"},
+                        {feature:"Analytics avancées",available:user.plan==="pro"},
+                        {feature:"Export de données",available:user.plan==="pro"},
+                      ].map((item,i)=>(
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:8,background:item.available?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:8}}>
+                          <div style={{fontSize:16,color:item.available?G:M}}>
+                            {item.available?"✅":"🔒"}
+                          </div>
+                          <div style={{fontSize:11,color:item.available?"white":M}}>
+                            {item.feature}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                    {user.plan!=="pro" && !isInTrial && (
+                      <Btn 
+                        onClick={()=>setModal("payment")}
+                        icon="⭐"
+                        style={{flex:1}}
+                      >
+                        Passer à Premium
+                      </Btn>
+                    )}
+                    
+                    {isInTrial && (
+                      <Btn 
+                        onClick={()=>setModal("payment")}
+                        icon="🚀"
+                        style={{flex:1}}
+                      >
+                        Activer Premium
+                      </Btn>
+                    )}
+                    
+                    {user.plan==="pro" && (
+                      <Btn 
+                        v="danger"
+                        onClick={cancelSubscription}
+                        icon="✕"
+                        style={{flex:1}}
+                      >
+                        Annuler l'abonnement
+                      </Btn>
+                    )}
+                  </div>
+
+                  {user.plan==="pro" && (
+                    <div style={{marginTop:12,fontSize:11,color:M,textAlign:"center"}}>
+                      ⚠️ L'annulation prendra effet à la fin de ta période de facturation en cours.<br/>
+                      Tu conserveras l'accès Premium jusqu'à cette date.
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
           </div>
         )}
