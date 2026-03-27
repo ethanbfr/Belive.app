@@ -373,6 +373,107 @@ export default function App(){
   const [aiTyping,setAiTyping]=useState(false);
   const aiEnd=useRef(null);
 
+  // Configuration Stripe pour Supabase
+  const STRIPE_PUBLISHABLE_KEY = 'pk_live_51QjW0bCdpGOR7VKT42nZiWQZu4YoKXAPsZ0TBiUuAC8bP3uIBCjKxte3Yd2ZGqqoqveDej3KTQ7c6yE5p3mCaojC00McsjkYVp';
+  const STRIPE_WEBHOOK_SECRET = 'whsec_9X6TQ6j3XTU8xSuCwBi58tTMokRTg6s4';
+  const [stripe, setStripe] = useState(null);
+
+  // Initialiser Stripe
+  useEffect(() => {
+    if (window.Stripe) {
+      setStripe(window.Stripe(STRIPE_PUBLISHABLE_KEY));
+    } else {
+      // Charger Stripe si pas encore chargé
+      const script = document.createElement('script');
+      script.src = 'https://js.stripe.com/v3/';
+      script.onload = () => {
+        setStripe(window.Stripe(STRIPE_PUBLISHABLE_KEY));
+      };
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Gérer les webhooks Stripe
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('payment') === 'success') {
+      updateUserToPremium();
+      alert('✅ Paiement réussi ! Bienvenue chez Belive Academy Premium 🎉');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('payment') === 'cancelled') {
+      alert('❌ Paiement annulé');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  // Créer un abonnement via Supabase
+  async function createSubscription(priceId = 'price_14_99') {
+    if (!user?.email) {
+      alert('Erreur: email manquant');
+      return;
+    }
+
+    try {
+      // Appeler la fonction Supabase pour créer l'abonnement
+      const { data, error } = await supabase
+        .rpc('create_stripe_subscription', {
+          user_email: user.email,
+          price_id: priceId
+        });
+
+      if (error) {
+        console.error('Erreur Supabase:', error);
+        alert('Erreur lors de la création de l\'abonnement');
+        return;
+      }
+
+      // Rediriger vers Stripe Checkout
+      if (data && data.checkout_url) {
+        window.location.href = data.checkout_url;
+      }
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la création de l\'abonnement');
+    }
+  }
+
+  // Mettre à jour l'utilisateur comme Premium
+  async function updateUserToPremium() {
+    if (user?.email) {
+      try {
+        // Mettre à jour via Supabase
+        await db.updateUser(user.email, {
+          plan: "pro",
+          paid: true,
+          planActivatedAt: new Date().toISOString()
+        });
+      } catch (e) {
+        console.log("Erreur Supabase:", e);
+      }
+      
+      // Mettre à jour localStorage
+      const sv = JSON.parse(localStorage.getItem("ba6_users") || "{}");
+      if (sv[user.email]) {
+        sv[user.email].plan = "pro";
+        sv[user.email].paid = true;
+        sv[user.email].planActivatedAt = new Date().toISOString();
+      }
+      localStorage.setItem("ba6_users", JSON.stringify(sv));
+      
+      // Mettre à jour la session
+      const updatedUser = {
+        ...user,
+        plan: "pro",
+        paid: true,
+        planActivatedAt: new Date().toISOString()
+      };
+      localStorage.setItem("ba6_session", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  }
+
   useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   useEffect(()=>{localStorage.setItem("ba6_co",JSON.stringify(contrats));},[contrats]);
@@ -1123,22 +1224,33 @@ export default function App(){
     if(!confirm("⚠️ Tu es sûr de vouloir annuler ton abonnement ?\n\nTu perdras l'accès à toutes les fonctionnalités premium à la fin de la période en cours.")) return;
     
     try{
-      // Utiliser votre endpoint Stripe existant
-      const response=await fetch("https://beliveacademy.com/api/cancel-subscription",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          email:user.email,
-          userId:user.id || user.email
-        })
-      });
+      // Utiliser Supabase pour gérer l'annulation Stripe
+      const { data, error } = await supabase
+        .rpc('cancel_stripe_subscription', {
+          user_email: user.email
+        });
       
-      if(response.ok){
-        alert("✅ Demande d'annulation envoyée. Tu recevras une confirmation par email et conserveras l'accès Premium jusqu'à la fin de ta période.");
-      }else{
+      if(error){
+        console.error('Erreur Supabase:', error);
         alert("❌ Erreur lors de l'annulation. Contacte le support : ethan@beliveacademy.com");
+        return;
       }
+      
+      // Mettre à jour l'état local
+      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      if(sv[user.email]){
+        sv[user.email].plan="free";
+        sv[user.email].paid=false;
+        sv[user.email].cancelledAt=new Date().toISOString();
+      }
+      localStorage.setItem("ba6_users",JSON.stringify(sv));
+      
+      setUser({...user,plan:"free",paid:false,cancelledAt:new Date().toISOString()});
+      
+      alert("✅ Ton abonnement a été annulé. Tu continueras à bénéficier des avantages jusqu'à la fin de ta période en cours.");
+      
     }catch(e){
+      console.error('Erreur:', e);
       alert("❌ Erreur de connexion. Contacte le support : ethan@beliveacademy.com");
     }
   }
@@ -3011,121 +3123,51 @@ export default function App(){
               </div>
             </Card>
 
-            {/* Section Abonnement */}
+            {/* Section Abonnement simplifiée */}
             <Card>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                <div>
-                  <div style={{fontWeight:800,fontSize:15}}>💳 Mon Abonnement</div>
-                  <div style={{fontSize:12,color:M,marginTop:2}}>
-                    {user.plan==="pro"?"Abonnement Premium actif" : 
-                     user.plan==="belive_creator"?"Créateur Belive" :
-                     isInTrial?`Essai gratuit - ${trialDaysLeft}j restants` :
-                     "Compte gratuit"}
+              <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>💳 Mon Abonnement</div>
+              
+              {/* Statut actuel */}
+              <div style={{background:user.plan==="pro"?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:12,padding:16,marginBottom:16}}>
+                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+                  <div style={{width:40,height:40,background:user.plan==="pro"?G:"rgba(255,255,255,0.1)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
+                    {user.plan==="pro"?"⭐":"🎁"}
+                  </div>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:14,color:user.plan==="pro"?G:"white"}}>
+                      {user.plan==="pro"?"Premium Actif" : user.plan==="belive_creator"?"Créateur Belive" : "Essai Gratuit"}
+                    </div>
+                    <div style={{fontSize:11,color:M}}>
+                      {user.plan==="pro"?"14,99€/mois" : 
+                       user.plan==="belive_creator"?"Offert par l'agence" :
+                       isInTrial?`${trialDaysLeft} jours restants` :
+                       "Fonctionnalités limitées"}
+                    </div>
                   </div>
                 </div>
-                <button 
-                  onClick={()=>setShowSubscriptionSection(!showSubscriptionSection)}
-                  style={{background:"none",border:"none",color:M,cursor:"pointer",fontSize:20,lineHeight:1}}
-                >
-                  {showSubscriptionSection?"▼":"▶"}
-                </button>
+                {user.plan==="pro" && (
+                  <div style={{fontSize:12,color:M,marginTop:8}}>
+                    Prochain paiement : {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString("fr-FR")}
+                  </div>
+                )}
               </div>
 
-              {showSubscriptionSection && (
-                <div style={{borderTop:`1px solid ${B}`,paddingTop:16}}>
-                  {/* Statut actuel */}
-                  <div style={{background:user.plan==="pro"?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:12,padding:16,marginBottom:16}}>
-                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
-                      <div style={{width:40,height:40,background:user.plan==="pro"?G:"rgba(255,255,255,0.1)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
-                        {user.plan==="pro"?"⭐":"🎁"}
-                      </div>
-                      <div>
-                        <div style={{fontWeight:700,fontSize:14,color:user.plan==="pro"?G:"white"}}>
-                          {user.plan==="pro"?"Premium" : user.plan==="belive_creator"?"Créateur Belive" : "Essai Gratuit"}
-                        </div>
-                        <div style={{fontSize:11,color:M}}>
-                          {user.plan==="pro"?"14,99€/mois" : 
-                           user.plan==="belive_creator"?"Offert" :
-                           isInTrial?"Passe à Premium pour continuer" : 
-                           "Fonctionnalités limitées"}
-                        </div>
-                      </div>
-                    </div>
-                    {user.plan==="pro" && (
-                      <div style={{fontSize:12,color:M,marginTop:8}}>
-                        Prochain paiement : {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString("fr-FR")}
-                      </div>
-                    )}
-                  </div>
+              {/* Bouton d'annulation */}
+              {user.plan==="pro" && (
+                <Btn 
+                  v="danger"
+                  onClick={cancelSubscription}
+                  icon="✕"
+                  style={{width:"100%"}}
+                >
+                  Annuler mon abonnement
+                </Btn>
+              )}
 
-                  {/* Avantages selon le plan */}
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontWeight:700,fontSize:13,marginBottom:12,color:"white"}}>
-                      🎯 Tes avantages {user.plan==="pro"?"Premium" : "actuels"}
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                      {[
-                        {feature:"Accès illimité au Coach IA",available:user.plan==="pro"||isInTrial},
-                        {feature:"Statistiques détaillées",available:user.plan==="pro"||isInTrial},
-                        {feature:"Planning avancé",available:user.plan==="pro"||isInTrial},
-                        {feature:"Partenariats exclusifs",available:user.plan==="pro"||isInTrial},
-                        {feature:"Templates personnalisés",available:user.plan==="pro"||isInTrial},
-                        {feature:"Support prioritaire",available:user.plan==="pro"},
-                        {feature:"Analytics avancées",available:user.plan==="pro"},
-                        {feature:"Export de données",available:user.plan==="pro"},
-                      ].map((item,i)=>(
-                        <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:8,background:item.available?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:8}}>
-                          <div style={{fontSize:16,color:item.available?G:M}}>
-                            {item.available?"✅":"🔒"}
-                          </div>
-                          <div style={{fontSize:11,color:item.available?"white":M}}>
-                            {item.feature}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                    {user.plan!=="pro" && !isInTrial && (
-                      <Btn 
-                        onClick={()=>setModal("payment")}
-                        icon="⭐"
-                        style={{flex:1}}
-                      >
-                        Passer à Premium
-                      </Btn>
-                    )}
-                    
-                    {isInTrial && (
-                      <Btn 
-                        onClick={()=>setModal("payment")}
-                        icon="🚀"
-                        style={{flex:1}}
-                      >
-                        Activer Premium
-                      </Btn>
-                    )}
-                    
-                    {user.plan==="pro" && (
-                      <Btn 
-                        v="danger"
-                        onClick={cancelSubscription}
-                        icon="✕"
-                        style={{flex:1}}
-                      >
-                        Annuler l'abonnement
-                      </Btn>
-                    )}
-                  </div>
-
-                  {user.plan==="pro" && (
-                    <div style={{marginTop:12,fontSize:11,color:M,textAlign:"center"}}>
-                      ⚠️ L'annulation prendra effet à la fin de ta période de facturation en cours.<br/>
-                      Tu conserveras l'accès Premium jusqu'à cette date.
-                    </div>
-                  )}
+              {user.plan==="pro" && (
+                <div style={{marginTop:12,fontSize:11,color:M,textAlign:"center"}}>
+                  ⚠️ L'annulation prendra effet à la fin de ta période de facturation.<br/>
+                  Tu conserveras l'accès Premium jusqu'à cette date.
                 </div>
               )}
             </Card>
