@@ -309,6 +309,7 @@ export default function App(){
   const [menuOpen,setMenuOpen]=useState(false);
   const [modal,setModal]=useState(null);
   const [showWelcome,setShowWelcome]=useState(false);
+  const [showLegalModal,setShowLegalModal]=useState(null);
   const [adminNotifs,setAdminNotifs]=useState(()=>JSON.parse(localStorage.getItem("ba6_notifs")||"[]"));
   const [notifPrefs,setNotifPrefs]=useState(()=>JSON.parse(localStorage.getItem("ba6_nprefs")||'{"planning":true,"messages":true,"partenariats":true,"classement":true}'));
 
@@ -1175,9 +1176,9 @@ export default function App(){
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
                 <strong style={{color:"white"}}>J'accepte les CGU et la politique de confidentialité</strong><br/>
                 En m'inscrivant, j'accepte les{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu.html","_blank");}}>CGU</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();setShowLegalModal("cgu");}}>CGU</span>
                 {" "}et la{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/politique.html","_blank");}}>politique de confidentialité</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();setShowLegalModal("politique");}}>politique de confidentialité</span>
                 {" "}de Belive Academy.
               </div>
             </label>
@@ -3580,6 +3581,96 @@ export default function App(){
             setTimeout(()=>w.print(),500);
           }} icon="📄">Imprimer PDF</Btn>
           <Btn v="success" onClick={saveContract} icon="💾">Envoyer par email</Btn>
+        </div>
+      </Modal>
+
+      {/* MODALE LÉGALE CGU/POLITIQUE */}
+      <Modal open={!!showLegalModal} onClose={()=>setShowLegalModal(null)} title={showLegalModal==="cgu"?"Conditions Générales d'Utilisation":"Politique de Confidentialité"} wide>
+        <div style={{maxHeight:"70vh",overflowY:"auto",lineHeight:1.6}}>
+          {showLegalModal==="cgu"?(
+            <div>
+              <h3 style={{color:R,marginBottom:12}}>1. Objet</h3>
+              <p style={{marginBottom:16}}>Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme Belive Academy.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>2. Accès au service</h3>
+              <p style={{marginBottom:16}}>Belive Academy est réservée aux personnes majeures (18 ans et plus). L'inscription est soumise à acceptation des présentes CGU.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>3. Services proposés</h3>
+              <ul style={{marginBottom:16,marginLeft:20}}>
+                <li>Accompagnement de créateurs de contenu</li>
+                <li>Formation et coaching streaming</li>
+                <li>Mise en relation avec des partenaires</li>
+                <li>Accès à une communauté de créateurs</li>
+              </ul>
+              
+              <h3 style={{color:R,marginBottom:12}}>4. Obligations des membres</h3>
+              <p style={{marginBottom:16}}>Les membres s'engagent à :</p>
+              <ul style={{marginBottom:16,marginLeft:20}}>
+                <li>Fournir des informations exactes</li>
+                <li>Respecter les autres membres</li>
+                <li>Ne pas partager de contenu illégal</li>
+                <li>Payer les frais d'abonnement souscrits</li>
+              </ul>
+              
+              <h3 style={{color:R,marginBottom:12}}>5. Tarification</h3>
+              <p style={{marginBottom:16}}>Les tarifs sont consultables sur la plateforme. Belive Academy se réserve le droit de modifier les tarifs sous préavis de 30 jours.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>6. Propriété intellectuelle</h3>
+              <p style={{marginBottom:16}}>Le contenu de la plateforme est protégé par le droit d'auteur. Toute reproduction non autorisée est interdite.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>7. Résiliation</h3>
+              <p style={{marginBottom:16}}>L'utilisateur peut résilier son compte à tout moment. Belive Academy se réserve le droit de résilier un compte en cas de manquement aux CGU.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>8. Contact</h3>
+              <p>Pour toute question : ethan@beliveacademy.com - 07 80 99 92 51</p>
+            </div>
+          ):(
+            <div>
+              <h3 style={{color:R,marginBottom:12}}>1. Collecte des données</h3>
+              <p style={{marginBottom:16}}>Belive Academy collecte les données suivantes :</p>
+              <ul style={{marginBottom:16,marginLeft:20}}>
+                <li>Nom, prénom, email, téléphone</li>
+                <li>Informations sur les réseaux sociaux</li>
+                <li>Données de connexion et d'utilisation</li>
+                <li>Données de paiement</li>
+              </ul>
+              
+              <h3 style={{color:R,marginBottom:12}}>2. Finalités</h3>
+              <p style={{marginBottom:16}}>Vos données sont utilisées pour :</p>
+              <ul style={{marginBottom:16,marginLeft:20}}>
+                <li>Gérer votre compte et abonnement</li>
+                <li>Fournir les services demandés</li>
+                <li>Améliorer la plateforme</li>
+                <li>Communiquer avec vous</li>
+              </ul>
+              
+              <h3 style={{color:R,marginBottom:12}}>3. Conservation</h3>
+              <p style={{marginBottom:16}}>Les données sont conservées le temps nécessaire à l'exécution des services et conformément à la législation.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>4. Partage des données</h3>
+              <p style={{marginBottom:16}}>Vos données ne sont jamais vendues. Elles peuvent être partagées avec :</p>
+              <ul style={{marginBottom:16,marginLeft:20}}>
+                <li>Les partenaires pour les offres commerciales</li>
+                <li>Les prestataires techniques</li>
+                <li>Les autorités légales sur demande</li>
+              </ul>
+              
+              <h3 style={{color:R,marginBottom:12}}>5. Sécurité</h3>
+              <p style={{marginBottom:16}}>Belive Academy met en œuvre des mesures techniques et organisationnelles pour protéger vos données.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>6. Vos droits</h3>
+              <p style={{marginBottom:16}}>Vous disposez d'un droit d'accès, de modification, de suppression et de portabilité sur vos données.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>7. Cookies</h3>
+              <p style={{marginBottom:16}}>Le site utilise des cookies techniques indispensables à son fonctionnement.</p>
+              
+              <h3 style={{color:R,marginBottom:12}}>8. Contact</h3>
+              <p>Pour exercer vos droits : ethan@beliveacademy.com - 07 80 99 92 51</p>
+            </div>
+          )}
+        </div>
+        <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
+          <Btn onClick={()=>setShowLegalModal(null)}>Fermer</Btn>
         </div>
       </Modal>
 
