@@ -1123,34 +1123,20 @@ export default function App(){
     if(!confirm("⚠️ Tu es sûr de vouloir annuler ton abonnement ?\n\nTu perdras l'accès à toutes les fonctionnalités premium à la fin de la période en cours.")) return;
     
     try{
-      // Appel à votre backend pour annuler l'abonnement Stripe
-      const response=await fetch("https://votre-backend.com/cancel-subscription",{
+      // Utiliser votre endpoint Stripe existant
+      const response=await fetch("https://beliveacademy.com/api/cancel-subscription",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           email:user.email,
-          userId:user.id
+          userId:user.id || user.email
         })
       });
       
       if(response.ok){
-        // Mettre à jour le statut dans la base de données
-        await db.updateUser(user.email,{plan:"free",paid:false,cancelledAt:new Date().toISOString()});
-        
-        // Mettre à jour l'état local
-        const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-        if(sv[user.email]){
-          sv[user.email].plan="free";
-          sv[user.email].paid=false;
-          sv[user.email].cancelledAt=new Date().toISOString();
-        }
-        localStorage.setItem("ba6_users",JSON.stringify(sv));
-        
-        setUser({...user,plan:"free",paid:false,cancelledAt:new Date().toISOString()});
-        
-        alert("✅ Ton abonnement a été annulé. Tu continueras à bénéficier des avantages jusqu'à la fin de ta période en cours.");
+        alert("✅ Demande d'annulation envoyée. Tu recevras une confirmation par email et conserveras l'accès Premium jusqu'à la fin de ta période.");
       }else{
-        alert("❌ Une erreur est survenue. Contacte le support : ethan@beliveacademy.com");
+        alert("❌ Erreur lors de l'annulation. Contacte le support : ethan@beliveacademy.com");
       }
     }catch(e){
       alert("❌ Erreur de connexion. Contacte le support : ethan@beliveacademy.com");
