@@ -3009,61 +3009,61 @@ export default function App(){
           );
         })()}
 
-      </div>
+        {/* PARRAINAGES ADMIN */}
+        {page==="parrainages"&&role==="admin"&&(
+          <div className="fade">
+            <div style={{marginBottom:20}}>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
+              <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
+            </div>
 
-      {/* PARRAINAGES ADMIN */}
-      {page==="parrainages"&&role==="admin"&&(
-        <div className="fade">
-          <div style={{marginBottom:20}}>
-            <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>PARRAINAGES</div>
-            <div style={{fontSize:13,color:M}}>Suivi des parrainages et réductions -50%</div>
-          </div>
+            {/* Stats */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
+              <SC label="Total parrainages" value={adminRefs.length} icon="🔗" color="yellow"/>
+              <SC label="Filleuls payants" value={adminRefs.filter(r=>r.paid).length} icon="💳" color="green"/>
+              <SC label="Réductions appliquées" value={adminRefs.filter(r=>r.reward_applied).length} icon="🎁" color="red"/>
+            </div>
 
-          {/* Stats */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
-            <SC label="Total parrainages" value={adminRefs.length} icon="🔗" color="yellow"/>
-            <SC label="Filleuls payants" value={adminRefs.filter(r=>r.paid).length} icon="💳" color="green"/>
-            <SC label="Réductions appliquées" value={adminRefs.filter(r=>r.reward_applied).length} icon="🎁" color="red"/>
-          </div>
-
-          {/* Liste */}
-          <Card>
-            <div style={{fontWeight:800,marginBottom:14}}>👥 Tous les parrainages</div>
-            {adminRefs.length===0?(
-              <div style={{textAlign:"center",padding:"40px 0",color:M}}>
-                <div style={{fontSize:36,marginBottom:10}}>🎁</div>
-                <div style={{fontWeight:700,marginBottom:6}}>Aucun parrainage pour l'instant</div>
-                <div style={{fontSize:13}}>Les parrainages apparaîtront ici dès qu'un créateur utilisera le code d'un autre</div>
-              </div>
-            ):adminRefs.map((r,i)=>{
-              const currentMonth=new Date().toISOString().slice(0,7);
-              const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===currentMonth&&x.id!==r.id);
-              return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:`1px solid ${B}`}}>
-                  <div style={{width:40,height:40,background:"rgba(251,191,36,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🎁</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
-                    <div style={{fontSize:11,color:M,marginTop:2}}>a parrainé → <strong style={{color:"white"}}>{r.filleul_name||r.filleul_email}</strong></div>
-                    <div style={{fontSize:11,color:M}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
-                  </div>
-                  <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                    <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
-                    {r.reward_applied&&<Pill color="green" xs>🎁 -50% {r.reward_month}</Pill>}
-                    {alreadyRewarded&&!r.reward_applied&&<Pill color="gray" xs>Limite mois atteinte</Pill>}
-                    {r.paid&&!r.reward_applied&&!alreadyRewarded&&(
-                      <Btn sz="sm" onClick={async()=>{
-                        await db.updateReferral(r.id,{reward_applied:true,reward_month:currentMonth});
-                        alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
-                        db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
-                      }}>Appliquer -50%</Btn>
-                    )}
-                  </div>
+            {/* Liste */}
+            <Card>
+              <div style={{fontWeight:800,marginBottom:14}}>👥 Tous les parrainages</div>
+              {adminRefs.length===0?(
+                <div style={{textAlign:"center",padding:"40px 0",color:M}}>
+                  <div style={{fontSize:36,marginBottom:10}}>🎁</div>
+                  <div style={{fontWeight:700,marginBottom:6}}>Aucun parrainage pour l'instant</div>
+                  <div style={{fontSize:13}}>Les parrainages apparaîtront ici dès qu'un créateur utilisera le code d'un autre</div>
                 </div>
-              );
-            })}
-          </Card>
-        </div>
-      )}
+              ):adminRefs.map((r,i)=>{
+                const currentMonth=new Date().toISOString().slice(0,7);
+                const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===currentMonth&&x.id!==r.id);
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:`1px solid ${B}`}}>
+                    <div style={{width:40,height:40,background:"rgba(251,191,36,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🎁</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>a parrainé → <strong style={{color:"white"}}>{r.filleul_name||r.filleul_email}</strong></div>
+                      <div style={{fontSize:11,color:M}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
+                    </div>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                      {r.reward_applied&&<Pill color="green" xs>🎁 -50% {r.reward_month}</Pill>}
+                      {alreadyRewarded&&!r.reward_applied&&<Pill color="gray" xs>Limite mois atteinte</Pill>}
+                      {r.paid&&!r.reward_applied&&!alreadyRewarded&&(
+                        <Btn sz="sm" onClick={async()=>{
+                          await db.updateReferral(r.id,{reward_applied:true,reward_month:currentMonth});
+                          alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
+                          db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
+                        }}>Appliquer -50%</Btn>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </Card>
+          </div>
+        )}
+
+      </div>
 
       {/* MODALS */}
 
