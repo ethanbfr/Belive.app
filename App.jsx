@@ -608,22 +608,65 @@ const STRIPE_URLS = {
 
   useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
-  useEffect(()=>{localStorage.setItem("ba6_co",JSON.stringify(contrats));},[contrats]);
-  // Sauvegarder la session pour éviter déconnexion au refresh
-  useEffect(()=>{
-    if(user){
-      localStorage.setItem("ba6_session",JSON.stringify(user));
-    } else {
-      localStorage.removeItem("ba6_session");
+  // Charger les partenariats depuis Supabase
+  useEffect(() => {
+    if (user && user.email === "ethanbfr06@gmail.com") {
+      db.getPartners().then(data => {
+        if (data) {
+          setPartners(data);
+          localStorage.setItem("ba6_pa", JSON.stringify(data));
+        }
+      });
     }
-  },[user]);
-  useEffect(()=>{localStorage.setItem("ba6_cd",JSON.stringify(codes));},[codes]);
-  useEffect(()=>{localStorage.setItem("ba6_ms",JSON.stringify(ms));},[ms]);
-  useEffect(()=>{localStorage.setItem("ba6_sc",JSON.stringify(schedule));},[schedule]);
-  useEffect(()=>{localStorage.setItem("ba6_profil",JSON.stringify(profil));},[profil]);
-  useEffect(()=>{localStorage.setItem("ba6_pa",JSON.stringify(partners));},[partners]);
-  useEffect(()=>{localStorage.setItem("ba6_nprefs",JSON.stringify(notifPrefs));},[notifPrefs]);
-  useEffect(()=>{localStorage.setItem("ba6_ref",JSON.stringify(referrals));},[referrals]);
+  }, [user]);
+
+  useEffect(() => {
+    // Charger les données depuis Supabase
+    const loadData = async () => {
+      if (!user) return;
+      
+      // Charger les utilisateurs
+      const users = await db.getUsers();
+      if (users) {
+        const usersObj = {};
+        users.forEach(u => {
+          usersObj[u.email] = u;
+        });
+        localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+      }
+      
+      // Charger les streams
+      const streams = await db.getStreams(user.email);
+      if (streams) {
+        setStreams(streams);
+        localStorage.setItem("ba6_st", JSON.stringify(streams));
+      }
+      
+      // Charger les codes
+      const codes = await db.getCodes();
+      if (codes) {
+        setCodes(codes);
+        localStorage.setItem("ba6_cd", JSON.stringify(codes));
+      }
+      
+      // Charger les contrats
+      const contrats = await db.getContrats();
+      if (contrats) {
+        setContrats(contrats);
+        localStorage.setItem("ba6_co", JSON.stringify(contrats));
+      }
+      
+      // Charger les parrainages
+      const referrals = await db.getReferrals();
+      if (referrals) {
+        setReferrals(referrals);
+        localStorage.setItem("ba6_ref", JSON.stringify(referrals));
+        setAdminRefs(referrals);
+      }
+    };
+    
+    loadData();
+  }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
   function getMyReferralCode(){
