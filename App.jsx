@@ -1308,8 +1308,7 @@ export default function App(){
         {/* PAYWALL — Accès bloqué si essai terminé */}
         {role==="createur"&&!hasAccess&&(
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:20,backdropFilter:"blur(10px)"}}>
-            <div className="fade" style={{background:"#0d0d0d",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:24,padding:32,width:"100%",maxWidth:440,textAlign:"center",position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
+<div className="fade" style={{marginLeft:SW,flex:1,padding:24,paddingTop:24,minHeight:"100vh"}}>              <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
               <div style={{fontSize:48,marginBottom:16}}>🔒</div>
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2,marginBottom:8}}>
                 ESSAI TERMINÉ
