@@ -289,7 +289,13 @@ export default function App(){
   // Détecter si on accède aux pages publiques CGU/Politique
   useEffect(()=>{
     const path=window.location.pathname;
-    if(path==="/cgu"||path==="/cgu.html") setPublicPage("cgu");
+    const search=window.location.search;
+    
+    // Vérifier les paramètres URL
+    if(search.includes("page=cgu")||search.includes("cgu=true")) setPublicPage("cgu");
+    else if(search.includes("page=politique")||search.includes("politique=true")) setPublicPage("politique");
+    // Vérifier les chemins directs
+    else if(path==="/cgu"||path==="/cgu.html") setPublicPage("cgu");
     else if(path==="/politique"||path==="/politique.html"||path==="/politique-de-confidentialite") setPublicPage("politique");
   }, []);
 
