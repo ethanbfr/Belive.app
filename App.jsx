@@ -1175,9 +1175,9 @@ export default function App(){
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
                 <strong style={{color:"white"}}>J'accepte les CGU et la politique de confidentialité</strong><br/>
                 En m'inscrivant, j'accepte les{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/cgu","_blank");}}>CGU</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("/cgu.html","_blank");}}>CGU</span>
                 {" "}et la{" "}
-                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("https://beliveacademy.com/politique-de-confidentialite","_blank");}}>politique de confidentialité</span>
+                <span style={{color:R,textDecoration:"underline",cursor:"pointer"}} onClick={e=>{e.preventDefault();window.open("/politique-de-confidentialite.html","_blank");}}>politique de confidentialité</span>
                 {" "}de Belive Academy.
               </div>
             </label>
