@@ -433,7 +433,7 @@ export default function App(){
     }
   }, []);
 
-  // Créer un abonnement via Supabase
+  // Créer un abonnement via Supabase (version webhook)
   async function createSubscription(priceId = 'cNicN430LdLj88zgru1wY05') {
     if (!user?.email) {
       alert('Erreur: email manquant');
@@ -454,44 +454,72 @@ export default function App(){
         alert(`🎉 Réduction de parrainage appliquée !\n\nTu bénéficies de -50% sur ton abonnement ce mois-ci.\nPrix: 9.99€ au lieu de 14.99€`);
       }
 
-      // Appeler la fonction Supabase pour créer l'abonnement
+      // Créer une session de paiement via Supabase
       const { data, error } = await supabase
-        .rpc('create_stripe_subscription', {
+        .rpc('create_payment_session', {
           user_email: user.email,
           price_id: finalPriceId
         });
 
       if (error) {
         console.error('Erreur Supabase:', error);
-        alert('Erreur lors de la création de l\'abonnement');
+        alert('Erreur lors de la création de la session de paiement');
         return;
       }
 
-      // Si réduction appliquée, la désactiver après utilisation
-      if (discountApplied) {
-        try {
-          await db.updateUser(user.email, {
-            next_month_discount: false,
-            discount_percentage: null,
-            discount_valid_until: null
-          });
-          
-          // Mettre à jour localStorage
-          const sv = JSON.parse(localStorage.getItem("ba6_users") || "{}");
-          if (sv[user.email]) {
-            sv[user.email].next_month_discount = false;
-            sv[user.email].discount_percentage = null;
-            sv[user.email].discount_valid_until = null;
+      // Créer la session Stripe directement depuis le frontend
+      if (stripe && data && data.session_id) {
+        const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${STRIPE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            customer_email: user.email,
+            payment_method_types: 'card',
+            mode: 'subscription',
+            success_url: `${window.location.origin}/?payment=success`,
+            cancel_url: `${window.location.origin}/?payment=cancelled`,
+            line_items: JSON.stringify([{
+              price: finalPriceId,
+              quantity: 1,
+            }]),
+            client_reference_id: data.session_id.toString(),
+          })
+        });
+        
+        const session = await response.json();
+        
+        // Si réduction appliquée, la désactiver après utilisation
+        if (discountApplied) {
+          try {
+            await db.updateUser(user.email, {
+              next_month_discount: false,
+              discount_percentage: null,
+              discount_valid_until: null
+            });
+            
+            // Mettre à jour localStorage
+            const sv = JSON.parse(localStorage.getItem("ba6_users") || "{}");
+            if (sv[user.email]) {
+              sv[user.email].next_month_discount = false;
+              sv[user.email].discount_percentage = null;
+              sv[user.email].discount_valid_until = null;
+            }
+            localStorage.setItem("ba6_users", JSON.stringify(sv));
+          } catch (e) {
+            console.log("Erreur désactivation réduction:", e);
           }
-          localStorage.setItem("ba6_users", JSON.stringify(sv));
-        } catch (e) {
-          console.log("Erreur désactivation réduction:", e);
         }
-      }
-
-      // Rediriger vers Stripe Checkout
-      if (data && data.checkout_url) {
-        window.location.href = data.checkout_url;
+        
+        // Rediriger vers Stripe Checkout
+        const result = await stripe.redirectToCheckout({ sessionId: session.id });
+        
+        if (result.error) {
+          console.error('Erreur:', result.error.message);
+          alert('Erreur de paiement: ' + result.error.message);
+        }
       }
 
     } catch (error) {
@@ -4180,32 +4208,4 @@ export default function App(){
                   <div key={name} style={{border:"2px solid #eee",borderRadius:10,padding:"16px",textAlign:"center"}}>
                     <div style={{fontWeight:800,fontSize:12,color:"#111",marginBottom:2}}>{name}</div>
                     <div style={{fontSize:10,color:"#888",marginBottom:16}}>{email}</div>
-                    <div style={{borderTop:`2px solid ${R}`,margin:"0 20px"}}/>
-                    <div style={{fontSize:9,color:"#aaa",marginTop:6}}>{label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Footer */}
-            <div style={{background:"#111",padding:"14px 28px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:14,letterSpacing:2,color:"white"}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",textAlign:"right"}}>beliveacademy.com • ethan@beliveacademy.com • 07 80 99 92 51</div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-          <Btn v="ghost" onClick={()=>setModal(null)}>Fermer</Btn>
-          <Btn v="ghost" onClick={()=>{
-            const w=window.open("","_blank");
-            w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:white;}@media print{body{margin:0;}}</style></head><body>${document.querySelector('[data-contract-preview]')?.innerHTML||""}</body></html>`);
-            w.document.close();
-            setTimeout(()=>w.print(),500);
-          }} icon="📄">Imprimer PDF</Btn>
-          <Btn v="success" onClick={saveContract} icon="💾">Envoyer par email</Btn>
-        </div>
-      </Modal>
-
-    </div>
-  );
-}
+ 
