@@ -366,7 +366,33 @@ export default function App(){
   const [profil,setProfil]=useState(()=>JSON.parse(localStorage.getItem("ba6_profil")||"{}"));
   const [profilEdit,setProfilEdit]=useState(false);
   const [showSubscriptionSection,setShowSubscriptionSection]=useState(false);
-  const monCodeParrain=user?"BELIVE-"+user.name.toUpperCase().replace(/ /g,"").slice(0,4)+"2025":"";
+  const monCodeParrain=user?.referral_code || generateReferralCode();
+
+  // Générer un code de parrainage unique
+  function generateReferralCode() {
+    if (!user?.name || !user?.email) return '';
+    
+    const namePart = user.name.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+    const emailPart = user.email.slice(0, 3).toUpperCase();
+    const randomPart = Math.random().toString(36).substring(2, 5).toUpperCase();
+    
+    return `BELIVE-${namePart}${randomPart}-${emailPart}`;
+  }
+
+  // Sauvegarder le code de parrainage
+  useEffect(() => {
+    if (user?.email && !user.referral_code) {
+      const code = generateReferralCode();
+      // Mettre à jour Supabase et localStorage
+      db.updateUser(user.email, { referral_code: code });
+      const sv = JSON.parse(localStorage.getItem("ba6_users") || "{}");
+      if (sv[user.email]) {
+        sv[user.email].referral_code = code;
+      }
+      localStorage.setItem("ba6_users", JSON.stringify(sv));
+      setUser({ ...user, referral_code: code });
+    }
+  }, [user?.email]);
 
   const [aiMsgs,setAiMsgs]=useState([{role:"ai",text:"Bonjour ! Je suis ton coach streaming IA 🎮\nPose-moi tes questions sur la croissance, la monétisation ou ta stratégie."}]);
   const [aiInput,setAiInput]=useState("");
@@ -415,17 +441,52 @@ export default function App(){
     }
 
     try {
+      // Vérifier si l'utilisateur a une réduction de parrainage
+      let finalPriceId = priceId;
+      let discountApplied = false;
+      
+      if (user.next_month_discount && user.discount_percentage === 50) {
+        // Appliquer le prix avec réduction 50%
+        finalPriceId = '00waEW7h15eNdsT1wA1wY04'; // Prix 9.99€ (réduction 50%)
+        discountApplied = true;
+        
+        // Afficher la confirmation
+        alert(`🎉 Réduction de parrainage appliquée !\n\nTu bénéficies de -50% sur ton abonnement ce mois-ci.\nPrix: 9.99€ au lieu de 14.99€`);
+      }
+
       // Appeler la fonction Supabase pour créer l'abonnement
       const { data, error } = await supabase
         .rpc('create_stripe_subscription', {
           user_email: user.email,
-          price_id: priceId
+          price_id: finalPriceId
         });
 
       if (error) {
         console.error('Erreur Supabase:', error);
         alert('Erreur lors de la création de l\'abonnement');
         return;
+      }
+
+      // Si réduction appliquée, la désactiver après utilisation
+      if (discountApplied) {
+        try {
+          await db.updateUser(user.email, {
+            next_month_discount: false,
+            discount_percentage: null,
+            discount_valid_until: null
+          });
+          
+          // Mettre à jour localStorage
+          const sv = JSON.parse(localStorage.getItem("ba6_users") || "{}");
+          if (sv[user.email]) {
+            sv[user.email].next_month_discount = false;
+            sv[user.email].discount_percentage = null;
+            sv[user.email].discount_valid_until = null;
+          }
+          localStorage.setItem("ba6_users", JSON.stringify(sv));
+        } catch (e) {
+          console.log("Erreur désactivation réduction:", e);
+        }
       }
 
       // Rediriger vers Stripe Checkout
@@ -488,6 +549,75 @@ export default function App(){
       };
       localStorage.setItem("ba6_session", JSON.stringify(updatedUser));
       setUser(updatedUser);
+      
+      // Vérifier si c'est un filleul et appliquer la réduction au parrain
+      applyReferralDiscount();
+    }
+  }
+
+  // Appliquer automatiquement la réduction au parrain
+  async function applyReferralDiscount() {
+    if (!user?.referred_by) return;
+    
+    try {
+      const parrainages = JSON.parse(localStorage.getItem("ba6_parrainages") || "[]");
+      const referral = parrainages.find(p => 
+        p.filleul_email === user.email && 
+        p.parrain_email === user.referred_by &&
+        !p.reward_applied
+      );
+      
+      if (!referral) return;
+      
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const usersData = JSON.parse(localStorage.getItem("ba6_users") || "{}");
+      const parrain = usersData[user.referred_by];
+      
+      if (!parrain) return;
+      
+      // Vérifier si le parrain n'a pas déjà 3 réductions ce mois-ci
+      const monthlyRewards = parrainages.filter(p => 
+        p.parrain_email === user.referred_by && 
+        p.reward_month === currentMonth
+      );
+      
+      if (monthlyRewards.length >= 3) return;
+      
+      // Appliquer la réduction de 50% pour le prochain mois
+      parrain.next_month_discount = true;
+      parrain.discount_percentage = 50;
+      parrain.discount_valid_until = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(); // 45 jours pour couvrir le prochain mois
+      
+      // Mettre à jour localStorage
+      usersData[user.referred_by] = parrain;
+      localStorage.setItem("ba6_users", JSON.stringify(usersData));
+      
+      // Mettre à jour Supabase
+      try {
+        await db.updateUser(user.referred_by, {
+          next_month_discount: true,
+          discount_percentage: 50,
+          discount_valid_until: parrain.discount_valid_until
+        });
+      } catch (e) {
+        console.log("Erreur mise à jour Supabase:", e);
+      }
+      
+      // Marquer la récompense comme appliquée
+      referral.reward_applied = true;
+      referral.reward_month = currentMonth;
+      referral.reward_type = "next_month_50_percent";
+      referral.applied_at = new Date().toISOString();
+      
+      localStorage.setItem("ba6_parrainages", JSON.stringify(parrainages));
+      
+      // Notifier le parrain
+      if (parrain.email === user.email) {
+        alert(`🎉 Félicitations ! Tu as gagné une réduction de 50% sur ton prochain mois grâce à ton parrainage !`);
+      }
+      
+    } catch (e) {
+      console.error("Erreur application réduction parrainage:", e);
     }
   }
 
@@ -704,68 +834,122 @@ export default function App(){
     if(!name||!email||!pass||!phone){alert("Nom, email, mot de passe et téléphone obligatoires.");return;}
     if(!regAge){alert("⚠️ Tu dois confirmer avoir 18 ans ou plus.");return;}
     if(!regCGU){alert("⚠️ Tu dois accepter les CGU et la politique de confidentialité.");return;}
+    
     let r2="createur";
     let plan="free";
     let trialDaysFromCode=14;
+    let referredBy = null;
+    let discountApplied = false;
+    
+    // Vérifier les codes de parrainage
     if(code){
-      // Vérifier d'abord dans Supabase
-      let f=null;
-      try{
-        const supaResult=await db.getCodes();
-        if(supaResult){
-          f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
-          if(f){
-            // Marquer comme utilisé dans Supabase
-            await db.useCode(f.code, name);
-            // Adapter le format
-            f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
+      // Vérifier d'abord si c'est un code de parrainage
+      const usersData=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      const referrer = Object.values(usersData).find(u => u.referral_code === code.toUpperCase());
+      
+      if(referrer){
+        // C'est un code de parrainage valide
+        referredBy = referrer.email;
+        discountApplied = true;
+        trialDaysFromCode = 30; // 30 jours au lieu de 14
+        
+        // Enregistrer le parrainage
+        const parrainages = JSON.parse(localStorage.getItem("ba6_parrainages")||"[]");
+        parrainages.push({
+          parrain_email: referrer.email,
+          filleul_email: email,
+          filleul_name: name,
+          code_used: code.toUpperCase(),
+          discount_given: true,
+          created_at: new Date().toISOString(),
+          reward_applied: false
+        });
+        localStorage.setItem("ba6_parrainages", JSON.stringify(parrainages));
+        
+        alert(`🎉 Code de parrainage valide !\n\nBienvenue ${name} !\nTu bénéficies de 30 jours d'essai au lieu de 14 grâce à ${referrer.name} !`);
+      } else {
+        // Vérifier les codes spéciaux (agence, etc.)
+        let f=null;
+        try{
+          const supaResult=await db.getCodes();
+          if(supaResult){
+            f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
+            if(f){
+              await db.useCode(f.code, name);
+              f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
+            }
           }
+        }catch(e){
+          f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
+          if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
         }
-      }catch(e){
-        // Fallback localStorage
-        f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
-        if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
+        if(!f){alert("❌ Code invalide ou déjà utilisé.");return;}
+        r2=f.type||"createur";
+        if(f.freeType==="belive_creator"||f.free_type==="belive_creator") plan="belive_creator";
+        if(f.freeType==="unlimited"||f.free_type==="unlimited"){plan="pro";}
+        if((f.freeType==="limited"||f.free_type==="limited")&&(f.freeDays||f.free_days)) trialDaysFromCode=f.freeDays||f.free_days;
       }
-      if(!f){alert("❌ Code invalide ou déjà utilisé.");return;}
-      r2=f.type||"createur";
-      if(f.freeType==="belive_creator"||f.free_type==="belive_creator") plan="belive_creator";
-      if(f.freeType==="unlimited"||f.free_type==="unlimited"){plan="pro";}
-      if((f.freeType==="limited"||f.free_type==="limited")&&(f.freeDays||f.free_days)) trialDaysFromCode=f.freeDays||f.free_days;
     }
     const isOffert=plan==="pro"&&true;
     const trialEnd=new Date(Date.now()+trialDaysFromCode*24*60*60*1000).toISOString();
     // Génère un code parrain unique
-    const refCode="REF-"+name.toUpperCase().replace(/\s/g,"").slice(0,6)+"-"+Math.random().toString(36).slice(2,5).toUpperCase();
-    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString(),referral_code:refCode};
-    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-    sv[email]=nu;
-    localStorage.setItem("ba6_users",JSON.stringify(sv));
+    const refCode=generateReferralCode();
+    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString(),referral_code:refCode,referred_by: referredBy, discount_applied: discountApplied};
+    const usersStorage=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+    usersStorage[email]=nu;
+    localStorage.setItem("ba6_users",JSON.stringify(usersStorage));
     // Sauvegarde dans Supabase
     try{
-      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode});
+      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
     }catch(e){console.log("User save to Supabase failed");}
+    
     // Si inscrit avec un code parrain — créer le lien parrainage
-    if(reg.referralCode){
+    if(referredBy){
       try{
-        // Trouver le parrain
-        const allUsers=await db.getUsers();
-        const parrain=allUsers?.find(u=>u.referral_code===reg.referralCode.toUpperCase());
-        if(parrain){
-          await db.addReferral({
-            parrain_email:parrain.email,
-            filleul_email:email,
-            filleul_name:name,
-            paid:false,
-            reward_applied:false,
-            reward_month:null,
-          });
+        // Donner une récompense au parrain (réduction sur son prochain mois)
+        const parrainages = JSON.parse(localStorage.getItem("ba6_parrainages")||"[]");
+        const currentMonth = new Date().toISOString().slice(0,7);
+        
+        // Vérifier si le parrain a déjà une récompense ce mois-ci
+        const monthlyRewards = parrainages.filter(p => 
+          p.parrain_email === referredBy && 
+          p.reward_month === currentMonth
+        );
+        
+        if(monthlyRewards.length < 3) { // Max 3 récompenses par mois
+          // Ajouter une réduction pour le parrain
+          const usersData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+          if(usersData[referredBy]){
+            usersData[referredBy].referral_discounts = (usersData[referredBy].referral_discounts || 0) + 1;
+            usersData[referredBy].next_month_discount = true;
+            localStorage.setItem("ba6_users", JSON.stringify(usersData));
+          }
+          
+          // Marquer la récompense comme appliquée
+          const referralIndex = parrainages.findIndex(p => 
+            p.filleul_email === email && p.parrain_email === referredBy
+          );
+          if(referralIndex !== -1){
+            parrainages[referralIndex].reward_applied = true;
+            parrainages[referralIndex].reward_month = currentMonth;
+            parrainages[referralIndex].reward_type = "next_month_discount";
+            localStorage.setItem("ba6_parrainages", JSON.stringify(parrainages));
+          }
         }
-      }catch(e){console.log("Referral save failed");}
+      }catch(e){console.log("Referral reward failed:", e);}
     }
-    setUser({email,...nu});
-    setShowWelcome(true);
-    storeAdminNotif(`🎉 Nouveau créateur inscrit : ${name} (${email})`);
-    sendNotif("🎉 Nouveau créateur !",`${name} vient de s'inscrire sur Belive Academy`,"new-user");
+    
+    // Connecter l'utilisateur
+    setUser({email,role:r2,name,phone,twitch,youtube,tiktok,instagram,plan,offert:isOffert,trialStart:new Date().toISOString(),trialEnd,av:name.charAt(0).toUpperCase(),referral_code:refCode});
+    localStorage.setItem("ba6_session",JSON.stringify({email,role:r2,name,phone,twitch,youtube,tiktok,instagram,plan,offert:isOffert,trialStart:new Date().toISOString(),trialEnd,av:name.charAt(0).toUpperCase(),referral_code:refCode}));
+    
+    // Réinitialiser le formulaire
+    setReg({name:"",email:"",pass:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",code:"",referralCode:""});
+    setRegAge(false);
+    setRegCGU(false);
+    setIsReg(false);
+    
+    alert(`✅ Bienvenue ${name} sur Belive Academy !\n\n${discountApplied ? "Tu as bénéficié de l'offre de parrainage !" : "Ton compte est créé avec succès !"}`);
   }
 
   const TWITCH_CLIENT_ID="splan7frqhf243aohn4l08n3z3a82c";
@@ -3212,9 +3396,9 @@ export default function App(){
               <div style={{fontWeight:800,marginBottom:14,fontSize:15}}>🎁 Comment ça marche ?</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
                 {[
-                  {icon:"🔗",t:"Partage ton code",d:"Donne ton code à un créateur"},
-                  {icon:"💳",t:"Il prend un abonnement",d:"Le -50% s'active uniquement si il paye"},
-                  {icon:"💰",t:"-50% le mois suivant",d:"1 seule réduction par mois maximum"},
+                  {icon:"🔗",t:"Partage ton code unique",d:"Chaque créateur a un code différent"},
+                  {icon:"🎁",t:"30 jours d'essai offerts",d:"Le filleul bénéficie de 30j au lieu de 14"},
+                  {icon:"💰",t:"Réduction pour toi",d:"-50% sur ton prochain mois (max 3/mois)"},
                 ].map((s,i)=>(
                   <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:"16px 14px",textAlign:"center"}}>
                     <div style={{fontSize:28,marginBottom:8}}>{s.icon}</div>
@@ -3224,7 +3408,7 @@ export default function App(){
                 ))}
               </div>
               <div style={{marginTop:12,background:"rgba(255,165,0,0.08)",border:"1px solid rgba(255,165,0,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"rgba(255,165,0,0.9)"}}>
-                ⚠️ Limite : 1 réduction de -50% par mois. Si tu paraines 2 personnes le même mois, seule la première compte.
+                ⚠️ Limite : 3 réductions de -50% par mois. Chaque filleul doit s'abonner pour valider la réduction.
               </div>
             </Card>
 
