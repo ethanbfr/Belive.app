@@ -896,7 +896,7 @@ const STRIPE_URLS = {
           p.reward_month === currentMonth
         );
         
-        if(monthlyRewards.length < 3) { // Max 3 récompenses par mois
+        if(monthlyRewards.length < 1) { // Max 1 récompense par mois
           // Ajouter une réduction pour le parrain
           const usersData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
           if(usersData[referredBy]){
@@ -3378,7 +3378,7 @@ const STRIPE_URLS = {
                 {[
                   {icon:"🔗",t:"Partage ton code unique",d:"Chaque créateur a un code différent"},
                   {icon:"🎁",t:"30 jours d'essai offerts",d:"Le filleul bénéficie de 30j au lieu de 14"},
-                  {icon:"💰",t:"Réduction pour toi",d:"-50% sur ton prochain mois (max 3/mois)"},
+                  {icon:"💰",t:"Réduction pour toi",d:"-50% sur ton prochain mois (max 1/mois)"},
                 ].map((s,i)=>(
                   <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:"16px 14px",textAlign:"center"}}>
                     <div style={{fontSize:28,marginBottom:8}}>{s.icon}</div>
@@ -3388,7 +3388,7 @@ const STRIPE_URLS = {
                 ))}
               </div>
               <div style={{marginTop:12,background:"rgba(255,165,0,0.08)",border:"1px solid rgba(255,165,0,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"rgba(255,165,0,0.9)"}}>
-                ⚠️ Limite : 3 réductions de -50% par mois. Chaque filleul doit s'abonner pour valider la réduction.
+                ⚠️ Limite : 1 réduction de -50% par mois. Chaque filleul doit s'abonner pour valider la réduction.
               </div>
             </Card>
 
