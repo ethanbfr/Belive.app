@@ -29,20 +29,21 @@ const db = {
   deleteUser:     (email)         => supabase("DELETE", "users",     null, `email=eq.${encodeURIComponent(email)}`),
   getStreams:     (email)         => supabase("GET",    "streams",   null, `user_email=eq.${encodeURIComponent(email)}`),
   addStream:      (data)          => supabase("POST",   "streams",   data),
+  deleteStream:   (id)            => supabase("DELETE", "streams",   null, `id=eq.${id}`),
   getCodes:       ()              => supabase("GET",    "codes",     null),
   addCode:        (data)          => supabase("POST",   "codes",     data),
   useCode:        (code, name)    => supabase("PATCH",  "codes",     {used_by: name, used_at: new Date().toISOString()}, `code=eq.${code}`),
   getContrats:    ()              => supabase("GET",    "contrats",  null),
   addContrat:     (data)          => supabase("POST",   "contrats",  data),
+  deleteContrat:  (id)            => supabase("DELETE", "contrats",  null, `id=eq.${id}`),
   getReferrals:   ()              => supabase("GET",    "referrals", null),
-  getReferralsByParrain: (email)  => supabase("GET",    "referrals", null, `parrain_email=eq.${encodeURIComponent(email)}`),
   addReferral:    (data)          => supabase("POST",   "referrals", data),
+  deleteReferral: (id)            => supabase("DELETE", "referrals", null, `id=eq.${id}`),
   updateReferral: (id, data)      => supabase("PATCH",  "referrals", data, `id=eq.${id}`),
-  // Partenariats
   getPartners:    ()              => supabase("GET",    "partners", null),
   addPartner:     (data)          => supabase("POST",   "partners", data),
   updatePartner:  (id, data)      => supabase("PATCH",  "partners", data, `id=eq.${id}`),
-  deletePartner:  (id)            => supabase("DELETE", "partners", null, `id=eq.${id}`),
+  deletePartner:  (id)            => supabase("DELETE", "partners", null, `id=eq.${id}`)
 };
 
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
@@ -308,7 +309,28 @@ export default function App(){
   const [user,setUser]=useState(()=>{
     try{
       const saved=localStorage.getItem("ba6_session");
-      return saved?JSON.parse(saved):null;
+      if (saved) {
+        const userData = JSON.parse(saved);
+        
+        // Vérifier si l'utilisateur n'a pas été supprimé de Supabase
+        const checkUserNotDeleted = async () => {
+          try {
+            const supabaseUser = await db.getUser(userData.email);
+            if (!supabaseUser || supabaseUser.length === 0) {
+              // L'utilisateur n'existe plus dans Supabase, le déconnecter
+              localStorage.removeItem("ba6_session");
+              return null;
+            }
+            return userData;
+          } catch(e) {
+            // En cas d'erreur, autoriser la connexion (pour éviter les blocages)
+            return userData;
+          }
+        };
+        
+        return userData; // Temporairement, on vérifiera de manière asynchrone
+      }
+      return null;
     }catch(e){return null;}
   });
   const [authEmail,setAuthEmail]=useState("");
@@ -607,7 +629,39 @@ const STRIPE_URLS = {
     }
   }
 
-  useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
+  useEffect(() => {
+    // Vérifier périodiquement si l'utilisateur existe encore dans Supabase
+    const checkUserExists = async () => {
+      if (!user || user.email === "ethanbfr06@gmail.com") return; // Ne jamais vérifier l'admin
+      
+      try {
+        const supabaseUser = await db.getUser(user.email);
+        if (!supabaseUser || supabaseUser.length === 0) {
+          // L'utilisateur a été supprimé, le déconnecter immédiatement
+          alert("⚠️ Votre compte a été supprimé par l'administrateur. Vous êtes maintenant déconnecté.");
+          localStorage.removeItem("ba6_session");
+          setUser(null);
+          return;
+        }
+      } catch(e) {
+        console.log("Erreur vérification utilisateur:", e);
+      }
+    };
+    
+    // Vérifier au chargement
+    if (user && user.email !== "ethanbfr06@gmail.com") {
+      checkUserExists();
+    }
+    
+    // Vérifier toutes les 30 secondes
+    const interval = setInterval(() => {
+      if (user && user.email !== "ethanbfr06@gmail.com") {
+        checkUserExists();
+      }
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
   // useEffect(() => {
