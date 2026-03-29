@@ -2195,38 +2195,47 @@ const STRIPE_URLS = {
                     <Btn sz="sm" onClick={async()=>{
                       try {
                         const supabaseUsers = await db.getUsers();
-                        if (supabaseUsers) {
-                          // Filtrer pour ne pas montrer l'admin
-                          const onlyCreators = supabaseUsers.filter(u => u.role !== "admin");
-                          const adminCount = supabaseUsers.filter(u => u.role === "admin").length;
+                        if (supabaseUsers && supabaseUsers.length > 0) {
+                          // Filtrer pour ne PAS montrer l'admin dans la liste
+                          const onlyCreators = supabaseUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+                          const adminCount = supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com").length;
                           const creatorCount = onlyCreators.length;
                           const totalCount = supabaseUsers.length;
                           
-                          console.log("=== COMPTES SUPABASE ===");
-                          console.log("Tous les comptes:", supabaseUsers);
-                          console.log("Admin:", adminCount);
-                          console.log("Créateurs:", creatorCount);
-                          console.log("Total:", totalCount);
+                          console.log("=== COMPTES SUPABASE DÉTAILLÉS ===");
+                          console.log("Tous les comptes bruts:", supabaseUsers);
+                          console.log("Admin filtrés:", supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com"));
+                          console.log("Créateurs filtrés:", onlyCreators);
                           
                           let details = "📊 COMPTES DANS SUPABASE:\n\n";
                           details += `Total: ${totalCount} comptes\n`;
                           details += `Admin: ${adminCount} compte(s)\n`;
                           details += `Créateurs: ${creatorCount} compte(s)\n\n`;
-                          details += "LISTE DES CRÉATEURS:\n";
+                          details += "🔍 LISTE DES CRÉATEURS UNIQUEMENT:\n";
+                          details += "─".repeat(40) + "\n";
                           
-                          onlyCreators.forEach((u, i) => {
-                            details += `${i+1}. ${u.name || 'Sans nom'}\n`;
-                            details += `   Email: ${u.email}\n`;
-                            details += `   Plan: ${u.plan || 'Non défini'}\n`;
-                            details += `   Inscrit le: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n\n`;
-                          });
+                          if (onlyCreators.length === 0) {
+                            details += "Aucun créateur trouvé (seulement l'admin)\n";
+                          } else {
+                            onlyCreators.forEach((u, i) => {
+                              details += `\n${i+1}. ${u.name || 'Nom non renseigné'}\n`;
+                              details += `   📧 Email: ${u.email}\n`;
+                              details += `   🎯 Rôle: ${u.role || 'Non défini'}\n`;
+                              details += `   💳 Plan: ${u.plan || 'Non défini'}\n`;
+                              details += `   📅 Inscrit: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n`;
+                            });
+                          }
+                          
+                          details += "\n" + "─".repeat(40) + "\n";
+                          details += "⚠️  L'admin n'apparaît pas dans cette liste";
                           
                           alert(details);
                         } else {
-                          alert("❌ Aucun utilisateur trouvé dans Supabase");
+                          alert("❌ Aucun utilisateur trouvé dans Supabase\n\nVérifiez que:\n• Les tables existent\n• RLS est désactivé\n• La clé API est correcte");
                         }
                       } catch(e) {
-                        alert("❌ Erreur interrogation Supabase: " + e.message);
+                        console.error("Erreur complète:", e);
+                        alert("❌ Erreur interrogation Supabase: " + e.message + "\n\nDétails: " + JSON.stringify(e));
                       }
                     }} icon="🗄️">Vérifier Supabase</Btn>
                     <Btn sz="sm" onClick={()=>{
