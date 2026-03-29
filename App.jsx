@@ -647,36 +647,51 @@ const STRIPE_URLS = {
           }
         }
         
-        // Charger les streams
-        const streams = await db.getStreams(user.email);
-        if (streams) {
-          setStreams(streams);
-          localStorage.setItem("ba6_st", JSON.stringify(streams));
+        // Charger les autres données SANS déconnecter en cas d'erreur
+        try {
+          const streams = await db.getStreams(user.email);
+          if (streams) {
+            setStreams(streams);
+            localStorage.setItem("ba6_st", JSON.stringify(streams));
+          }
+        } catch(e) {
+          console.log("Erreur streams, utilisation localStorage");
         }
         
-        // Charger les codes
-        const codes = await db.getCodes();
-        if (codes) {
-          setCodes(codes);
-          localStorage.setItem("ba6_cd", JSON.stringify(codes));
+        try {
+          const codes = await db.getCodes();
+          if (codes) {
+            setCodes(codes);
+            localStorage.setItem("ba6_cd", JSON.stringify(codes));
+          }
+        } catch(e) {
+          console.log("Erreur codes, utilisation localStorage");
         }
         
-        // Charger les contrats
-        const contrats = await db.getContrats();
-        if (contrats) {
-          setContrats(contrats);
-          localStorage.setItem("ba6_co", JSON.stringify(contrats));
+        try {
+          const contrats = await db.getContrats();
+          if (contrats) {
+            setContrats(contrats);
+            localStorage.setItem("ba6_co", JSON.stringify(contrats));
+          }
+        } catch(e) {
+          console.log("Erreur contrats, utilisation localStorage");
         }
         
-        // Charger les parrainages
-        const referrals = await db.getReferrals();
-        if (referrals) {
-          setReferrals(referrals);
-          localStorage.setItem("ba6_ref", JSON.stringify(referrals));
-          setAdminRefs(referrals);
+        try {
+          const referrals = await db.getReferrals();
+          if (referrals) {
+            setReferrals(referrals);
+            localStorage.setItem("ba6_ref", JSON.stringify(referrals));
+            setAdminRefs(referrals);
+          }
+        } catch(e) {
+          console.log("Erreur referrals, utilisation localStorage");
         }
+        
       } catch(e) {
-        console.log("Erreur chargement données Supabase:", e);
+        console.log("Erreur générale chargement données:", e);
+        // NE PAS déconnecter l'utilisateur - continuer avec les données locales
       }
     };
     
