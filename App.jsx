@@ -364,13 +364,18 @@ export default function App(){
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
   const [posts,setPosts]=useState(IPOSTS);
   const [validUsers, setValidUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   useEffect(() => {
     // Vérifier les utilisateurs valides au chargement
     const checkValidUsers = async () => {
-      if (!user || user.email !== "ethanbfr06@gmail.com") return;
+      if (!user || user.email !== "ethanbfr06@gmail.com") {
+        setUsersLoading(false);
+        return;
+      }
       
       try {
+        setUsersLoading(true);
         const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
         
         const valid = [];
@@ -395,6 +400,8 @@ export default function App(){
         console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
       } catch(e) {
         console.log("Erreur vérification utilisateurs:", e);
+      } finally {
+        setUsersLoading(false);
       }
     };
     
@@ -2188,6 +2195,16 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
+              // Afficher le chargement
+              if (usersLoading) {
+                return (
+                  <div style={{textAlign:"center",padding:"40px"}}>
+                    <div style={{fontSize:24,marginBottom:16}}>🔄</div>
+                    <div style={{color:M,fontSize:14}}>Chargement des utilisateurs...</div>
+                  </div>
+                );
+              }
+              
               // Utiliser les utilisateurs valides vérifiés
               const allUsers = validUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
