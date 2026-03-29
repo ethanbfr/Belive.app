@@ -2086,13 +2086,13 @@ const STRIPE_URLS = {
             </div>
             {role==="admin"&&(() => {
               // Récupère tous les utilisateurs inscrits depuis localStorage
-              const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+              const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Fusionne avec les données Supabase de manière synchrone (utilise les données déjà chargées si disponibles)
               const allUsersMap = new Map();
               localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
               
-              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin");
+              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
@@ -2253,7 +2253,19 @@ const STRIPE_URLS = {
                       
                       alert(diagnostic);
                     }} icon="📱">Diagnostic Mobile</Btn>
-                    <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
+                    <Btn sz="sm" onClick={async()=>{
+                      try {
+                        // Nettoyer l'admin du localStorage
+                        const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                        delete localStorageData["ethanbfr06@gmail.com"];
+                        localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+                        
+                        alert("✅ Admin supprimé du localStorage !\n\nRafraîchissez la page pour voir les changements.");
+                        window.location.reload();
+                      } catch(e) {
+                        alert("❌ Erreur nettoyage: " + e.message);
+                      }
+                    }} icon="🧹">Nettoyer Admin</Btn>
                   </div>
                 </div>
                   {allUsers.length===0?(
