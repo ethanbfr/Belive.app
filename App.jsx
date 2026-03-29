@@ -2195,8 +2195,18 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
-              // Utiliser les utilisateurs du localStorage directement
-              const allUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+              // Afficher le chargement
+              if (usersLoading) {
+                return (
+                  <div style={{textAlign:"center",padding:"40px"}}>
+                    <div style={{fontSize:24,marginBottom:16}}>🔄</div>
+                    <div style={{color:M,fontSize:14}}>Chargement des utilisateurs...</div>
+                  </div>
+                );
+              }
+              
+              // Utiliser les utilisateurs valides vérifiés
+              const allUsers = validUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
@@ -4771,6 +4781,5 @@ const STRIPE_URLS = {
       </Modal>
 
     </div>
-  </div>
   );
 }
