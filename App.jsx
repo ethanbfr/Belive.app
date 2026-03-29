@@ -6,18 +6,22 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const SUPA_PUBLISHABLE = "sb_publishable_J0CVKi8b-ZpMEUwjb3gMrw_-zwsKkPH";
 
 async function supabase(method, table, body, match) {
-  const url = `${SUPA_URL}/rest/v1/${table}${match ? `?${match}` : ""}`;
+  const sep = match ? `?${match}&` : "?";
+  const url = `${SUPA_URL}/rest/v1/${table}${sep}apikey=${SUPA_KEY}`;
   const res = await fetch(url, {
     method,
     headers: {
       "apikey": SUPA_KEY,
       "Authorization": `Bearer ${SUPA_KEY}`,
       "Content-Type": "application/json",
-      "Prefer": method === "POST" ? "return=representation" : "return=representation",
+      "Prefer": "return=representation",
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.warn(`Supabase ${method} ${table} → ${res.status}`);
+    return null;
+  }
   return res.json().catch(() => null);
 }
 
