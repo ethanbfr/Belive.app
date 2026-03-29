@@ -392,6 +392,7 @@ export default function App(){
         }
         
         setValidUsers(valid);
+        console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
       } catch(e) {
         console.log("Erreur vérification utilisateurs:", e);
       }
@@ -666,7 +667,13 @@ const STRIPE_URLS = {
   useEffect(() => {
     // Vérifier périodiquement si l'utilisateur existe encore dans Supabase
     const checkUserExists = async () => {
-      if (!user || user.email === "ethanbfr06@gmail.com") return; // Ne jamais vérifier l'admin
+      if (!user) return;
+      
+      // NE JAMAIS vérifier l'admin
+      if (user.email === "ethanbfr06@gmail.com") {
+        console.log("Admin détecté - pas de vérification");
+        return;
+      }
       
       try {
         const supabaseUser = await db.getUser(user.email);
