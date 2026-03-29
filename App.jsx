@@ -608,17 +608,17 @@ const STRIPE_URLS = {
 
   useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
-  // Charger les partenariats depuis Supabase
-  useEffect(() => {
-    if (user && user.email === "ethanbfr06@gmail.com") {
-      db.getPartners().then(data => {
-        if (data) {
-          setPartners(data);
-          localStorage.setItem("ba6_pa", JSON.stringify(data));
-        }
-      });
-    }
-  }, [user]);
+  // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
+  // useEffect(() => {
+  //   if (user && user.email === "ethanbfr06@gmail.com") {
+  //     db.getPartners().then(data => {
+  //       if (data) {
+  //         setPartners(data);
+  //         localStorage.setItem("ba6_pa", JSON.stringify(data));
+  //       }
+  //     });
+  //   }
+  // }, [user]);
 
   useEffect(() => {
     // DÉSACTIVÉ COMPLÈTEMENT - Les requêtes Supabase déconnectent l'admin
