@@ -363,8 +363,42 @@ export default function App(){
   const [schedule,setSchedule]=useState(()=>JSON.parse(localStorage.getItem("ba6_sc")||"[]"));
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
   const [posts,setPosts]=useState(IPOSTS);
-  const [parrainages,setParrainages]=useState([]);
-  const [adminRefs,setAdminRefs]=useState([]);
+  const [validUsers, setValidUsers] = useState([]);
+
+  useEffect(() => {
+    // Vérifier les utilisateurs valides au chargement
+    const checkValidUsers = async () => {
+      if (!user || user.email !== "ethanbfr06@gmail.com") return;
+      
+      try {
+        const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+        
+        const valid = [];
+        for (const user of localStorageUsers) {
+          try {
+            const supabaseUser = await db.getUser(user.email);
+            if (supabaseUser && supabaseUser.length > 0) {
+              valid.push(user);
+            } else {
+              // Supprimer du localStorage si n'existe plus dans Supabase
+              const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+              delete localStorageData[user.email];
+              localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+              console.log("Utilisateur supprimé du localStorage:", user.email);
+            }
+          } catch(e) {
+            valid.push(user); // Garder en cas d'erreur
+          }
+        }
+        
+        setValidUsers(valid);
+      } catch(e) {
+        console.log("Erreur vérification utilisateurs:", e);
+      }
+    };
+    
+    checkValidUsers();
+  }, [user]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
 
@@ -2137,18 +2171,12 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
-              // Récupère tous les utilisateurs inscrits depuis localStorage
-              const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
-              
-              // Fusionne avec les données Supabase de manière synchrone (utilise les données déjà chargées si disponibles)
-              const allUsersMap = new Map();
-              localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
-              
-              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+              // Utiliser les utilisateurs valides vérifiés
+              const allUsers = validUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
-              console.log("localStorageUsers count:", localStorageUsers.length);
+              console.log("validUsers count:", validUsers.length);
               console.log("allUsers count:", allUsers.length);
               console.log("allUsers:", allUsers);
               const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&u.offert!==true&&u.offert!=="true");
