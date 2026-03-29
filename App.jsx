@@ -676,7 +676,7 @@ const STRIPE_URLS = {
   // }, [user]);
 
   useEffect(() => {
-    // Charger les données depuis Supabase
+    // Charger les données depuis Supabase avec vraie suppression
     const loadData = async () => {
       if (!user) return;
       
@@ -685,7 +685,6 @@ const STRIPE_URLS = {
         if (user.email === "ethanbfr06@gmail.com") {
           console.log("Admin détecté, synchronisation automatique...");
           
-          // Essayer de synchroniser les utilisateurs
           try {
             const users = await db.getUsers();
             if (users && users.length > 0) {
@@ -701,7 +700,7 @@ const STRIPE_URLS = {
           }
         }
         
-        // Charger les autres données SANS déconnecter en cas d'erreur
+        // Charger les autres données
         try {
           const streams = await db.getStreams(user.email);
           if (streams) {
@@ -744,8 +743,7 @@ const STRIPE_URLS = {
         }
         
       } catch(e) {
-        console.log("Erreur générale chargement données:", e);
-        // NE PAS déconnecter l'utilisateur - continuer avec les données locales
+        console.log("Erreur chargement données Supabase:", e);
       }
     };
     
@@ -2351,10 +2349,10 @@ const STRIPE_URLS = {
                           <div style={{display:"flex",gap:6}}>
                             <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
                             <Btn sz="sm" v="ghost" onClick={async()=>{
-                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur\n• Toutes ses données associées\n• Ses accès à l'application`)) return;
+                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur de Supabase\n• Toutes ses données associées\n• Ses accès à l'application\n\nL'utilisateur pourra recréer un compte avec le même email.`)) return;
                               
                               try {
-                                // Supprimer de Supabase
+                                // Supprimer complètement de Supabase
                                 await db.deleteUser(u.email);
                                 
                                 // Supprimer du localStorage
@@ -2362,9 +2360,10 @@ const STRIPE_URLS = {
                                 delete localStorageData[u.email];
                                 localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
                                 
-                                alert(`✅ ${u.name} a été supprimé définitivement`);
+                                alert(`✅ ${u.name} a été supprimé définitivement de Supabase\n\nL'utilisateur peut recréer un compte s'il le souhaite.`);
                                 window.location.reload();
                               } catch(e) {
+                                console.error("Erreur suppression:", e);
                                 alert("❌ Erreur lors de la suppression: " + e.message);
                               }
                             }} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</Btn>
