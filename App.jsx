@@ -4,20 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVpaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
 
+// DÉSACTIVÉ COMPLÈTEMENT - Les requêtes Supabase déconnectent l'admin
 async function supabase(method, table, body, match) {
-  const url = `${SUPA_URL}/rest/v1/${table}${match ? `?${match}` : ""}`;
-  const res = await fetch(url, {
-    method,
-    headers: {
-      "apikey": SUPA_KEY,
-      "Authorization": `Bearer ${SUPA_KEY}`,
-      "Content-Type": "application/json",
-      "Prefer": method === "POST" ? "return=representation" : "return=representation",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) return null;
-  return res.json().catch(() => null);
+  console.log("Requête Supabase bloquée pour éviter les déconnexions:", method, table);
+  return null;
 }
 
 const db = {
