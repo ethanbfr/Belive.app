@@ -621,30 +621,65 @@ const STRIPE_URLS = {
   // }, [user]);
 
   useEffect(() => {
-    // DÉSACTIVÉ COMPLÈTEMENT - Les requêtes Supabase déconnectent l'admin
-    // On utilise seulement le localStorage pour éviter les déconnexions
-    
-    // Charger depuis localStorage seulement
-    if (user) {
+    // Charger les données depuis Supabase
+    const loadData = async () => {
+      if (!user) return;
+      
       try {
-        const streams = JSON.parse(localStorage.getItem("ba6_st")||"[]");
-        if (streams) setStreams(streams);
+        // Pour l'admin, synchroniser automatiquement les utilisateurs au chargement
+        if (user.email === "ethanbfr06@gmail.com") {
+          console.log("Admin détecté, synchronisation automatique...");
+          
+          // Essayer de synchroniser les utilisateurs
+          try {
+            const users = await db.getUsers();
+            if (users && users.length > 0) {
+              const usersObj = {};
+              users.forEach(u => {
+                usersObj[u.email] = u;
+              });
+              localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+              console.log("Synchronisation auto réussie:", users.length, "utilisateurs");
+            }
+          } catch(syncError) {
+            console.log("Synchronisation échouée, utilisation des données locales:", syncError.message);
+          }
+        }
         
-        const codes = JSON.parse(localStorage.getItem("ba6_cd")||"[]");
-        if (codes) setCodes(codes);
+        // Charger les streams
+        const streams = await db.getStreams(user.email);
+        if (streams) {
+          setStreams(streams);
+          localStorage.setItem("ba6_st", JSON.stringify(streams));
+        }
         
-        const contrats = JSON.parse(localStorage.getItem("ba6_co")||"[]");
-        if (contrats) setContrats(contrats);
+        // Charger les codes
+        const codes = await db.getCodes();
+        if (codes) {
+          setCodes(codes);
+          localStorage.setItem("ba6_cd", JSON.stringify(codes));
+        }
         
-        const referrals = JSON.parse(localStorage.getItem("ba6_ref")||"[]");
+        // Charger les contrats
+        const contrats = await db.getContrats();
+        if (contrats) {
+          setContrats(contrats);
+          localStorage.setItem("ba6_co", JSON.stringify(contrats));
+        }
+        
+        // Charger les parrainages
+        const referrals = await db.getReferrals();
         if (referrals) {
           setReferrals(referrals);
+          localStorage.setItem("ba6_ref", JSON.stringify(referrals));
           setAdminRefs(referrals);
         }
       } catch(e) {
-        console.log("Erreur chargement localStorage:", e);
+        console.log("Erreur chargement données Supabase:", e);
       }
-    }
+    };
+    
+    loadData();
   }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
