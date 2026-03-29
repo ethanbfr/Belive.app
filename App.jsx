@@ -871,21 +871,21 @@ const STRIPE_URLS = {
         
         alert(`🎉 Code de parrainage valide !\n\nBienvenue ${name} !\nTu bénéficies de 30 jours d'essai au lieu de 14 grâce à ${referrer.name} !`);
       } else {
-        // Vérifier les codes spéciaux (agence, etc.)
-        let f=null;
-        try{
-          const supaResult=await db.getCodes();
-          if(supaResult){
-            f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
-            if(f){
-              await db.useCode(f.code, name);
-              f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
-            }
-          }
-        }catch(e){
-          f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
-          if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
-        }
+        // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
+        // let f=null;
+        // try{
+        //   const supaResult=await db.getCodes();
+        //   if(supaResult){
+        //     f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
+        //     if(f){
+        //       await db.useCode(f.code, name);
+        //       f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
+        //     }
+        //   }
+        // }catch(e){
+        f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
+        if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
+        // }
         if(!f){alert("❌ Code invalide ou déjà utilisé.");return;}
         r2=f.type||"createur";
         if(f.freeType==="belive_creator"||f.free_type==="belive_creator") plan="belive_creator";
@@ -901,10 +901,10 @@ const STRIPE_URLS = {
     const usersStorage=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     usersStorage[email]=nu;
     localStorage.setItem("ba6_users",JSON.stringify(usersStorage));
-    // Sauvegarde dans Supabase
-    try{
-      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
-    }catch(e){console.log("User save to Supabase failed");}
+    // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
+    // try{
+    //   await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
+    // }catch(e){console.log("User save to Supabase failed");}
     
     // Si inscrit avec un code parrain — créer le lien parrainage
     if(referredBy){
