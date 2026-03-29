@@ -626,28 +626,8 @@ const STRIPE_URLS = {
       if (!user) return;
       
       try {
-        // Pour l'admin, synchroniser automatiquement les utilisateurs au chargement
-        if (user.email === "ethanbfr06@gmail.com") {
-          console.log("Admin détecté, synchronisation automatique...");
-          
-          // Essayer de synchroniser les utilisateurs
-          try {
-            const users = await db.getUsers();
-            if (users && users.length > 0) {
-              const usersObj = {};
-              users.forEach(u => {
-                usersObj[u.email] = u;
-              });
-              localStorage.setItem("ba6_users", JSON.stringify(usersObj));
-              console.log("Synchronisation auto réussie:", users.length, "utilisateurs");
-              
-              // Forcer le rechargement du composant pour afficher les nouvelles données
-              window.location.reload();
-            }
-          } catch(syncError) {
-            console.log("Synchronisation échouée, utilisation des données locales:", syncError.message);
-          }
-        }
+        // DÉSACTIVÉ TEMPORAIREMENT - Les requêtes Supabase déconnectent l'admin
+        // TODO: Réactiver quand RLS sera corrigé
         
         // Charger les streams
         const streams = await db.getStreams(user.email);
@@ -683,12 +663,6 @@ const STRIPE_URLS = {
     };
     
     loadData();
-    
-    // Pour l'admin, synchroniser plus fréquemment
-    if (user?.email === "ethanbfr06@gmail.com") {
-      const interval = setInterval(loadData, 30000); // Toutes les 30 secondes
-      return () => clearInterval(interval);
-    }
   }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
@@ -2218,16 +2192,20 @@ const STRIPE_URLS = {
                       }
                     }} icon="🗄️">Vérifier Supabase</Btn>
                     <Btn sz="sm" onClick={()=>{
-                      // Débogage : afficher les données brutes
+                      // Diagnostic mobile - affiche les infos directement
                       const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                      const localStorageCount = Object.keys(localStorageData).length;
+                      const userCount = Object.keys(localStorageData).length;
                       
-                      console.log("=== DÉBOGAGE ADMIN ===");
-                      console.log("LocalStorage utilisateurs:", localStorageData);
-                      console.log("Nombre d'utilisateurs localStorage:", localStorageCount);
+                      let diagnostic = "📊 DIAGNOSTIC MOBILE:\n\n";
+                      diagnostic += `LocalStorage: ${userCount} utilisateur(s)\n\n`;
+                      diagnostic += "Liste des utilisateurs:\n";
                       
-                      alert(`📊 Débogage:\n\nLocalStorage: ${localStorageCount} utilisateurs\n\nVérifie la console (F12) pour voir les détails complets.`);
-                    }} icon="🔍">Déboguer</Btn>
+                      Object.entries(localStorageData).forEach(([email, u], i) => {
+                        diagnostic += `${i+1}. ${u.name || '???'} (${email})\n`;
+                      });
+                      
+                      alert(diagnostic);
+                    }} icon="📱">Diagnostic Mobile</Btn>
                     <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
                   </div>
                 </div>
