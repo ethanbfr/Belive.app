@@ -639,11 +639,14 @@ const STRIPE_URLS = {
           try {
             const users = await db.getUsers();
             if (users && users.length > 0) {
-              const usersObj = {};
+              // Fusionner avec localStorage sans écraser les suppressions locales
+              const localUsers = JSON.parse(localStorage.getItem("ba6_users") || "{}");
               users.forEach(u => {
-                usersObj[u.email] = u;
+                // Ne réajouter que si l'utilisateur existe encore dans Supabase
+                // et n'a pas été supprimé localement après la dernière sync
+                localUsers[u.email] = { ...localUsers[u.email], ...u };
               });
-              localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+              localStorage.setItem("ba6_users", JSON.stringify(localUsers));
               console.log("Synchronisation auto réussie:", users.length, "utilisateurs");
             }
           } catch(syncError) {
@@ -968,8 +971,10 @@ const STRIPE_URLS = {
     localStorage.setItem("ba6_users",JSON.stringify(usersStorage));
     // Sauvegarde dans Supabase
     try{
-      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
-    }catch(e){console.log("User save to Supabase failed");}
+      const result = await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
+      if(!result) console.warn("Supabase createUser a retourné null");
+      else console.log("✅ Utilisateur sauvegardé dans Supabase:", email);
+    }catch(e){ console.warn("User save to Supabase failed:", e); }
     
     // Si inscrit avec un code parrain — créer le lien parrainage
     if(referredBy){
@@ -1206,11 +1211,14 @@ const STRIPE_URLS = {
     });
   }
 
-  function deleteUser(email){
+  async function deleteUser(email){
     if(!confirm(`Supprimer définitivement ce créateur ?`))return;
+    // Supprimer du localStorage
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     delete sv[email];
     localStorage.setItem("ba6_users",JSON.stringify(sv));
+    // Supprimer de Supabase
+    try{ await db.deleteUser(email); }catch(e){ console.log("Erreur suppression Supabase:", e); }
     setCreateurs(p=>p.filter(c=>c.email!==email));
     alert("✅ Créateur supprimé.");
   }
