@@ -2221,6 +2221,191 @@ const STRIPE_URLS = {
               const essai=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&u.trialStart&&Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))<14);
               const expires=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&(!u.trialStart||Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))>=14));
               const revenuMensuel=revenuBelive+revenuPro;
+              
+              return (
+                <div>
+                  {/* Stats */}
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:24}}>
+                    <Card style={{background:"rgba(34,197,94,0.05)",border:`1px solid rgba(34,197,94,0.15)`}}>
+                      <div style={{fontSize:24,fontWeight:800,color:G}}>{allUsers.length}</div>
+                      <div style={{fontSize:12,color:M,marginTop:2}}>Total créateurs</div>
+                    </Card>
+                    <Card style={{background:"rgba(255,255,255,0.05)",border:`1px solid rgba(255,255,255,0.1)`}}>
+                      <div style={{fontSize:24,fontWeight:800}}>{essai.length}</div>
+                      <div style={{fontSize:12,color:M,marginTop:2}}>Essai gratuit</div>
+                    </Card>
+                    <Card style={{background:"rgba(34,197,94,0.05)",border:`1px solid rgba(34,197,94,0.15)`}}>
+                      <div style={{fontSize:24,fontWeight:800,color:G}}>{payantsBelive.length+payantsPro.length}</div>
+                      <div style={{fontSize:12,color:M,marginTop:2}}>Abonnés payants</div>
+                    </Card>
+                    <Card style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.12)`}}>
+                      <div style={{fontSize:24,fontWeight:800,color:R}}>{expires.length}</div>
+                      <div style={{fontSize:12,color:M,marginTop:2}}>Essai expiré</div>
+                    </Card>
+                    <Card style={{background:"rgba(255,215,0,0.1)",border:`1px solid rgba(255,215,0,0.3)`}}>
+                      <div style={{fontSize:24,fontWeight:800,color:"#FFD700"}}>{revenuMensuel.toFixed(2)}€</div>
+                      <div style={{fontSize:12,color:M,marginTop:2}}>Revenu mensuel</div>
+                    </Card>
+                  </div>
+
+                  {/* Actions */}
+                  <Card style={{marginBottom:16}}>
+                    <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>⚡ Actions rapides</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      <Btn sz="sm" onClick={async()=>{
+                        const syncData=async()=>{
+                          try{
+                            const users=await db.getUsers();
+                            if(users&&users.length>0){
+                              const usersObj={};
+                              users.forEach(u=>{usersObj[u.email]=u;});
+                              localStorage.setItem("ba6_users",JSON.stringify(usersObj));
+                              console.log("LocalStorage mis à jour:", usersObj);
+                              alert("✅ " + users.length + " utilisateurs synchronisés !");
+                              window.location.reload();
+                            } else {
+                              alert("❌ Aucun utilisateur trouvé dans Supabase");
+                            }
+                          } catch(e) {
+                            console.error("Erreur synchronisation:", e);
+                            alert("❌ Erreur: " + e.message);
+                          }
+                        };
+                        
+                        syncData();
+                      }} icon="🔄">Synchroniser</Btn>
+                      <Btn sz="sm" onClick={async()=>{
+                        try {
+                          const supabaseUsers = await db.getUsers();
+                          if (supabaseUsers && supabaseUsers.length > 0) {
+                            // Filtrer pour ne PAS montrer l'admin dans la liste
+                            const onlyCreators = supabaseUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+                            const adminCount = supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com").length;
+                            const creatorCount = onlyCreators.length;
+                            const totalCount = supabaseUsers.length;
+                            
+                            console.log("=== COMPTES SUPABASE DÉTAILLÉS ===");
+                            console.log("Tous les comptes bruts:", supabaseUsers);
+                            console.log("Admin filtrés:", supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com"));
+                            console.log("Créateurs filtrés:", onlyCreators);
+                            
+                            let details = "📊 COMPTES DANS SUPABASE:\n\n";
+                            details += `Total: ${totalCount} comptes\n`;
+                            details += `Admin: ${adminCount} compte(s)\n`;
+                            details += `Créateurs: ${creatorCount} compte(s)\n\n`;
+                            details += "🔍 LISTE DES CRÉATEURS UNIQUEMENT:\n";
+                            details += "─".repeat(40) + "\n";
+                            
+                            if (onlyCreators.length === 0) {
+                              details += "Aucun créateur trouvé (seulement l'admin)\n";
+                            } else {
+                              onlyCreators.forEach((u, i) => {
+                                details += `\n${i+1}. ${u.name || 'Nom non renseigné'}\n`;
+                                details += `   📧 Email: ${u.email}\n`;
+                                details += `   🎯 Rôle: ${u.role || 'Non défini'}\n`;
+                                details += `   💳 Plan: ${u.plan || 'Non défini'}\n`;
+                                details += `   📅 Inscrit: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n`;
+                              });
+                            }
+                            
+                            details += "\n" + "─".repeat(40) + "\n";
+                            details += "⚠️  L'admin n'apparaît pas dans cette liste";
+                            
+                            alert(details);
+                          } else {
+                            alert("❌ Aucun utilisateur trouvé dans Supabase\n\nVérifiez que:\n• Les tables existent\n• RLS est désactivé\n• La clé API est correcte");
+                          }
+                        } catch(e) {
+                          console.error("Erreur complète:", e);
+                          alert("❌ Erreur interrogation Supabase: " + e.message + "\n\nDétails: " + JSON.stringify(e));
+                        }
+                      }} icon="🗄️">Vérifier Supabase</Btn>
+                      <Btn sz="sm" onClick={()=>{
+                        // Diagnostic mobile - affiche les infos directement
+                        const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                        const userCount = Object.keys(localStorageData).length;
+                        
+                        let diagnostic = "📊 DIAGNOSTIC MOBILE:\n\n";
+                        diagnostic += `LocalStorage: ${userCount} utilisateur(s)\n\n`;
+                        diagnostic += "Liste des utilisateurs:\n";
+                        
+                        Object.entries(localStorageData).forEach(([email, u], i) => {
+                          diagnostic += `${i+1}. ${u.name || '???'} (${email})\n`;
+                        });
+                        
+                        alert(diagnostic);
+                      }} icon="📱">Diagnostic Mobile</Btn>
+                      <Btn sz="sm" onClick={async()=>{
+                        try {
+                          // Nettoyer l'admin du localStorage
+                          const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                          delete localStorageData["ethanbfr06@gmail.com"];
+                          localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+                          
+                          alert("✅ Admin supprimé du localStorage !\n\nRafraîchissez la page pour voir les changements.");
+                          window.location.reload();
+                        } catch(e) {
+                          alert("❌ Erreur nettoyage: " + e.message);
+                        }
+                      }} icon="🧹">Nettoyer Admin</Btn>
+                    </div>
+                  </Card>
+
+                  {/* Liste des créateurs */}
+                  {allUsers.length===0?(
+                    <div style={{textAlign:"center",padding:"24px 0",color:M}}>Aucun inscrit pour l'instant</div>
+                  ):allUsers.map((u,i)=>{
+                    const daysLeft=u.trialStart?Math.max(0,14-Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))):0;
+                    const status=u.plan==="pro"?"pro":daysLeft>0?"trial":"expired";
+                    return(
+                      <Card key={i} style={{marginBottom:12}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                          <div style={{width:40,height:40,background:"linear-gradient(135deg,#D4103F,#FF6B6B)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16}}>{(u.name||"U").charAt(0).toUpperCase()}</div>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                              <div style={{fontWeight:700,fontSize:14}}>{u.name||"Nom inconnu"}</div>
+                              {status==="pro"&&<span style={{background:G,color:"white",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700}}>PRO</span>}
+                              {status==="trial"&&<span style={{background:BL,color:"white",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700}}>ESSAI {daysLeft}j</span>}
+                              {status==="expired"&&<span style={{background:R,color:"white",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700}}>EXPIRÉ</span>}
+                            </div>
+                            <div style={{fontSize:11,color:M,display:"flex",flexWrap:"wrap",gap:8}}>
+                              <span>📧 {u.email}</span>
+                              <span>📱 {u.phone||"—"}</span>
+                              {u.twitch&&<span>🟣 @{u.twitch}</span>}
+                              {u.youtube&&<span>▶️ {u.youtube}</span>}
+                              {u.tiktok&&<span>🎵 {u.tiktok}</span>}
+                              {u.instagram&&<span>📸 {u.instagram}</span>}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:6}}>
+                            <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
+                            <Btn sz="sm" v="ghost" onClick={async()=>{
+                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur de Supabase\n• Toutes ses données associées\n• Ses accès à l'application\n\nL'utilisateur pourra recréer un compte avec le même email.`)) return;
+                              
+                              try {
+                                // Supprimer complètement de Supabase
+                                await db.deleteUser(u.email);
+                                
+                                // Supprimer du localStorage
+                                const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                                delete localStorageData[u.email];
+                                localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+                                
+                                alert(`✅ ${u.name} a été supprimé définitivement de Supabase\n\nL'utilisateur peut recréer un compte s'il le souhaite.`);
+                                window.location.reload();
+                              } catch(e) {
+                                console.error("Erreur suppression:", e);
+                                alert("❌ Erreur lors de la suppression: " + e.message);
+                              }
+                            }} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</Btn>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              );
+            })()}
               const potentielMax=revenuMensuel+(essai.length*14.99)+(expires.length*14.99);
 
               return(<>
@@ -2385,128 +2570,21 @@ const STRIPE_URLS = {
                   {allUsers.length===0?(
                     <div style={{textAlign:"center",padding:"24px 0",color:M}}>Aucun inscrit pour l'instant</div>
                   ):allUsers.map((u,i)=>{
-
-                  {/* Actions */}
-                  <Card style={{marginBottom:16}}>
-                    <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>⚡ Actions rapides</div>
-                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                      <Btn sz="sm" onClick={async()=>{
-                        const syncData=async()=>{
-                          try{
-                            const users=await db.getUsers();
-                            if(users&&users.length>0){
-                              const usersObj={};
-                              users.forEach(u=>{usersObj[u.email]=u;});
-                              localStorage.setItem("ba6_users",JSON.stringify(usersObj));
-                              console.log("LocalStorage mis à jour:", usersObj);
-                              alert("✅ " + users.length + " utilisateurs synchronisés !");
-                              window.location.reload();
-                            } else {
-                              alert("❌ Aucun utilisateur trouvé dans Supabase");
-                            }
-                          } catch(e) {
-                            console.error("Erreur synchronisation:", e);
-                            alert("❌ Erreur: " + e.message);
-                          }
-                        };
-                        
-                        syncData();
-                      }} icon="🔄">Synchroniser</Btn>
-                      <Btn sz="sm" onClick={async()=>{
-                        try {
-                          const supabaseUsers = await db.getUsers();
-                          if (supabaseUsers && supabaseUsers.length > 0) {
-                            // Filtrer pour ne PAS montrer l'admin dans la liste
-                            const onlyCreators = supabaseUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
-                            const adminCount = supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com").length;
-                            const creatorCount = onlyCreators.length;
-                            const totalCount = supabaseUsers.length;
-                            
-                            console.log("=== COMPTES SUPABASE DÉTAILLÉS ===");
-                            console.log("Tous les comptes bruts:", supabaseUsers);
-                            console.log("Admin filtrés:", supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com"));
-                            console.log("Créateurs filtrés:", onlyCreators);
-                            
-                            let details = "📊 COMPTES DANS SUPABASE:\n\n";
-                            details += `Total: ${totalCount} comptes\n`;
-                            details += `Admin: ${adminCount} compte(s)\n`;
-                            details += `Créateurs: ${creatorCount} compte(s)\n\n`;
-                            details += "🔍 LISTE DES CRÉATEURS UNIQUEMENT:\n";
-                            details += "─".repeat(40) + "\n";
-                            
-                            if (onlyCreators.length === 0) {
-                              details += "Aucun créateur trouvé (seulement l'admin)\n";
-                            } else {
-                              onlyCreators.forEach((u, i) => {
-                                details += `\n${i+1}. ${u.name || 'Nom non renseigné'}\n`;
-                                details += `   📧 Email: ${u.email}\n`;
-                                details += `   🎯 Rôle: ${u.role || 'Non défini'}\n`;
-                                details += `   💳 Plan: ${u.plan || 'Non défini'}\n`;
-                                details += `   📅 Inscrit: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n`;
-                              });
-                            }
-                            
-                            details += "\n" + "─".repeat(40) + "\n";
-                            details += "⚠️  L'admin n'apparaît pas dans cette liste";
-                            
-                            alert(details);
-                          } else {
-                            alert("❌ Aucun utilisateur trouvé dans Supabase\n\nVérifiez que:\n• Les tables existent\n• RLS est désactivé\n• La clé API est correcte");
-                          }
-                        } catch(e) {
-                          console.error("Erreur complète:", e);
-                          alert("❌ Erreur interrogation Supabase: " + e.message + "\n\nDétails: " + JSON.stringify(e));
-                        }
-                      }} icon="🗄️">Vérifier Supabase</Btn>
-                      <Btn sz="sm" onClick={()=>{
-                        // Diagnostic mobile - affiche les infos directement
-                        const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                        const userCount = Object.keys(localStorageData).length;
-                        
-                        let diagnostic = "📊 DIAGNOSTIC MOBILE:\n\n";
-                        diagnostic += `LocalStorage: ${userCount} utilisateur(s)\n\n`;
-                        diagnostic += "Liste des utilisateurs:\n";
-                        
-                        Object.entries(localStorageData).forEach(([email, u], i) => {
-                          diagnostic += `${i+1}. ${u.name || '???'} (${email})\n`;
-                        });
-                        
-                        alert(diagnostic);
-                      }} icon="📱">Diagnostic Mobile</Btn>
-                      <Btn sz="sm" onClick={async()=>{
-                        try {
-                          // Nettoyer l'admin du localStorage
-                          const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                          delete localStorageData["ethanbfr06@gmail.com"];
-                          localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
-                          
-                          alert("✅ Admin supprimé du localStorage !\n\nRafraîchissez la page pour voir les changements.");
-                          window.location.reload();
-                        } catch(e) {
-                          alert("❌ Erreur nettoyage: " + e.message);
-                        }
-                      }} icon="🧹">Nettoyer Admin</Btn>
-                    </div>
-                  </Card>
-
-                  {/* Liste des créateurs */}
-                  {allUsers.length===0?(
-                    <div style={{textAlign:"center",padding:"24px 0",color:M}}>Aucun inscrit pour l'instant</div>
-                  ):allUsers.map((u,i)=>{
                     const daysLeft=u.trialStart?Math.max(0,14-Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))):0;
                     const status=u.plan==="pro"?"pro":daysLeft>0?"trial":"expired";
                     return(
-                      <Card key={i} style={{marginBottom:12}}>
+                      <div key={i} style={{padding:"14px 0",borderBottom:`1px solid ${B}`}}>
                         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-                          <div style={{width:40,height:40,background:"linear-gradient(135deg,#D4103F,#FF6B6B)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16}}>{(u.name||"U").charAt(0).toUpperCase()}</div>
-                          <div style={{flex:1}}>
-                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                              <div style={{fontWeight:700,fontSize:14}}>{u.name||"Nom inconnu"}</div>
-                              {status==="pro"&&<span style={{background:G,color:"white",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700}}>PRO</span>}
-                              {status==="trial"&&<span style={{background:BL,color:"white",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700}}>ESSAI {daysLeft}j</span>}
-                              {status==="expired"&&<span style={{background:R,color:"white",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700}}>EXPIRÉ</span>}
+                          <div style={{width:40,height:40,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:15,flexShrink:0}}>{(u.name||"?").charAt(0)}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
+                              <div style={{fontWeight:800,fontSize:14}}>{u.name}</div>
+                              {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
+                              {status==="trial"&&<Pill color="yellow">⏳ Essai {daysLeft}j</Pill>}
+                              {status==="expired"&&<Pill color="red">🔒 Expiré</Pill>}
+                              {u.formule&&<Pill color="blue">{u.formule==="commission"?"Commission":"Premium"}</Pill>}
                             </div>
-                            <div style={{fontSize:11,color:M,display:"flex",flexWrap:"wrap",gap:8}}>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:12,color:M}}>
                               <span>📧 {u.email}</span>
                               <span>📱 {u.phone||"—"}</span>
                               {u.twitch&&<span>🟣 @{u.twitch}</span>}
@@ -2538,10 +2616,10 @@ const STRIPE_URLS = {
                             }} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</Btn>
                           </div>
                         </div>
-                      </Card>
+                      </div>
                     );
                   })}
-                </div>
+                </Card>
 
                 {/* Payants */}
                 {(payantsBelive.length>0||payantsPro.length>0)&&(
