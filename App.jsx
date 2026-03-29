@@ -2213,7 +2213,7 @@ const STRIPE_URLS = {
                           details += "Liste des comptes:\n";
                           
                           supabaseUsers.forEach((u, i) => {
-                            details += `${i+1}. ${u.name} (${u.email}) - ${u.role}\n`;
+                            details += `${i+1}. ${u.name || 'Sans nom'} - ${u.email}\n`;
                           });
                           
                           alert(details);
