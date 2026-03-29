@@ -622,15 +622,16 @@ const STRIPE_URLS = {
   // }, [user]);
 
   useEffect(() => {
-    // Charger les données depuis Supabase SANS déconnecter en cas d'erreur
+    // Charger les données depuis Supabase
     const loadData = async () => {
       if (!user) return;
       
       try {
-        // Pour l'admin, synchroniser automatiquement les utilisateurs
+        // Pour l'admin, synchroniser automatiquement les utilisateurs au chargement
         if (user.email === "ethanbfr06@gmail.com") {
           console.log("Admin détecté, synchronisation automatique...");
           
+          // Essayer de synchroniser les utilisateurs
           try {
             const users = await db.getUsers();
             if (users && users.length > 0) {
@@ -642,11 +643,11 @@ const STRIPE_URLS = {
               console.log("Synchronisation auto réussie:", users.length, "utilisateurs");
             }
           } catch(syncError) {
-            console.log("Synchronisation échouée, utilisation données locales:", syncError.message);
+            console.log("Synchronisation échouée, utilisation des données locales:", syncError.message);
           }
         }
         
-        // Charger les autres données avec protection contre les erreurs
+        // Charger les autres données SANS déconnecter en cas d'erreur
         try {
           const streams = await db.getStreams(user.email);
           if (streams) {
@@ -655,8 +656,6 @@ const STRIPE_URLS = {
           }
         } catch(e) {
           console.log("Erreur streams, utilisation localStorage");
-          const streams = JSON.parse(localStorage.getItem("ba6_st")||"[]");
-          if (streams) setStreams(streams);
         }
         
         try {
@@ -667,8 +666,6 @@ const STRIPE_URLS = {
           }
         } catch(e) {
           console.log("Erreur codes, utilisation localStorage");
-          const codes = JSON.parse(localStorage.getItem("ba6_cd")||"[]");
-          if (codes) setCodes(codes);
         }
         
         try {
@@ -679,8 +676,6 @@ const STRIPE_URLS = {
           }
         } catch(e) {
           console.log("Erreur contrats, utilisation localStorage");
-          const contrats = JSON.parse(localStorage.getItem("ba6_co")||"[]");
-          if (contrats) setContrats(contrats);
         }
         
         try {
@@ -692,34 +687,11 @@ const STRIPE_URLS = {
           }
         } catch(e) {
           console.log("Erreur referrals, utilisation localStorage");
-          const referrals = JSON.parse(localStorage.getItem("ba6_ref")||"[]");
-          if (referrals) {
-            setReferrals(referrals);
-            setAdminRefs(referrals);
-          }
         }
         
       } catch(e) {
-        console.log("Erreur générale, utilisation localStorage:", e);
-        // En cas d'erreur générale, charger tout depuis localStorage
-        try {
-          const streams = JSON.parse(localStorage.getItem("ba6_st")||"[]");
-          if (streams) setStreams(streams);
-          
-          const codes = JSON.parse(localStorage.getItem("ba6_cd")||"[]");
-          if (codes) setCodes(codes);
-          
-          const contrats = JSON.parse(localStorage.getItem("ba6_co")||"[]");
-          if (contrats) setContrats(contrats);
-          
-          const referrals = JSON.parse(localStorage.getItem("ba6_ref")||"[]");
-          if (referrals) {
-            setReferrals(referrals);
-            setAdminRefs(referrals);
-          }
-        } catch(localError) {
-          console.log("Erreur localStorage:", localError);
-        }
+        console.log("Erreur générale chargement données:", e);
+        // NE PAS déconnecter l'utilisateur - continuer avec les données locales
       }
     };
     
