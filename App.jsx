@@ -311,12 +311,28 @@ export default function App(){
       const saved=localStorage.getItem("ba6_session");
       if (saved) {
         const userData = JSON.parse(saved);
-        return userData;
+        
+        // Vérifier si l'utilisateur n'a pas été supprimé de Supabase
+        const checkUserNotDeleted = async () => {
+          try {
+            const supabaseUser = await db.getUser(userData.email);
+            if (!supabaseUser || supabaseUser.length === 0) {
+              // L'utilisateur n'existe plus dans Supabase, le déconnecter
+              localStorage.removeItem("ba6_session");
+              return null;
+            }
+            return userData;
+          } catch(e) {
+            // En cas d'erreur, autoriser la connexion (pour éviter les blocages)
+            return userData;
+          }
+        };
+        
+        return userData; // Temporairement, on vérifiera de manière asynchrone
       }
       return null;
     }catch(e){return null;}
   });
-  const [isLoading,setIsLoading]=useState(false);
   const [authEmail,setAuthEmail]=useState("");
   const [authPass,setAuthPass]=useState("");
   const [authErr,setAuthErr]=useState("");
@@ -350,48 +366,47 @@ export default function App(){
   const [validUsers, setValidUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
 
-  // DÉSACTIVÉ - Peut causer des blocs lors de la connexion
-  // useEffect(() => {
-  //   // Vérifier les utilisateurs valides au chargement
-  //   const checkValidUsers = async () => {
-  //     if (!user || user.email !== "ethanbfr06@gmail.com") {
-  //       setUsersLoading(false);
-  //       return;
-  //     }
+  useEffect(() => {
+    // Vérifier les utilisateurs valides au chargement
+    const checkValidUsers = async () => {
+      if (!user || user.email !== "ethanbfr06@gmail.com") {
+        setUsersLoading(false);
+        return;
+      }
       
-  //     try {
-  //       setUsersLoading(true);
-  //       const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+      try {
+        setUsersLoading(true);
+        const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
         
-  //       const valid = [];
-  //       for (const user of localStorageUsers) {
-  //         try {
-  //           const supabaseUser = await db.getUser(user.email);
-  //           if (supabaseUser && supabaseUser.length > 0) {
-  //             valid.push(user);
-  //           } else {
-  //             // Supprimer du localStorage si n'existe plus dans Supabase
-  //             const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-  //             delete localStorageData[user.email];
-  //             localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
-  //             console.log("Utilisateur supprimé du localStorage:", user.email);
-  //           }
-  //         } catch(e) {
-  //           valid.push(user); // Garder en cas d'erreur
-  //         }
-  //       }
+        const valid = [];
+        for (const user of localStorageUsers) {
+          try {
+            const supabaseUser = await db.getUser(user.email);
+            if (supabaseUser && supabaseUser.length > 0) {
+              valid.push(user);
+            } else {
+              // Supprimer du localStorage si n'existe plus dans Supabase
+              const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+              delete localStorageData[user.email];
+              localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+              console.log("Utilisateur supprimé du localStorage:", user.email);
+            }
+          } catch(e) {
+            valid.push(user); // Garder en cas d'erreur
+          }
+        }
         
-  //       setValidUsers(valid);
-  //       console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
-  //     } catch(e) {
-  //       console.log("Erreur vérification utilisateurs:", e);
-  //     } finally {
-  //       setUsersLoading(false);
-  //     }
-  //   };
+        setValidUsers(valid);
+        console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
+      } catch(e) {
+        console.log("Erreur vérification utilisateurs:", e);
+      } finally {
+        setUsersLoading(false);
+      }
+    };
     
-  //   checkValidUsers();
-  // }, [user]);
+    checkValidUsers();
+  }, [user]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
 
@@ -656,33 +671,45 @@ const STRIPE_URLS = {
     }
   }
 
-  // Vérification simple au chargement uniquement (plus de vérification automatique)
   useEffect(() => {
-    if (!user || user.email === "ethanbfr06@gmail.com") return;
-    
-    // Vérification unique au chargement avec timeout
-    const checkOnce = async () => {
+    // Vérifier périodiquement si l'utilisateur existe encore dans Supabase
+    const checkUserExists = async () => {
+      if (!user) return;
+      
+      // NE JAMAIS vérifier l'admin
+      if (user.email === "ethanbfr06@gmail.com") {
+        console.log("Admin détecté - pas de vérification");
+        return;
+      }
+      
       try {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout")), 3000)
-        );
-        
-        const supabaseUser = await Promise.race([
-          db.getUser(user.email),
-          timeoutPromise
-        ]);
-        
+        const supabaseUser = await db.getUser(user.email);
         if (!supabaseUser || supabaseUser.length === 0) {
+          // L'utilisateur a été supprimé, le déconnecter immédiatement
+          alert("⚠️ Votre compte a été supprimé par l'administrateur. Vous êtes maintenant déconnecté.");
           localStorage.removeItem("ba6_session");
           setUser(null);
+          return;
         }
       } catch(e) {
-        console.log("Vérification utilisateur ignorée (timeout ou erreur)");
+        console.log("Erreur vérification utilisateur:", e);
       }
     };
     
-    checkOnce();
-  }, [user?.email]);
+    // Vérifier au chargement
+    if (user && user.email !== "ethanbfr06@gmail.com") {
+      checkUserExists();
+    }
+    
+    // Vérifier toutes les 30 secondes
+    const interval = setInterval(() => {
+      if (user && user.email !== "ethanbfr06@gmail.com") {
+        checkUserExists();
+      }
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
   // useEffect(() => {
@@ -697,7 +724,7 @@ const STRIPE_URLS = {
   // }, [user]);
 
   useEffect(() => {
-    // Charger les données depuis Supabase avec vraie suppression et protection contre les erreurs
+    // Charger les données depuis Supabase avec vraie suppression
     const loadData = async () => {
       if (!user) return;
       
@@ -721,47 +748,46 @@ const STRIPE_URLS = {
           }
         }
         
-        // Charger les autres données avec timeout et protection
-        const loadWithTimeout = async (loadFn, errorMsg) => {
-          try {
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("Timeout")), 5000)
-            );
-            const result = await Promise.race([loadFn(), timeoutPromise]);
-            return result;
-          } catch(e) {
-            console.log(errorMsg, e.message);
-            return null;
+        // Charger les autres données
+        try {
+          const streams = await db.getStreams(user.email);
+          if (streams) {
+            setStreams(streams);
+            localStorage.setItem("ba6_st", JSON.stringify(streams));
           }
-        };
-        
-        // Streams
-        const streams = await loadWithTimeout(() => db.getStreams(user.email), "Erreur streams, utilisation localStorage");
-        if (streams) {
-          setStreams(streams);
-          localStorage.setItem("ba6_st", JSON.stringify(streams));
+        } catch(e) {
+          console.log("Erreur streams, utilisation localStorage");
         }
         
-        // Codes
-        const codes = await loadWithTimeout(() => db.getCodes(), "Erreur codes, utilisation localStorage");
-        if (codes) {
-          setCodes(codes);
-          localStorage.setItem("ba6_cd", JSON.stringify(codes));
+        try {
+          const codes = await db.getCodes();
+          if (codes) {
+            setCodes(codes);
+            localStorage.setItem("ba6_cd", JSON.stringify(codes));
+          }
+        } catch(e) {
+          console.log("Erreur codes, utilisation localStorage");
         }
         
-        // Contrats
-        const contrats = await loadWithTimeout(() => db.getContrats(), "Erreur contrats, utilisation localStorage");
-        if (contrats) {
-          setContrats(contrats);
-          localStorage.setItem("ba6_co", JSON.stringify(contrats));
+        try {
+          const contrats = await db.getContrats();
+          if (contrats) {
+            setContrats(contrats);
+            localStorage.setItem("ba6_co", JSON.stringify(contrats));
+          }
+        } catch(e) {
+          console.log("Erreur contrats, utilisation localStorage");
         }
         
-        // Referrals
-        const referrals = await loadWithTimeout(() => db.getReferrals(), "Erreur referrals, utilisation localStorage");
-        if (referrals) {
-          setReferrals(referrals);
-          localStorage.setItem("ba6_ref", JSON.stringify(referrals));
-          setAdminRefs(referrals);
+        try {
+          const referrals = await db.getReferrals();
+          if (referrals) {
+            setReferrals(referrals);
+            localStorage.setItem("ba6_ref", JSON.stringify(referrals));
+            setAdminRefs(referrals);
+          }
+        } catch(e) {
+          console.log("Erreur referrals, utilisation localStorage");
         }
         
       } catch(e) {
@@ -769,9 +795,7 @@ const STRIPE_URLS = {
       }
     };
     
-    // Démarrer le chargement avec un petit délai pour éviter les blocages
-    const timer = setTimeout(loadData, 100);
-    return () => clearTimeout(timer);
+    loadData();
   }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
@@ -811,66 +835,65 @@ const STRIPE_URLS = {
   const hasAccess=isPro||isInTrial||isBeliveCreator;
 
   // Charger les codes et utilisateurs depuis Supabase quand admin connecté
-  // DÉSACTIVÉ - Ce useEffect admin cause aussi des pages blanches
-  // useEffect(()=>{
-  //   if(role==="admin"){
-  //     // Charger les codes
-  //     db.getCodes().then(data=>{
-  //       if(data&&data.length>0){
-  //         setCodes(data.map(c=>({
-  //           code:c.code,
-  //           type:c.type,
-  //           freeType:c.free_type||"limited",
-  //           freeDays:c.free_days||14,
-  //           createdAt:c.created_at,
-  //           usedBy:c.used_by,
-  //           usedAt:c.used_at,
-  //           owner:c.owner,
-  //           creatorName:c.creator_name||"",
-  //         })));
-  //       }
-  //     }).catch(()=>{});
-  //     // Charger les utilisateurs depuis Supabase
-  //     db.getUsers().then(data=>{
-  //       if(data&&data.length>0){
-  //         const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-  //         data.forEach(u=>{
-  //           // Toujours mettre à jour plan, offert et paid depuis Supabase
-  //           if(sv[u.email]){
-  //             sv[u.email].plan=u.plan||sv[u.email].plan||"free";
-  //             sv[u.email].offert=u.offert||false;
-  //             sv[u.email].paid=u.paid||false;
-  //           } else {
-  //             sv[u.email]={
-  //               name:u.name,
-  //               role:u.role||"createur",
-  //               password:u.password,
-  //               plan:u.plan||"free",
-  //               offert:u.offert||false,
-  //               paid:u.paid||false,
-  //               phone:u.phone,
-  //               twitch:u.twitch,
-  //               youtube:u.youtube,
-  //               tiktok:u.tiktok,
-  //               instagram:u.instagram,
-  //               av:u.av||(u.name?u.name.charAt(0):"?"),
-  //               trialStart:u.trial_start,
-  //             };
-  //           }
-  //         });
-  //         localStorage.setItem("ba6_users",JSON.stringify(sv));
-  //       }
-  //     }).catch(()=>{});
-  //     // Charger les parrainages admin
-  //     db.getReferrals().then(data=>{if(data&&data.length>0)setAdminRefs(data);}).catch(()=>{});
-  //     // Charger les partenariats depuis Supabase
-  //     db.getPartners().then(data=>{
-  //       if(data&&data.length>0){
-  //         setPartners(data);
-  //       }
-  //     }).catch(()=>{});
-  //   }
-  // },[role]);
+  useEffect(()=>{
+    if(role==="admin"){
+      // Charger les codes
+      db.getCodes().then(data=>{
+        if(data&&data.length>0){
+          setCodes(data.map(c=>({
+            code:c.code,
+            type:c.type,
+            freeType:c.free_type||"limited",
+            freeDays:c.free_days||14,
+            createdAt:c.created_at,
+            usedBy:c.used_by,
+            usedAt:c.used_at,
+            owner:c.owner,
+            creatorName:c.creator_name||"",
+          })));
+        }
+      }).catch(()=>{});
+      // Charger les utilisateurs depuis Supabase
+      db.getUsers().then(data=>{
+        if(data&&data.length>0){
+          const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+          data.forEach(u=>{
+            // Toujours mettre à jour plan, offert et paid depuis Supabase
+            if(sv[u.email]){
+              sv[u.email].plan=u.plan||sv[u.email].plan||"free";
+              sv[u.email].offert=u.offert||false;
+              sv[u.email].paid=u.paid||false;
+            } else {
+              sv[u.email]={
+                name:u.name,
+                role:u.role||"createur",
+                password:u.password,
+                plan:u.plan||"free",
+                offert:u.offert||false,
+                paid:u.paid||false,
+                phone:u.phone,
+                twitch:u.twitch,
+                youtube:u.youtube,
+                tiktok:u.tiktok,
+                instagram:u.instagram,
+                av:u.av||(u.name?u.name.charAt(0):"?"),
+                trialStart:u.trial_start,
+              };
+            }
+          });
+          localStorage.setItem("ba6_users",JSON.stringify(sv));
+        }
+      }).catch(()=>{});
+      // Charger les parrainages admin
+      db.getReferrals().then(data=>{if(data&&data.length>0)setAdminRefs(data);}).catch(()=>{});
+      // Charger les partenariats depuis Supabase
+      db.getPartners().then(data=>{
+        if(data&&data.length>0){
+          setPartners(data);
+        }
+      }).catch(()=>{});
+    }
+  },[role]);
   const totalH=streams.reduce((s,r)=>s+r.duration,0);
   const avgV=streams.length?Math.round(streams.reduce((s,r)=>s+r.viewers,0)/streams.length):0;
   const maxV=streams.length?Math.max(...streams.map(s=>s.viewers)):0;
@@ -899,15 +922,6 @@ const STRIPE_URLS = {
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
       askNotifPermission();
-      try{
-        const supaStreams=await db.getStreams(authEmail);
-        if(supaStreams&&supaStreams.length>0){
-          setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
-        }
-        // Charger les parrainages
-        const supaRefs=await db.getReferralsByParrain(authEmail);
-        if(supaRefs&&supaRefs.length>0) setParrainages(supaRefs);
-      }catch(e){console.log("Data load failed");}
       return;
     }
     // Essayer Supabase si pas dans localStorage (sauf admin)
@@ -920,7 +934,6 @@ const STRIPE_URLS = {
           sv2[authEmail]=u2;
           localStorage.setItem("ba6_users",JSON.stringify(sv2));
           setUser({email:authEmail,...u2});
-          askNotifPermission();
           return;
         }
       }catch(e){}
@@ -1829,17 +1842,10 @@ const STRIPE_URLS = {
     );
   }
 
-  // AUTH avec écran de chargement
+  // AUTH
   if(!user)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:D,padding:16,position:"relative",overflow:"hidden"}}>
       <style>{css}</style>
-      {isLoading ? (
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:48,marginBottom:16}}>⏳</div>
-          <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:24,letterSpacing:2,marginBottom:8}}>CONNEXION EN COURS</div>
-          <div style={{fontSize:13,color:M}}>Veuillez patienter...</div>
-        </div>
-      ) : (
       <div style={{position:"absolute",width:600,height:600,background:"radial-gradient(circle,rgba(212,16,63,0.1) 0%,transparent 70%)",top:-200,right:-150,borderRadius:"50%",pointerEvents:"none"}}/>
       <div style={{width:"100%",maxWidth:440}} className="fade">
         <div style={{textAlign:"center",marginBottom:24}}>
@@ -1913,7 +1919,7 @@ const STRIPE_URLS = {
               </div>
             </div>
             {authErr&&<div style={{color:R,fontSize:12,marginBottom:12,textAlign:"center"}}>{authErr}</div>}
-            <Btn full onClick={()=>{setIsLoading(true); setTimeout(() => {doLogin(); setIsLoading(false);}, 500);}} sz="lg">Se connecter</Btn>
+            <Btn full onClick={doLogin} sz="lg">Se connecter</Btn>
             <div style={{textAlign:"center",marginTop:10}}>
               <span onClick={()=>setIsForgot(true)} style={{color:M,fontSize:12,cursor:"pointer",textDecoration:"underline"}}>Mot de passe oublié ?</span>
             </div>
@@ -1924,7 +1930,7 @@ const STRIPE_URLS = {
           </div>
         </div>
       </div>
-      )}
+
       {/* MODALE LÉGALE CGU/POLITIQUE */}
       <Modal open={!!showLegalModal} onClose={()=>setShowLegalModal(null)} title={showLegalModal==="cgu"?"Conditions Générales d'Utilisation":"Politique de Confidentialité"} wide>
         <div style={{maxHeight:"70vh",overflowY:"auto",lineHeight:1.6}}>
@@ -2181,8 +2187,18 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
-              // Utiliser les utilisateurs du localStorage directement
-              const allUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+              // Afficher le chargement
+              if (usersLoading) {
+                return (
+                  <div style={{textAlign:"center",padding:"40px"}}>
+                    <div style={{fontSize:24,marginBottom:16}}>🔄</div>
+                    <div style={{color:M,fontSize:14}}>Chargement des utilisateurs...</div>
+                  </div>
+                );
+              }
+              
+              // Utiliser les utilisateurs valides vérifiés
+              const allUsers = validUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
@@ -2663,7 +2679,7 @@ const STRIPE_URLS = {
                 )}
               </>);
             })()}
-            {role!=="admin"&&(<>
+            {role==="createur"&&(<>
               {/* Bannière trial / Pro */}
               {/* Bannière trial — uniquement si en cours */}
               {isInTrial&&!isPro&&(
