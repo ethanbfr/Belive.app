@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVlaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
-const SUPA_PUBLISHABLE = "sb_publishable_hHHgNw_jHBktQ-OOxgu-Eg_wW8QhgGL";
+const SUPA_PUBLISHABLE = "sb_publishable_J0CVKi8b-ZpMEUwjb3gMrw_-zwsKkPH";
 
 async function supabase(method, table, body, match) {
   const url = `${SUPA_URL}/rest/v1/${table}${match ? `?${match}` : ""}`;
