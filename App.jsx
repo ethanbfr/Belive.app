@@ -898,14 +898,31 @@ const STRIPE_URLS = {
     setAuthErr("");
     // Admin direct - pas de vérification Supabase
     if(authEmail==="ethanbfr06@gmail.com"&&authPass==="Belive2025!"){
-      setUser({email:authEmail,name:"Ethan",role:"admin",plan:"unlimited"});
-      localStorage.setItem("ba6_session",JSON.stringify({email:authEmail,name:"Ethan",role:"admin",plan:"unlimited"}));
+      const adminUser = {email:authEmail,name:"Ethan",role:"admin",plan:"unlimited"};
+      setUser(adminUser);
+      localStorage.setItem("ba6_session",JSON.stringify(adminUser));
+      console.log("Admin connecté avec succès");
       return;
     }
     const u=createurs.find(c=>c.email===authEmail);
     if(u&&u.password===authPass){
       setUser({email:authEmail,...u});
       askNotifPermission();
+      return;
+    }
+    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+    if(sv[authEmail]&&sv[authEmail].password===authPass){
+      const loggedUser={email:authEmail,...sv[authEmail]};
+      setUser(loggedUser);
+      try{
+        const supaStreams=await db.getStreams(authEmail);
+        if(supaStreams&&supaStreams.length>0){
+          setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
+        }
+        // Charger les parrainages
+        const supaRefs=await db.getReferralsByParrain(authEmail);
+        if(supaRefs&&supaRefs.length>0) setParrainages(supaRefs);
+      }catch(e){console.log("Data load failed");}
       return;
     }
     // Essayer Supabase si pas dans localStorage (sauf admin)
