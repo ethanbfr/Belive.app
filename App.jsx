@@ -4,10 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVpaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
 
-// DÉSACTIVÉ COMPLÈTEMENT - Les requêtes Supabase déconnectent l'admin
 async function supabase(method, table, body, match) {
-  console.log("Requête Supabase bloquée pour éviter les déconnexions:", method, table);
-  return null;
+  const url = `${SUPA_URL}/rest/v1/${table}${match ? `?${match}` : ""}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": `Bearer ${SUPA_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": method === "POST" ? "return=representation" : "return=representation",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) return null;
+  return res.json().catch(() => null);
 }
 
 const db = {
@@ -871,21 +881,21 @@ const STRIPE_URLS = {
         
         alert(`🎉 Code de parrainage valide !\n\nBienvenue ${name} !\nTu bénéficies de 30 jours d'essai au lieu de 14 grâce à ${referrer.name} !`);
       } else {
-        // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
-        // let f=null;
-        // try{
-        //   const supaResult=await db.getCodes();
-        //   if(supaResult){
-        //     f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
-        //     if(f){
-        //       await db.useCode(f.code, name);
-        //       f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
-        //     }
-        //   }
-        // }catch(e){
-        f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
-        if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
-        // }
+        // Vérifier les codes spéciaux (agence, etc.)
+        let f=null;
+        try{
+          const supaResult=await db.getCodes();
+          if(supaResult){
+            f=supaResult.find(c=>c.code===code.toUpperCase()&&!c.used_by);
+            if(f){
+              await db.useCode(f.code, name);
+              f={...f, freeType:f.free_type, freeDays:f.free_days, usedBy:null};
+            }
+          }
+        }catch(e){
+          f=codes.find(c=>c.code===code.toUpperCase()&&!c.usedBy);
+          if(f) setCodes(p=>p.map(c=>c.code===f.code?{...c,usedBy:name,usedAt:new Date().toISOString()}:c));
+        }
         if(!f){alert("❌ Code invalide ou déjà utilisé.");return;}
         r2=f.type||"createur";
         if(f.freeType==="belive_creator"||f.free_type==="belive_creator") plan="belive_creator";
@@ -901,10 +911,10 @@ const STRIPE_URLS = {
     const usersStorage=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     usersStorage[email]=nu;
     localStorage.setItem("ba6_users",JSON.stringify(usersStorage));
-    // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
-    // try{
-    //   await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
-    // }catch(e){console.log("User save to Supabase failed");}
+    // Sauvegarde dans Supabase
+    try{
+      await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
+    }catch(e){console.log("User save to Supabase failed");}
     
     // Si inscrit avec un code parrain — créer le lien parrainage
     if(referredBy){
