@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
-const SUPA_KEY = "sb_publishable_J0CVKi8b-ZpMEUwjb3gMrw_-zwsKkPH";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVlaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
 const SUPA_PUBLISHABLE = "sb_publishable_hHHgNw_jHBktQ-OOxgu-Eg_wW8QhgGL";
 
 async function supabase(method, table, body, match) {
@@ -29,21 +29,20 @@ const db = {
   deleteUser:     (email)         => supabase("DELETE", "users",     null, `email=eq.${encodeURIComponent(email)}`),
   getStreams:     (email)         => supabase("GET",    "streams",   null, `user_email=eq.${encodeURIComponent(email)}`),
   addStream:      (data)          => supabase("POST",   "streams",   data),
-  deleteStream:   (id)            => supabase("DELETE", "streams",   null, `id=eq.${id}`),
   getCodes:       ()              => supabase("GET",    "codes",     null),
   addCode:        (data)          => supabase("POST",   "codes",     data),
   useCode:        (code, name)    => supabase("PATCH",  "codes",     {used_by: name, used_at: new Date().toISOString()}, `code=eq.${code}`),
   getContrats:    ()              => supabase("GET",    "contrats",  null),
   addContrat:     (data)          => supabase("POST",   "contrats",  data),
-  deleteContrat:  (id)            => supabase("DELETE", "contrats",  null, `id=eq.${id}`),
   getReferrals:   ()              => supabase("GET",    "referrals", null),
+  getReferralsByParrain: (email)  => supabase("GET",    "referrals", null, `parrain_email=eq.${encodeURIComponent(email)}`),
   addReferral:    (data)          => supabase("POST",   "referrals", data),
-  deleteReferral: (id)            => supabase("DELETE", "referrals", null, `id=eq.${id}`),
   updateReferral: (id, data)      => supabase("PATCH",  "referrals", data, `id=eq.${id}`),
+  // Partenariats
   getPartners:    ()              => supabase("GET",    "partners", null),
   addPartner:     (data)          => supabase("POST",   "partners", data),
   updatePartner:  (id, data)      => supabase("PATCH",  "partners", data, `id=eq.${id}`),
-  deletePartner:  (id)            => supabase("DELETE", "partners", null, `id=eq.${id}`)
+  deletePartner:  (id)            => supabase("DELETE", "partners", null, `id=eq.${id}`),
 };
 
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
@@ -309,28 +308,7 @@ export default function App(){
   const [user,setUser]=useState(()=>{
     try{
       const saved=localStorage.getItem("ba6_session");
-      if (saved) {
-        const userData = JSON.parse(saved);
-        
-        // Vérifier si l'utilisateur n'a pas été supprimé de Supabase
-        const checkUserNotDeleted = async () => {
-          try {
-            const supabaseUser = await db.getUser(userData.email);
-            if (!supabaseUser || supabaseUser.length === 0) {
-              // L'utilisateur n'existe plus dans Supabase, le déconnecter
-              localStorage.removeItem("ba6_session");
-              return null;
-            }
-            return userData;
-          } catch(e) {
-            // En cas d'erreur, autoriser la connexion (pour éviter les blocages)
-            return userData;
-          }
-        };
-        
-        return userData; // Temporairement, on vérifiera de manière asynchrone
-      }
-      return null;
+      return saved?JSON.parse(saved):null;
     }catch(e){return null;}
   });
   const [authEmail,setAuthEmail]=useState("");
@@ -363,43 +341,8 @@ export default function App(){
   const [schedule,setSchedule]=useState(()=>JSON.parse(localStorage.getItem("ba6_sc")||"[]"));
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
   const [posts,setPosts]=useState(IPOSTS);
-  const [validUsers, setValidUsers] = useState([]);
-
-  useEffect(() => {
-    // Vérifier les utilisateurs valides au chargement
-    const checkValidUsers = async () => {
-      if (!user || user.email !== "ethanbfr06@gmail.com") return;
-      
-      try {
-        const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
-        
-        const valid = [];
-        for (const user of localStorageUsers) {
-          try {
-            const supabaseUser = await db.getUser(user.email);
-            if (supabaseUser && supabaseUser.length > 0) {
-              valid.push(user);
-            } else {
-              // Supprimer du localStorage si n'existe plus dans Supabase
-              const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-              delete localStorageData[user.email];
-              localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
-              console.log("Utilisateur supprimé du localStorage:", user.email);
-            }
-          } catch(e) {
-            valid.push(user); // Garder en cas d'erreur
-          }
-        }
-        
-        setValidUsers(valid);
-        console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
-      } catch(e) {
-        console.log("Erreur vérification utilisateurs:", e);
-      }
-    };
-    
-    checkValidUsers();
-  }, [user]);
+  const [parrainages,setParrainages]=useState([]);
+  const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
 
@@ -664,45 +607,7 @@ const STRIPE_URLS = {
     }
   }
 
-  useEffect(() => {
-    // Vérifier périodiquement si l'utilisateur existe encore dans Supabase
-    const checkUserExists = async () => {
-      if (!user) return;
-      
-      // NE JAMAIS vérifier l'admin
-      if (user.email === "ethanbfr06@gmail.com") {
-        console.log("Admin détecté - pas de vérification");
-        return;
-      }
-      
-      try {
-        const supabaseUser = await db.getUser(user.email);
-        if (!supabaseUser || supabaseUser.length === 0) {
-          // L'utilisateur a été supprimé, le déconnecter immédiatement
-          alert("⚠️ Votre compte a été supprimé par l'administrateur. Vous êtes maintenant déconnecté.");
-          localStorage.removeItem("ba6_session");
-          setUser(null);
-          return;
-        }
-      } catch(e) {
-        console.log("Erreur vérification utilisateur:", e);
-      }
-    };
-    
-    // Vérifier au chargement
-    if (user && user.email !== "ethanbfr06@gmail.com") {
-      checkUserExists();
-    }
-    
-    // Vérifier toutes les 30 secondes
-    const interval = setInterval(() => {
-      if (user && user.email !== "ethanbfr06@gmail.com") {
-        checkUserExists();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [user]);
+  useEffect(()=>{localStorage.setItem("ba6_cr",JSON.stringify(createurs));},[createurs]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
   // useEffect(() => {
@@ -717,7 +622,7 @@ const STRIPE_URLS = {
   // }, [user]);
 
   useEffect(() => {
-    // Charger les données depuis Supabase avec vraie suppression
+    // Charger les données depuis Supabase
     const loadData = async () => {
       if (!user) return;
       
@@ -726,6 +631,7 @@ const STRIPE_URLS = {
         if (user.email === "ethanbfr06@gmail.com") {
           console.log("Admin détecté, synchronisation automatique...");
           
+          // Essayer de synchroniser les utilisateurs
           try {
             const users = await db.getUsers();
             if (users && users.length > 0) {
@@ -741,7 +647,7 @@ const STRIPE_URLS = {
           }
         }
         
-        // Charger les autres données
+        // Charger les autres données SANS déconnecter en cas d'erreur
         try {
           const streams = await db.getStreams(user.email);
           if (streams) {
@@ -784,7 +690,8 @@ const STRIPE_URLS = {
         }
         
       } catch(e) {
-        console.log("Erreur chargement données Supabase:", e);
+        console.log("Erreur générale chargement données:", e);
+        // NE PAS déconnecter l'utilisateur - continuer avec les données locales
       }
     };
     
@@ -896,15 +803,7 @@ const STRIPE_URLS = {
 
   async function doLogin(){
     setAuthErr("");
-    // Admin direct - pas de vérification Supabase
-    if(authEmail==="ethanbfr06@gmail.com"&&authPass==="Belive2025!"){
-      const adminUser = {email:authEmail,name:"Ethan",role:"admin",plan:"unlimited"};
-      setUser(adminUser);
-      localStorage.setItem("ba6_session",JSON.stringify(adminUser));
-      console.log("Admin connecté avec succès");
-      return;
-    }
-    const u=createurs.find(c=>c.email===authEmail);
+    const u=ADMIN[authEmail];
     if(u&&u.password===authPass){
       setUser({email:authEmail,...u});
       askNotifPermission();
@@ -925,20 +824,18 @@ const STRIPE_URLS = {
       }catch(e){console.log("Data load failed");}
       return;
     }
-    // Essayer Supabase si pas dans localStorage (sauf admin)
-    if(authEmail!=="ethanbfr06@gmail.com"){
-      try{
-        const supaUser=await db.getUser(authEmail);
-        if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
-          const u2=supaUser[0];
-          const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-          sv2[authEmail]=u2;
-          localStorage.setItem("ba6_users",JSON.stringify(sv2));
-          setUser({email:authEmail,...u2});
-          return;
-        }
-      }catch(e){}
-    }
+    // Essayer Supabase si pas dans localStorage
+    try{
+      const supaUser=await db.getUser(authEmail);
+      if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
+        const u2=supaUser[0];
+        const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+        sv2[authEmail]=u2;
+        localStorage.setItem("ba6_users",JSON.stringify(sv2));
+        setUser({email:authEmail,...u2});
+        return;
+      }
+    }catch(e){}
     setAuthErr("Email ou mot de passe incorrect.");
   }
 
@@ -2188,12 +2085,18 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
-              // Utiliser les utilisateurs valides vérifiés
-              const allUsers = validUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+              // Récupère tous les utilisateurs inscrits depuis localStorage
+              const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+              
+              // Fusionne avec les données Supabase de manière synchrone (utilise les données déjà chargées si disponibles)
+              const allUsersMap = new Map();
+              localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
+              
+              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
-              console.log("validUsers count:", validUsers.length);
+              console.log("localStorageUsers count:", localStorageUsers.length);
               console.log("allUsers count:", allUsers.length);
               console.log("allUsers:", allUsers);
               const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&u.offert!==true&&u.offert!=="true");
@@ -2292,47 +2195,33 @@ const STRIPE_URLS = {
                     <Btn sz="sm" onClick={async()=>{
                       try {
                         const supabaseUsers = await db.getUsers();
-                        if (supabaseUsers && supabaseUsers.length > 0) {
-                          // Filtrer pour ne PAS montrer l'admin dans la liste
-                          const onlyCreators = supabaseUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
-                          const adminCount = supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com").length;
-                          const creatorCount = onlyCreators.length;
+                        if (supabaseUsers) {
+                          const adminCount = supabaseUsers.filter(u => u.role === "admin").length;
+                          const creatorCount = supabaseUsers.filter(u => u.role === "createur").length;
                           const totalCount = supabaseUsers.length;
                           
-                          console.log("=== COMPTES SUPABASE DÉTAILLÉS ===");
-                          console.log("Tous les comptes bruts:", supabaseUsers);
-                          console.log("Admin filtrés:", supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com"));
-                          console.log("Créateurs filtrés:", onlyCreators);
+                          console.log("=== COMPTES SUPABASE ===");
+                          console.log("Tous les comptes:", supabaseUsers);
+                          console.log("Admin:", adminCount);
+                          console.log("Créateurs:", creatorCount);
+                          console.log("Total:", totalCount);
                           
                           let details = "📊 COMPTES DANS SUPABASE:\n\n";
                           details += `Total: ${totalCount} comptes\n`;
                           details += `Admin: ${adminCount} compte(s)\n`;
                           details += `Créateurs: ${creatorCount} compte(s)\n\n`;
-                          details += "🔍 LISTE DES CRÉATEURS UNIQUEMENT:\n";
-                          details += "─".repeat(40) + "\n";
+                          details += "Liste des comptes:\n";
                           
-                          if (onlyCreators.length === 0) {
-                            details += "Aucun créateur trouvé (seulement l'admin)\n";
-                          } else {
-                            onlyCreators.forEach((u, i) => {
-                              details += `\n${i+1}. ${u.name || 'Nom non renseigné'}\n`;
-                              details += `   📧 Email: ${u.email}\n`;
-                              details += `   🎯 Rôle: ${u.role || 'Non défini'}\n`;
-                              details += `   💳 Plan: ${u.plan || 'Non défini'}\n`;
-                              details += `   📅 Inscrit: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n`;
-                            });
-                          }
-                          
-                          details += "\n" + "─".repeat(40) + "\n";
-                          details += "⚠️  L'admin n'apparaît pas dans cette liste";
+                          supabaseUsers.forEach((u, i) => {
+                            details += `${i+1}. ${u.name} (${u.email}) - ${u.role}\n`;
+                          });
                           
                           alert(details);
                         } else {
-                          alert("❌ Aucun utilisateur trouvé dans Supabase\n\nVérifiez que:\n• Les tables existent\n• RLS est désactivé\n• La clé API est correcte");
+                          alert("❌ Aucun utilisateur trouvé dans Supabase");
                         }
                       } catch(e) {
-                        console.error("Erreur complète:", e);
-                        alert("❌ Erreur interrogation Supabase: " + e.message + "\n\nDétails: " + JSON.stringify(e));
+                        alert("❌ Erreur interrogation Supabase: " + e.message);
                       }
                     }} icon="🗄️">Vérifier Supabase</Btn>
                     <Btn sz="sm" onClick={()=>{
@@ -2350,19 +2239,7 @@ const STRIPE_URLS = {
                       
                       alert(diagnostic);
                     }} icon="📱">Diagnostic Mobile</Btn>
-                    <Btn sz="sm" onClick={async()=>{
-                      try {
-                        // Nettoyer l'admin du localStorage
-                        const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                        delete localStorageData["ethanbfr06@gmail.com"];
-                        localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
-                        
-                        alert("✅ Admin supprimé du localStorage !\n\nRafraîchissez la page pour voir les changements.");
-                        window.location.reload();
-                      } catch(e) {
-                        alert("❌ Erreur nettoyage: " + e.message);
-                      }
-                    }} icon="🧹">Nettoyer Admin</Btn>
+                    <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
                   </div>
                 </div>
                   {allUsers.length===0?(
@@ -2394,10 +2271,10 @@ const STRIPE_URLS = {
                           <div style={{display:"flex",gap:6}}>
                             <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
                             <Btn sz="sm" v="ghost" onClick={async()=>{
-                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur de Supabase\n• Toutes ses données associées\n• Ses accès à l'application\n\nL'utilisateur pourra recréer un compte avec le même email.`)) return;
+                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur\n• Toutes ses données associées\n• Ses accès à l'application`)) return;
                               
                               try {
-                                // Supprimer complètement de Supabase
+                                // Supprimer de Supabase
                                 await db.deleteUser(u.email);
                                 
                                 // Supprimer du localStorage
@@ -2405,10 +2282,9 @@ const STRIPE_URLS = {
                                 delete localStorageData[u.email];
                                 localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
                                 
-                                alert(`✅ ${u.name} a été supprimé définitivement de Supabase\n\nL'utilisateur peut recréer un compte s'il le souhaite.`);
+                                alert(`✅ ${u.name} a été supprimé définitivement`);
                                 window.location.reload();
                               } catch(e) {
-                                console.error("Erreur suppression:", e);
                                 alert("❌ Erreur lors de la suppression: " + e.message);
                               }
                             }} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</Btn>
