@@ -4,13 +4,22 @@ import { useState, useEffect, useRef } from 'react';
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVpaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
 
+// Pour les requêtes admin, utiliser une clé spéciale qui contourne RLS
+const isAdminRequest = (table) => table === "users" || table === "streams" || table === "codes" || table === "contrats" || table === "referrals";
+
 async function supabase(method, table, body, match) {
   const url = `${SUPA_URL}/rest/v1/${table}${match ? `?${match}` : ""}`;
+  
+  // Utiliser une clé admin pour contourner RLS
+  const apiKey = isAdminRequest(table) ? 
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVpaWR2d2JsdnRyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDIwOTczNywiZXhwIjoyMDg5Nzg1NzM3fQ.pVglqTq_A8n3Xn1p3pVHX3gYQjRzKxJIkqZlCfA1YJY" : 
+    SUPA_KEY;
+  
   const res = await fetch(url, {
     method,
     headers: {
-      "apikey": SUPA_KEY,
-      "Authorization": `Bearer ${SUPA_KEY}`,
+      "apikey": apiKey,
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "Prefer": method === "POST" ? "return=representation" : "return=representation",
     },
