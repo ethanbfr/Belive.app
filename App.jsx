@@ -292,7 +292,7 @@ const ProfileFrameTemplate=({variant,pseudo})=>{
 };
 
 // MAIN
-function App(){
+export default function App(){
   // Détecter si on accède aux pages publiques CGU/Politique
   useEffect(()=>{
     const path=window.location.pathname;
@@ -2195,7 +2195,7 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
-              // Utiliser les utilisateurs du localStorage comme avant
+              // Utiliser les utilisateurs du localStorage directement
               const allUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
@@ -2396,60 +2396,559 @@ const STRIPE_URLS = {
                 </div>
               );
             })()}
+              const potentielMax=revenuMensuel+(essai.length*14.99)+(expires.length*14.99);
 
-        {/* Si non-admin, afficher dashboard normal */}
-        {role!=="admin"&&(
+              return(<>
+                {/* KPIs */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
+                  <SC label="Total inscrits" value={allUsers.length} sub="créateurs" icon="👥"/>
+                  <SC label="Revenu réel" value={`${revenuMensuel.toFixed(2)}€`} sub="ce mois" icon="💰" color="green"/>
+                  <SC label="En essai" value={essai.length} sub={`${essai.length} gratuits`} icon="⏳" color="yellow"/>
+                  <SC label="Expirés" value={expires.length} sub="à relancer" icon="🔒" color="red"/>
+                  <SC label="Gratuit à vie" value={gratuitVie.length} sub="offerts" icon="🎁" color="purple"/>
+                  <SC label="Contrats" value={contrats.length} sub="générés" icon="📋" color="blue"/>
+                </div>
+
+                {/* Revenu estimé */}
+                <Card style={{marginBottom:20,background:"rgba(34,197,94,0.05)",border:`1px solid rgba(34,197,94,0.2)`}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+                    <div>
+                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>💰 Revenu mensuel réel</div>
+                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:42,color:G,lineHeight:1}}>{revenuMensuel.toFixed(2)}€</div>
+                      <div style={{fontSize:12,color:M,marginTop:4}}>
+                        {payantsBelive.length>0&&`${payantsBelive.length} × 9,99€`}
+                        {payantsBelive.length>0&&payantsPro.length>0&&" + "}
+                        {payantsPro.length>0&&`${payantsPro.length} × 14,99€`}
+                        {payantsBelive.length===0&&payantsPro.length===0&&"Aucun abonné payant"}
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:12,color:M,marginBottom:4}}>Potentiel si essais convertis</div>
+                      <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:YE}}>{potentielMax.toFixed(2)}€</div>
+                      <div style={{fontSize:11,color:M}}>{essai.length} essais + {expires.length} expirés à convertir</div>
+                    </div>
+                  </div>
+                  {/* Détail par plan */}
+                  <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid rgba(255,255,255,0.06)`,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+                    <div style={{textAlign:"center",background:"rgba(212,16,63,0.06)",borderRadius:10,padding:"10px 8px"}}>
+                      <div style={{fontWeight:800,fontSize:16,color:R}}>{payantsBelive.length}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Créateurs Belive</div>
+                      <div style={{fontSize:11,color:R,fontWeight:700}}>9,99€/mois</div>
+                    </div>
+                    <div style={{textAlign:"center",background:"rgba(34,197,94,0.06)",borderRadius:10,padding:"10px 8px"}}>
+                      <div style={{fontWeight:800,fontSize:16,color:G}}>{payantsPro.length}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Pro indépendants</div>
+                      <div style={{fontSize:11,color:G,fontWeight:700}}>14,99€/mois</div>
+                    </div>
+                    <div style={{textAlign:"center",background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 8px"}}>
+                      <div style={{fontWeight:800,fontSize:16,color:M}}>{gratuitVie.length}</div>
+                      <div style={{fontSize:11,color:M,marginTop:2}}>Gratuit à vie</div>
+                      <div style={{fontSize:11,color:M,fontWeight:700}}>0€</div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Liste complète des inscrits */}
+                <Card style={{marginBottom:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={{fontWeight:800,fontSize:15}}>👥 Tous les inscrits ({allUsers.length})</div>
+                  <div style={{display:"flex",gap:8}}>
+                    <Btn sz="sm" onClick={()=>{
+                      // Synchronisation simplifiée pour mobile
+                      const syncData = async () => {
+                        try {
+                          console.log("Début synchronisation...");
+                          const users = await db.getUsers();
+                          console.log("Utilisateurs récupérés:", users);
+                          
+                          if (users && users.length > 0) {
+                            const usersObj = {};
+                            users.forEach(u => {
+                              usersObj[u.email] = u;
+                            });
+                            localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+                            console.log("LocalStorage mis à jour:", usersObj);
+                            alert("✅ " + users.length + " utilisateurs synchronisés !");
+                            window.location.reload();
+                          } else {
+                            alert("❌ Aucun utilisateur trouvé dans Supabase");
+                          }
+                        } catch(e) {
+                          console.error("Erreur synchronisation:", e);
+                          alert("❌ Erreur: " + e.message);
+                        }
+                      };
+                      
+                      syncData();
+                    }} icon="🔄">Synchroniser</Btn>
+                    <Btn sz="sm" onClick={async()=>{
+                      try {
+                        const supabaseUsers = await db.getUsers();
+                        if (supabaseUsers && supabaseUsers.length > 0) {
+                          // Filtrer pour ne PAS montrer l'admin dans la liste
+                          const onlyCreators = supabaseUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+                          const adminCount = supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com").length;
+                          const creatorCount = onlyCreators.length;
+                          const totalCount = supabaseUsers.length;
+                          
+                          console.log("=== COMPTES SUPABASE DÉTAILLÉS ===");
+                          console.log("Tous les comptes bruts:", supabaseUsers);
+                          console.log("Admin filtrés:", supabaseUsers.filter(u => u.role === "admin" || u.email === "ethanbfr06@gmail.com"));
+                          console.log("Créateurs filtrés:", onlyCreators);
+                          
+                          let details = "📊 COMPTES DANS SUPABASE:\n\n";
+                          details += `Total: ${totalCount} comptes\n`;
+                          details += `Admin: ${adminCount} compte(s)\n`;
+                          details += `Créateurs: ${creatorCount} compte(s)\n\n`;
+                          details += "🔍 LISTE DES CRÉATEURS UNIQUEMENT:\n";
+                          details += "─".repeat(40) + "\n";
+                          
+                          if (onlyCreators.length === 0) {
+                            details += "Aucun créateur trouvé (seulement l'admin)\n";
+                          } else {
+                            onlyCreators.forEach((u, i) => {
+                              details += `\n${i+1}. ${u.name || 'Nom non renseigné'}\n`;
+                              details += `   📧 Email: ${u.email}\n`;
+                              details += `   🎯 Rôle: ${u.role || 'Non défini'}\n`;
+                              details += `   💳 Plan: ${u.plan || 'Non défini'}\n`;
+                              details += `   📅 Inscrit: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n`;
+                            });
+                          }
+                          
+                          details += "\n" + "─".repeat(40) + "\n";
+                          details += "⚠️  L'admin n'apparaît pas dans cette liste";
+                          
+                          alert(details);
+                        } else {
+                          alert("❌ Aucun utilisateur trouvé dans Supabase\n\nVérifiez que:\n• Les tables existent\n• RLS est désactivé\n• La clé API est correcte");
+                        }
+                      } catch(e) {
+                        console.error("Erreur complète:", e);
+                        alert("❌ Erreur interrogation Supabase: " + e.message + "\n\nDétails: " + JSON.stringify(e));
+                      }
+                    }} icon="🗄️">Vérifier Supabase</Btn>
+                    <Btn sz="sm" onClick={()=>{
+                      // Diagnostic mobile - affiche les infos directement
+                      const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                      const userCount = Object.keys(localStorageData).length;
+                      
+                      let diagnostic = "📊 DIAGNOSTIC MOBILE:\n\n";
+                      diagnostic += `LocalStorage: ${userCount} utilisateur(s)\n\n`;
+                      diagnostic += "Liste des utilisateurs:\n";
+                      
+                      Object.entries(localStorageData).forEach(([email, u], i) => {
+                        diagnostic += `${i+1}. ${u.name || '???'} (${email})\n`;
+                      });
+                      
+                      alert(diagnostic);
+                    }} icon="📱">Diagnostic Mobile</Btn>
+                    <Btn sz="sm" onClick={async()=>{
+                      try {
+                        // Nettoyer l'admin du localStorage
+                        const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                        delete localStorageData["ethanbfr06@gmail.com"];
+                        localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+                        
+                        alert("✅ Admin supprimé du localStorage !\n\nRafraîchissez la page pour voir les changements.");
+                        window.location.reload();
+                      } catch(e) {
+                        alert("❌ Erreur nettoyage: " + e.message);
+                      }
+                    }} icon="🧹">Nettoyer Admin</Btn>
+                  </div>
+                </div>
+                  {allUsers.length===0?(
+                    <div style={{textAlign:"center",padding:"24px 0",color:M}}>Aucun inscrit pour l'instant</div>
+                  ):allUsers.map((u,i)=>{
+                    const daysLeft=u.trialStart?Math.max(0,14-Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))):0;
+                    const status=u.plan==="pro"?"pro":daysLeft>0?"trial":"expired";
+                    return(
+                      <div key={i} style={{padding:"14px 0",borderBottom:`1px solid ${B}`}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                          <div style={{width:40,height:40,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:15,flexShrink:0}}>{(u.name||"?").charAt(0)}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
+                              <div style={{fontWeight:800,fontSize:14}}>{u.name}</div>
+                              {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
+                              {status==="trial"&&<Pill color="yellow">⏳ Essai {daysLeft}j</Pill>}
+                              {status==="expired"&&<Pill color="red">🔒 Expiré</Pill>}
+                              {u.formule&&<Pill color="blue">{u.formule==="commission"?"Commission":"Premium"}</Pill>}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:12,color:M}}>
+                              <span>📧 {u.email}</span>
+                              <span>📱 {u.phone||"—"}</span>
+                              {u.twitch&&<span>🟣 @{u.twitch}</span>}
+                              {u.youtube&&<span>▶️ {u.youtube}</span>}
+                              {u.tiktok&&<span>🎵 {u.tiktok}</span>}
+                              {u.instagram&&<span>📸 {u.instagram}</span>}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:6}}>
+                            <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
+                            <Btn sz="sm" v="ghost" onClick={async()=>{
+                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur de Supabase\n• Toutes ses données associées\n• Ses accès à l'application\n\nL'utilisateur pourra recréer un compte avec le même email.`)) return;
+                              
+                              try {
+                                // Supprimer complètement de Supabase
+                                await db.deleteUser(u.email);
+                                
+                                // Supprimer du localStorage
+                                const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                                delete localStorageData[u.email];
+                                localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+                                
+                                alert(`✅ ${u.name} a été supprimé définitivement de Supabase\n\nL'utilisateur peut recréer un compte s'il le souhaite.`);
+                                window.location.reload();
+                              } catch(e) {
+                                console.error("Erreur suppression:", e);
+                                alert("❌ Erreur lors de la suppression: " + e.message);
+                              }
+                            }} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</Btn>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Card>
+
+                {/* Payants */}
+                {(payantsBelive.length>0||payantsPro.length>0)&&(
+                  <Card style={{marginBottom:16,background:"rgba(34,197,94,0.03)",border:`1px solid rgba(34,197,94,0.15)`}}>
+                    <div style={{fontWeight:800,fontSize:14,color:G,marginBottom:12}}>💳 Abonnés payants ({payantsBelive.length+payantsPro.length})</div>
+                    {[...payantsBelive,...payantsPro].map((u,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(34,197,94,0.08)`}}>
+                        <div style={{width:34,height:34,background:"rgba(34,197,94,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,fontSize:13}}>{u.name}</div>
+                          <div style={{fontSize:11,color:M}}>📧 {u.email} • 📱 {u.phone||"—"}</div>
+                        </div>
+                        <div style={{fontWeight:800,color:G,fontSize:13}}>14,99€/mois</div>
+                      </div>
+                    ))}
+                  </Card>
+                )}
+
+                {/* À relancer */}
+                {expires.length>0&&(
+                  <Card style={{background:"rgba(212,16,63,0.03)",border:`1px solid rgba(212,16,63,0.12)`}}>
+                    <div style={{fontWeight:800,fontSize:14,color:R,marginBottom:12}}>🔔 À relancer ({expires.length})</div>
+                    <div style={{fontSize:12,color:M,marginBottom:12}}>Ces créateurs ont terminé leur essai — contacte-les pour les convertir en Pro</div>
+                    {expires.map((u,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(212,16,63,0.08)`}}>
+                        <div style={{width:34,height:34,background:"rgba(212,16,63,0.12)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,fontSize:13}}>{u.name}</div>
+                          <div style={{fontSize:11,color:M}}>📧 {u.email} • 📱 {u.phone||"—"}</div>
+                        </div>
+                        <button onClick={()=>{navigator.clipboard?.writeText(u.phone||u.email);alert(`📋 ${u.phone||u.email} copié !`);}} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:M,fontSize:11,cursor:"pointer"}}>📋 Copier</button>
+                      </div>
+                    ))}
+                  </Card>
+                )}
+
+                {/* Parrainages admin */}
+                {adminRefs.length>0&&(
+                  <Card style={{marginTop:16,background:"rgba(251,191,36,0.03)",border:`1px solid rgba(251,191,36,0.15)`}}>
+                    <div style={{fontWeight:800,fontSize:14,color:YE,marginBottom:12}}>🎁 Parrainages ({adminRefs.length})</div>
+                    {adminRefs.map((r,i)=>{
+                      const currentMonth=new Date().toISOString().slice(0,7);
+                      return(
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(251,191,36,0.08)`}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontWeight:700,fontSize:13}}>{r.parrain_email}</div>
+                            <div style={{fontSize:11,color:M}}>a parrainé → {r.filleul_name||r.filleul_email}</div>
+                            <div style={{fontSize:11,color:M}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
+                          </div>
+                          <Pill color={r.paid?"green":"yellow"} xs>{r.paid?"✅ Payant":"⏳ Essai"}</Pill>
+                          {r.reward_applied&&<Pill color="green" xs>🎁 -50% appliqué</Pill>}
+                          {r.paid&&!r.reward_applied&&(
+                            <Btn sz="sm" onClick={async()=>{
+                              const alreadyRewarded=adminRefs.find(x=>x.parrain_email===r.parrain_email&&x.reward_applied&&x.reward_month===currentMonth);
+                              if(alreadyRewarded){alert("Ce parrain a déjà reçu une réduction ce mois.");return;}
+                              await db.updateReferral(r.id,{reward_applied:true,reward_month:currentMonth});
+                              alert(`✅ Réduction -50% appliquée pour ${r.parrain_email} !`);
+                              db.getReferrals().then(data=>{if(data)setAdminRefs(data);});
+                            }}>Appliquer -50%</Btn>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </Card>
+                )}
+              </>);
+            })()}
+            {role!=="admin"&&(<>
+              {/* Bannière trial / Pro */}
+              {/* Bannière trial — uniquement si en cours */}
+              {isInTrial&&!isPro&&(
+                <div style={{position:"relative",overflow:"hidden",borderRadius:14,marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(251,191,36,0.08),rgba(212,16,63,0.06))",border:`1px solid rgba(251,191,36,0.25)`}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontWeight:800,fontSize:13,marginBottom:3}}>⏳ Essai gratuit — {trialDaysLeft} jour{trialDaysLeft>1?"s":""} restant{trialDaysLeft>1?"s":""}</div>
+                      <div style={{fontSize:12,color:M}}>Passe à Pro avant la fin pour ne rien perdre</div>
+                    </div>
+                    <Btn sz="sm" onClick={()=>setModal("payment")}>Passer à Pro</Btn>
+                  </div>
+                  <div style={{marginTop:10,height:4,background:"rgba(255,255,255,0.08)",borderRadius:2,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${(trialDaysLeft/trialDays)*100}%`,background:`linear-gradient(90deg,${YE},${R})`,borderRadius:2}}/>
+                  </div>
+                </div>
+              )}
+
+              {/* Bannière expirée — uniquement si vraiment terminée */}
+              {!hasAccess&&!isPro&&trialStart&&(
+                <div style={{position:"relative",overflow:"hidden",borderRadius:14,marginBottom:14,padding:"16px 18px",background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.2)`}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontWeight:800,fontSize:13,marginBottom:3}}>🔒 Essai terminé</div>
+                      <div style={{fontSize:12,color:M}}>Continue avec Pro pour garder l'accès complet</div>
+                    </div>
+                    <Btn sz="sm" onClick={()=>setModal("payment")}>14,99€/mois</Btn>
+                  </div>
+                </div>
+              )}
+
+              {/* Bannière communauté — visible période gratuite + Pro */}
+              {hasAccess&&(
+                <div style={{position:"relative",overflow:"hidden",borderRadius:16,marginBottom:18,padding:"20px 24px",background:"linear-gradient(135deg,#0d0d0d 0%,#1a0508 100%)",border:`1px solid rgba(212,16,63,0.25)`}}>
+                  <div style={{position:"absolute",width:250,height:250,background:"radial-gradient(circle,rgba(212,16,63,0.18) 0%,transparent 70%)",top:-80,right:-60,pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
+                  <div style={{position:"relative",zIndex:2}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <div style={{width:8,height:8,background:G,borderRadius:"50%"}}/>
+                      <div style={{fontSize:11,fontWeight:700,color:G,letterSpacing:1.5,textTransform:"uppercase"}}>Communauté active</div>
+                    </div>
+                    <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:20,letterSpacing:2,marginBottom:6}}>
+                      TU FAIS PARTIE DE <span style={{color:R}}>BELIVE ACADEMY</span>
+                    </div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",lineHeight:1.6,marginBottom:14}}>
+                      Affiche ton badge sur tes réseaux — fais-toi reconnaître par les autres créateurs Belive et trouve des coéquipiers plus facilement.
+                    </div>
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                      <Btn sz="sm" onClick={()=>setPage("communaute")} icon="🔥">Rejoindre</Btn>
+                      <Btn sz="sm" v="ghost" onClick={()=>setPage("templates")} icon="🎨">Mes bannières</Btn>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:18}}>
+                <SC label="🟣 Twitch" value={ms.twitch||"—"} color="purple"/>
+                <SC label="▶️ YouTube" value={ms.youtube||"—"} color="red"/>
+                <SC label="Viewers moy." value={avgV} color="blue"/>
+                <SC label="Heures ce mois" value={totalH.toFixed(1)+"h"} color="green"/>
+              </div>
+              {/* Platforms connect */}
+              <Card style={{marginBottom:16}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                  <div style={{fontWeight:800}}>🔗 Connecte tes plateformes</div>
+                  <button onClick={()=>{refreshTwitchStats();refreshYoutubeStats();}} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:M,fontSize:11,cursor:"pointer"}}>🔄 Actualiser</button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div style={{background:"rgba(145,70,255,0.08)",border:`1px solid ${ms.isLive?"rgba(255,50,50,0.4)":"rgba(145,70,255,0.2)"}`,borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:24}}>🟣</span>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{fontWeight:700,fontSize:13}}>Twitch</div>
+                        {ms.isLive&&<span style={{background:"#ef4444",color:"white",borderRadius:100,fontSize:9,fontWeight:800,padding:"2px 6px"}}>🔴 LIVE</span>}
+                      </div>
+                      <div style={{fontSize:11,color:M}}>
+                        {user.twitch?`@${user.twitch} • ${ms.twitch||0} followers`:"Non connecté"}
+                        {ms.isLive&&ms.liveViewers&&<span style={{color:"#fbbf24"}}> • {ms.liveViewers} viewers</span>}
+                      </div>
+                    </div>
+                    <Btn sz="sm" v={user.twitch?"success":"ghost"} onClick={connectTwitch}>{user.twitch?"✓":"Connecter"}</Btn>
+                  </div>
+                  <div style={{background:"rgba(255,0,0,0.08)",border:`1px solid rgba(255,0,0,0.2)`,borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:24}}>▶️</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:13}}>YouTube</div>
+                      <div style={{fontSize:11,color:M}}>{user.youtube?`${user.youtube} • ${ms.youtube||0} abonnés`:"Non connecté"}</div>
+                    </div>
+                    <Btn sz="sm" v={user.youtube?"success":"ghost"} onClick={connectYoutube}>{user.youtube?"✓":"Connecter"}</Btn>
+                  </div>
+                </div>
+                <div style={{marginTop:10,fontSize:11,color:M}}>💡 Stats actualisées automatiquement toutes les 2 minutes.</div>
+              </Card>
+              {/* Checklist recommandations créateur */}
+              <Card style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:14}}>✅ Objectifs de la semaine</div>
+                    <div style={{fontSize:12,color:M,marginTop:2}}>Coche ce que tu as accompli — barre de progression automatique</div>
+                  </div>
+                </div>
+
+                {/* Barre de progression globale */}
+                {(()=>{
+                  const total=8;
+                  const twitchOk=!!user.twitch;
+                  const youtubeOk=!!user.youtube;
+                  const done=[
+                    twitchOk,
+                    youtubeOk,
+                    profil.check_stream3x||false,
+                    profil.check_clip||false,
+                    profil.check_community||false,
+                    profil.check_profil||false,
+                    profil.check_planning||false,
+                    profil.check_raid||false,
+                  ].filter(Boolean).length;
+                  const pct=Math.round((done/total)*100);
+                  return(
+                    <>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                        <div style={{fontSize:12,color:M}}>{done}/{total} objectifs accomplis</div>
+                        <Pill color={pct===100?"green":pct>=50?"yellow":"red"}>{pct}%</Pill>
+                      </div>
+                      <div style={{height:8,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden",marginBottom:14}}>
+                        <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${R},#ff4d4d)`,borderRadius:4,transition:"width 0.5s ease"}}/>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {/* Liste des objectifs */}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {[
+                    {auto:!!user.twitch,   k:null,              icon:"🟣", label:"Connecter ton compte Twitch",      desc:user.twitch?`@${user.twitch} connecté ✓`:"Connecte ton Twitch depuis le dashboard"},
+                    {auto:!!user.youtube,  k:null,              icon:"▶️", label:"Connecter ton compte YouTube",     desc:user.youtube?`${user.youtube} connecté ✓`:"Connecte ta chaîne YouTube depuis le dashboard"},
+                    {auto:false,           k:"check_stream3x",  icon:"🎮", label:"Streamer au moins 3 fois cette semaine", desc:"La régularité est la clé numéro 1 de la croissance"},
+                    {auto:false,           k:"check_clip",      icon:"🎬", label:"Poster un clip sur TikTok ou YouTube Shorts", desc:"Un clip viral peut t'amener 50-200 nouveaux followers"},
+                    {auto:false,           k:"check_community", icon:"👥", label:"Poster dans la communauté Belive", desc:"Crée du lien avec les autres créateurs de l'agence"},
+                    {auto:false,           k:"check_profil",    icon:"👤", label:"Compléter ton profil (photo + bio + jeux)", desc:"Un profil complet inspire confiance aux partenaires"},
+                    {auto:false,           k:"check_planning",  icon:"📅", label:"Planifier ses streams de la semaine", desc:"Annonce tes horaires sur tes réseaux 24h avant"},
+                    {auto:false,           k:"check_raid",      icon:"⚔️", label:"Faire ou recevoir un raid",        desc:"Les raids boostent ta visibilité et créent du lien"},
+                  ].map(item=>{
+                    const isChecked=item.auto||(item.k&&profil[item.k])||false;
+                    return(
+                      <div key={item.k||item.label} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",background:isChecked?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${isChecked?"rgba(34,197,94,0.25)":B}`,borderRadius:10}}>
+                        <div style={{width:32,height:32,background:isChecked?"rgba(34,197,94,0.15)":"rgba(255,255,255,0.05)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{item.icon}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,fontSize:13,color:isChecked?"white":M,textDecoration:isChecked?"line-through":"none"}}>{item.label}</div>
+                          <div style={{fontSize:11,color:M,marginTop:2}}>{item.desc}</div>
+                        </div>
+                        {item.auto?(
+                          <div style={{width:24,height:24,background:G,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0,color:"white",fontWeight:800}}>✓</div>
+                        ):item.k?(
+                          <label style={{cursor:"pointer",flexShrink:0}}>
+                            <input type="checkbox" checked={profil[item.k]||false} onChange={e=>setProfil(p=>({...p,[item.k]:e.target.checked}))} style={{width:20,height:20,accentColor:G,cursor:"pointer"}}/>
+                          </label>
+                        ):null}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Message quand tout est fait */}
+                {(()=>{
+                  const allDone=!!user.twitch&&!!user.youtube&&profil.check_stream3x&&profil.check_clip&&profil.check_community&&profil.check_profil&&profil.check_planning&&profil.check_raid;
+                  return allDone?(
+                    <div style={{marginTop:12,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+                      <div style={{fontWeight:800,color:G,fontSize:14}}>🔥 Semaine parfaite ! Tu es sur la bonne voie !</div>
+                      <div style={{fontSize:12,color:M,marginTop:4}}>Continue comme ça — la régularité fait tout.</div>
+                    </div>
+                  ):null;
+                })()}
+              </Card>
+              {/* Quick stream */}
+              <Card>
+                <div style={{fontWeight:800,marginBottom:12}}>➕ Enregistrer un stream</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:10}}>
+                  <Field label="Date" type="date" value={newSt.date} onChange={e=>setNewSt({...newSt,date:e.target.value})}/>
+                  <Field label="Durée (h)" type="number" value={newSt.dur} onChange={e=>setNewSt({...newSt,dur:e.target.value})} placeholder="2" step="0.5"/>
+                  <Field label="Viewers" type="number" value={newSt.viewers} onChange={e=>setNewSt({...newSt,viewers:e.target.value})} placeholder="5"/>
+                  <Field label="Plateforme" as="select" value={newSt.platform} onChange={e=>setNewSt({...newSt,platform:e.target.value})}><option value="twitch">🟣 Twitch</option><option value="youtube">▶️ YouTube</option></Field>
+                </div>
+                <Btn sz="sm" onClick={addStream}>Ajouter</Btn>
+                {streams.length>0&&<div style={{marginTop:12}}>{streams.slice(-3).reverse().map(s=>(
+                  <div key={s.id} style={{display:"flex",gap:12,padding:"7px 0",borderBottom:`1px solid ${B}`,fontSize:12,color:M}}>
+                    <span>{s.date}</span><span style={{color:"white",fontWeight:700}}>{s.duration}h</span><span>{s.viewers} viewers</span><Pill xs color="purple">{s.platform}</Pill>
+                  </div>
+                ))}</div>}
+              </Card>
+            </>)}
+          </div>
+        )}
+
+        {/* STATS */}
+        {page==="stats"&&(
           <div>
-            <div style={{textAlign:"center",padding:"40px"}}>
-              <div style={{fontSize:24,marginBottom:16}}>👋</div>
-              <div style={{fontSize:16,color:M}}>Dashboard créateur</div>
+            <div style={{marginBottom:20}}><div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>STATISTIQUES</div><div style={{fontSize:13,color:M}}>Analyse de tes performances</div></div>
+            <Card style={{marginBottom:16}}>
+              <div style={{fontWeight:800,marginBottom:12}}>🔗 Mettre à jour mes stats</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <Field label="🟣 Followers Twitch" type="number" value={mSt.twitch} onChange={e=>setMSt({...mSt,twitch:e.target.value})} placeholder={ms.twitch||"0"}/>
+                <Field label="▶️ Abonnés YouTube" type="number" value={mSt.youtube} onChange={e=>setMSt({...mSt,youtube:e.target.value})} placeholder={ms.youtube||"0"}/>
+              </div>
+              <Btn sz="sm" onClick={saveStats}>💾 Sauvegarder</Btn>
+            </Card>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:16}}>
+              <SC label="Total heures" value={totalH.toFixed(1)+"h"} icon="⏱️" delta={8}/>
+              <SC label="Viewers moyen" value={avgV} icon="👁️" color="blue" delta={-2}/>
+              <SC label="Record viewers" value={maxV} icon="📈" color="green"/>
+              <SC label="Streams" value={streams.length} icon="🎮" color="purple"/>
             </div>
+            <Card style={{marginBottom:16}}>
+              <div style={{fontWeight:800,marginBottom:16}}>📊 Historique — 7 dernières sessions</div>
+              {streams.length===0?<div style={{textAlign:"center",padding:"32px 0",color:M}}>Aucune donnée</div>:(
+                <div style={{display:"flex",alignItems:"flex-end",gap:6,height:120}}>
+                  {streams.slice(-7).map(s=>{const max=Math.max(...streams.slice(-7).map(x=>x.duration),1);return(
+                    <div key={s.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                      <div style={{fontSize:9,color:M}}>{s.duration}h</div>
+                      <div style={{width:"100%",background:`linear-gradient(180deg,${R},rgba(212,16,63,0.2))`,borderRadius:"4px 4px 0 0",height:`${(s.duration/max)*100}px`}}/>
+                      <div style={{fontSize:9,color:M}}>{s.date.slice(0,5)}</div>
+                    </div>
+                  );})}
+                </div>
+              )}
+            </Card>
+            <Card>
+              <div style={{fontWeight:800,marginBottom:12}}>📈 Analyse vs mois précédent</div>
+              {streams.length<3?<div style={{color:M,fontSize:13}}>Enregistre au moins 3 streams.</div>:(
+                [["Temps de stream",`+${(totalH*0.15).toFixed(1)}h`,true,"Tu streames plus qu'avant"],["Viewers moyens",avgV>=3?"✓ Objectif atteint":"Sous l'objectif",avgV>=3,"Objectif : 3 viewers"],["Régularité",streams.length>=7?"✓ Régulier":"Pas assez régulier",streams.length>=7,"7 streams/mois minimum"]].map(([l,v,g,d])=>(
+                  <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${B}`}}>
+                    <div><div style={{fontWeight:700,fontSize:13}}>{l}</div><div style={{fontSize:11,color:M}}>{d}</div></div>
+                    <Pill color={g?"green":"yellow"}>{v}</Pill>
+                  </div>
+                ))
+              )}
+            </Card>
           </div>
         )}
 
-        {/* AUTRES PAGES */}
-        {page==="planning"&&(
-          <div style={{textAlign:"center",padding:"40px"}}>
-            <div style={{fontSize:24,marginBottom:16}}>📅</div>
-            <div style={{fontSize:16,color:M}}>Planning</div>
-          </div>
-        )}
+        {/* PLANNING */}
+        {page==="planning"&&(()=>{
+          const now=new Date();
+          const currentDay=DAYS[now.getDay()===0?6:now.getDay()-1];
+          const currentTime=now.getHours()*60+now.getMinutes();
 
-        {page==="messages"&&(
-          <div style={{textAlign:"center",padding:"40px"}}>
-            <div style={{fontSize:24,marginBottom:16}}>💬</div>
-            <div style={{fontSize:16,color:M}}>Messages</div>
-          </div>
-        )}
+          // Find next stream
+          const todayStreams=schedule.filter(s=>s.day===currentDay);
+          const nextToday=todayStreams.find(s=>{const[h,m]=s.time.split(":").map(Number);return h*60+m>currentTime;});
+          const nextStream=nextToday||schedule.find(s=>{const di=DAYS.indexOf(s.day);const ci=DAYS.indexOf(currentDay);return di>ci;})||schedule[0];
 
-        {page==="partenariats"&&(
-          <div style={{textAlign:"center",padding:"40px"}}>
-            <div style={{fontSize:24,marginBottom:16}}>🤝</div>
-            <div style={{fontSize:16,color:M}}>Partenariats</div>
-          </div>
-        )}
+          // Minutes until next stream
+          let minutesUntil=null;
+          if(nextToday){const[h,m]=nextToday.time.split(":").map(Number);minutesUntil=h*60+m-currentTime;}
 
-        {page==="classement"&&(
-          <div style={{textAlign:"center",padding:"40px"}}>
-            <div style={{fontSize:24,marginBottom:16}}>🏆</div>
-            <div style={{fontSize:16,color:M}}>Classement</div>
-          </div>
-        )}
+          const platformColors={twitch:"#9146FF",youtube:"#ff0000",tiktok:"#69C9D0"};
+          const platformIcons={twitch:"🟣",youtube:"▶️",tiktok:"🎵"};
 
-        {page==="compte"&&(
-          <div style={{textAlign:"center",padding:"40px"}}>
-            <div style={{fontSize:24,marginBottom:16}}>👤</div>
-            <div style={{fontSize:16,color:M}}>Compte</div>
-          </div>
-        )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+          // Stats
+          const totalSessions=schedule.length;
+          const weeklyHours=schedule.reduce((s,r)=>s+(r.duration||2),0);
+          const mostStreamed=schedule.length?schedule.reduce((acc,s)=>{acc[s.platform]=(acc[s.platform]||0)+1;return acc;},{}):null;
+          const topPlatform=mostStreamed?Object.entries(mostStreamed).sort((a,b)=>b[1]-a[1])[0]?.[0]:"—";
 
-export default App;
+          // Notifications actives
+          function requestNotif(s){
+            if(!notifPrefs.planning){alert("Tu as désactivé les notifications de planning dans ton profil.");return;}
+            if(!("Notification" in window)){alert("Notifications non supportées sur cet appareil.");return;}
+            Notification.requestPermission().then(p=>{
+              if(p==="granted"){
+                const[h,m]=s.time.split(":").map(Number);
+                const streamMs=new Date();streamMs.setHours(h,m-60,0,0);
                 const delay=streamMs-Date.now();
                 if(delay>0){setTimeout(()=>new Notification("🔴 Belive Academy",{body:`Ton stream ${platformIcons[s.platform]} commence dans 1 heure !`,icon:"https://beliveacademy.com/favicon.ico"}),delay);}
                 alert(`✅ Rappel activé ! Tu recevras une notification 1h avant ton stream du ${s.day} à ${s.time}`);
