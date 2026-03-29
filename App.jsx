@@ -2196,8 +2196,10 @@ const STRIPE_URLS = {
                       try {
                         const supabaseUsers = await db.getUsers();
                         if (supabaseUsers) {
+                          // Filtrer pour ne pas montrer l'admin
+                          const onlyCreators = supabaseUsers.filter(u => u.role !== "admin");
                           const adminCount = supabaseUsers.filter(u => u.role === "admin").length;
-                          const creatorCount = supabaseUsers.filter(u => u.role === "createur").length;
+                          const creatorCount = onlyCreators.length;
                           const totalCount = supabaseUsers.length;
                           
                           console.log("=== COMPTES SUPABASE ===");
@@ -2210,10 +2212,13 @@ const STRIPE_URLS = {
                           details += `Total: ${totalCount} comptes\n`;
                           details += `Admin: ${adminCount} compte(s)\n`;
                           details += `Créateurs: ${creatorCount} compte(s)\n\n`;
-                          details += "Liste des comptes:\n";
+                          details += "LISTE DES CRÉATEURS:\n";
                           
-                          supabaseUsers.forEach((u, i) => {
-                            details += `${i+1}. ${u.name || 'Sans nom'} - ${u.email}\n`;
+                          onlyCreators.forEach((u, i) => {
+                            details += `${i+1}. ${u.name || 'Sans nom'}\n`;
+                            details += `   Email: ${u.email}\n`;
+                            details += `   Plan: ${u.plan || 'Non défini'}\n`;
+                            details += `   Inscrit le: ${u.trialStart ? new Date(u.trialStart).toLocaleDateString('fr-FR') : 'Date inconnue'}\n\n`;
                           });
                           
                           alert(details);
