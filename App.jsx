@@ -311,28 +311,12 @@ export default function App(){
       const saved=localStorage.getItem("ba6_session");
       if (saved) {
         const userData = JSON.parse(saved);
-        
-        // Vérifier si l'utilisateur n'a pas été supprimé de Supabase
-        const checkUserNotDeleted = async () => {
-          try {
-            const supabaseUser = await db.getUser(userData.email);
-            if (!supabaseUser || supabaseUser.length === 0) {
-              // L'utilisateur n'existe plus dans Supabase, le déconnecter
-              localStorage.removeItem("ba6_session");
-              return null;
-            }
-            return userData;
-          } catch(e) {
-            // En cas d'erreur, autoriser la connexion (pour éviter les blocages)
-            return userData;
-          }
-        };
-        
-        return userData; // Temporairement, on vérifiera de manière asynchrone
+        return userData;
       }
       return null;
     }catch(e){return null;}
   });
+  const [isLoading,setIsLoading]=useState(false);
   const [authEmail,setAuthEmail]=useState("");
   const [authPass,setAuthPass]=useState("");
   const [authErr,setAuthErr]=useState("");
@@ -366,47 +350,48 @@ export default function App(){
   const [validUsers, setValidUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
 
-  useEffect(() => {
-    // Vérifier les utilisateurs valides au chargement
-    const checkValidUsers = async () => {
-      if (!user || user.email !== "ethanbfr06@gmail.com") {
-        setUsersLoading(false);
-        return;
-      }
+  // DÉSACTIVÉ - Peut causer des blocs lors de la connexion
+  // useEffect(() => {
+  //   // Vérifier les utilisateurs valides au chargement
+  //   const checkValidUsers = async () => {
+  //     if (!user || user.email !== "ethanbfr06@gmail.com") {
+  //       setUsersLoading(false);
+  //       return;
+  //     }
       
-      try {
-        setUsersLoading(true);
-        const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+  //     try {
+  //       setUsersLoading(true);
+  //       const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
         
-        const valid = [];
-        for (const user of localStorageUsers) {
-          try {
-            const supabaseUser = await db.getUser(user.email);
-            if (supabaseUser && supabaseUser.length > 0) {
-              valid.push(user);
-            } else {
-              // Supprimer du localStorage si n'existe plus dans Supabase
-              const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
-              delete localStorageData[user.email];
-              localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
-              console.log("Utilisateur supprimé du localStorage:", user.email);
-            }
-          } catch(e) {
-            valid.push(user); // Garder en cas d'erreur
-          }
-        }
+  //       const valid = [];
+  //       for (const user of localStorageUsers) {
+  //         try {
+  //           const supabaseUser = await db.getUser(user.email);
+  //           if (supabaseUser && supabaseUser.length > 0) {
+  //             valid.push(user);
+  //           } else {
+  //             // Supprimer du localStorage si n'existe plus dans Supabase
+  //             const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+  //             delete localStorageData[user.email];
+  //             localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+  //             console.log("Utilisateur supprimé du localStorage:", user.email);
+  //           }
+  //         } catch(e) {
+  //           valid.push(user); // Garder en cas d'erreur
+  //         }
+  //       }
         
-        setValidUsers(valid);
-        console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
-      } catch(e) {
-        console.log("Erreur vérification utilisateurs:", e);
-      } finally {
-        setUsersLoading(false);
-      }
-    };
+  //       setValidUsers(valid);
+  //       console.log("Admin: vérification terminée, utilisateurs valides:", valid.length);
+  //     } catch(e) {
+  //       console.log("Erreur vérification utilisateurs:", e);
+  //     } finally {
+  //       setUsersLoading(false);
+  //     }
+  //   };
     
-    checkValidUsers();
-  }, [user]);
+  //   checkValidUsers();
+  // }, [user]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
 
@@ -826,65 +811,66 @@ const STRIPE_URLS = {
   const hasAccess=isPro||isInTrial||isBeliveCreator;
 
   // Charger les codes et utilisateurs depuis Supabase quand admin connecté
-  useEffect(()=>{
-    if(role==="admin"){
-      // Charger les codes
-      db.getCodes().then(data=>{
-        if(data&&data.length>0){
-          setCodes(data.map(c=>({
-            code:c.code,
-            type:c.type,
-            freeType:c.free_type||"limited",
-            freeDays:c.free_days||14,
-            createdAt:c.created_at,
-            usedBy:c.used_by,
-            usedAt:c.used_at,
-            owner:c.owner,
-            creatorName:c.creator_name||"",
-          })));
-        }
-      }).catch(()=>{});
-      // Charger les utilisateurs depuis Supabase
-      db.getUsers().then(data=>{
-        if(data&&data.length>0){
-          const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-          data.forEach(u=>{
-            // Toujours mettre à jour plan, offert et paid depuis Supabase
-            if(sv[u.email]){
-              sv[u.email].plan=u.plan||sv[u.email].plan||"free";
-              sv[u.email].offert=u.offert||false;
-              sv[u.email].paid=u.paid||false;
-            } else {
-              sv[u.email]={
-                name:u.name,
-                role:u.role||"createur",
-                password:u.password,
-                plan:u.plan||"free",
-                offert:u.offert||false,
-                paid:u.paid||false,
-                phone:u.phone,
-                twitch:u.twitch,
-                youtube:u.youtube,
-                tiktok:u.tiktok,
-                instagram:u.instagram,
-                av:u.av||(u.name?u.name.charAt(0):"?"),
-                trialStart:u.trial_start,
-              };
-            }
-          });
-          localStorage.setItem("ba6_users",JSON.stringify(sv));
-        }
-      }).catch(()=>{});
-      // Charger les parrainages admin
-      db.getReferrals().then(data=>{if(data&&data.length>0)setAdminRefs(data);}).catch(()=>{});
-      // Charger les partenariats depuis Supabase
-      db.getPartners().then(data=>{
-        if(data&&data.length>0){
-          setPartners(data);
-        }
-      }).catch(()=>{});
-    }
-  },[role]);
+  // DÉSACTIVÉ - Ce useEffect admin cause aussi des pages blanches
+  // useEffect(()=>{
+  //   if(role==="admin"){
+  //     // Charger les codes
+  //     db.getCodes().then(data=>{
+  //       if(data&&data.length>0){
+  //         setCodes(data.map(c=>({
+  //           code:c.code,
+  //           type:c.type,
+  //           freeType:c.free_type||"limited",
+  //           freeDays:c.free_days||14,
+  //           createdAt:c.created_at,
+  //           usedBy:c.used_by,
+  //           usedAt:c.used_at,
+  //           owner:c.owner,
+  //           creatorName:c.creator_name||"",
+  //         })));
+  //       }
+  //     }).catch(()=>{});
+  //     // Charger les utilisateurs depuis Supabase
+  //     db.getUsers().then(data=>{
+  //       if(data&&data.length>0){
+  //         const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+  //         data.forEach(u=>{
+  //           // Toujours mettre à jour plan, offert et paid depuis Supabase
+  //           if(sv[u.email]){
+  //             sv[u.email].plan=u.plan||sv[u.email].plan||"free";
+  //             sv[u.email].offert=u.offert||false;
+  //             sv[u.email].paid=u.paid||false;
+  //           } else {
+  //             sv[u.email]={
+  //               name:u.name,
+  //               role:u.role||"createur",
+  //               password:u.password,
+  //               plan:u.plan||"free",
+  //               offert:u.offert||false,
+  //               paid:u.paid||false,
+  //               phone:u.phone,
+  //               twitch:u.twitch,
+  //               youtube:u.youtube,
+  //               tiktok:u.tiktok,
+  //               instagram:u.instagram,
+  //               av:u.av||(u.name?u.name.charAt(0):"?"),
+  //               trialStart:u.trial_start,
+  //             };
+  //           }
+  //         });
+  //         localStorage.setItem("ba6_users",JSON.stringify(sv));
+  //       }
+  //     }).catch(()=>{});
+  //     // Charger les parrainages admin
+  //     db.getReferrals().then(data=>{if(data&&data.length>0)setAdminRefs(data);}).catch(()=>{});
+  //     // Charger les partenariats depuis Supabase
+  //     db.getPartners().then(data=>{
+  //       if(data&&data.length>0){
+  //         setPartners(data);
+  //       }
+  //     }).catch(()=>{});
+  //   }
+  // },[role]);
   const totalH=streams.reduce((s,r)=>s+r.duration,0);
   const avgV=streams.length?Math.round(streams.reduce((s,r)=>s+r.viewers,0)/streams.length):0;
   const maxV=streams.length?Math.max(...streams.map(s=>s.viewers)):0;
@@ -1843,10 +1829,17 @@ const STRIPE_URLS = {
     );
   }
 
-  // AUTH
+  // AUTH avec écran de chargement
   if(!user)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:D,padding:16,position:"relative",overflow:"hidden"}}>
       <style>{css}</style>
+      {isLoading ? (
+        <div style={{textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:16}}>⏳</div>
+          <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:24,letterSpacing:2,marginBottom:8}}>CONNEXION EN COURS</div>
+          <div style={{fontSize:13,color:M}}>Veuillez patienter...</div>
+        </div>
+      ) : (
       <div style={{position:"absolute",width:600,height:600,background:"radial-gradient(circle,rgba(212,16,63,0.1) 0%,transparent 70%)",top:-200,right:-150,borderRadius:"50%",pointerEvents:"none"}}/>
       <div style={{width:"100%",maxWidth:440}} className="fade">
         <div style={{textAlign:"center",marginBottom:24}}>
@@ -1920,7 +1913,7 @@ const STRIPE_URLS = {
               </div>
             </div>
             {authErr&&<div style={{color:R,fontSize:12,marginBottom:12,textAlign:"center"}}>{authErr}</div>}
-            <Btn full onClick={doLogin} sz="lg">Se connecter</Btn>
+            <Btn full onClick={()=>{setIsLoading(true); setTimeout(() => {doLogin(); setIsLoading(false);}, 500);}} sz="lg">Se connecter</Btn>
             <div style={{textAlign:"center",marginTop:10}}>
               <span onClick={()=>setIsForgot(true)} style={{color:M,fontSize:12,cursor:"pointer",textDecoration:"underline"}}>Mot de passe oublié ?</span>
             </div>
@@ -1931,7 +1924,7 @@ const STRIPE_URLS = {
           </div>
         </div>
       </div>
-
+      )}
       {/* MODALE LÉGALE CGU/POLITIQUE */}
       <Modal open={!!showLegalModal} onClose={()=>setShowLegalModal(null)} title={showLegalModal==="cgu"?"Conditions Générales d'Utilisation":"Politique de Confidentialité"} wide>
         <div style={{maxHeight:"70vh",overflowY:"auto",lineHeight:1.6}}>
