@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPA_URL = "https://fiftdixtzeiidvwblvtr.supabase.co";
-const SUPA_KEY = "sb_publishable_hHHgNw_jHBktQ-OOxgu-Eg_wW8QhgGL";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZnRkaXh0emVlaWR2d2JsdnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDk3MzcsImV4cCI6MjA4OTc4NTczN30.BFvldCWsJQPXa6dHqR8wRJikVpG7qXTAEw_T6mtCGKM";
 const SUPA_PUBLISHABLE = "sb_publishable_hHHgNw_jHBktQ-OOxgu-Eg_wW8QhgGL";
 
 async function supabase(method, table, body, match) {
@@ -2092,7 +2092,7 @@ const STRIPE_URLS = {
               const allUsersMap = new Map();
               localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
               
-              const allUsers = Array.from(allUsersMap.values());
+              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
