@@ -621,48 +621,30 @@ const STRIPE_URLS = {
   }, [user]);
 
   useEffect(() => {
-    // Charger les données depuis Supabase
-    const loadData = async () => {
-      if (!user) return;
-      
+    // DÉSACTIVÉ COMPLÈTEMENT - Les requêtes Supabase déconnectent l'admin
+    // On utilise seulement le localStorage pour éviter les déconnexions
+    
+    // Charger depuis localStorage seulement
+    if (user) {
       try {
-        // DÉSACTIVÉ TEMPORAIREMENT - Les requêtes Supabase déconnectent l'admin
-        // TODO: Réactiver quand RLS sera corrigé
+        const streams = JSON.parse(localStorage.getItem("ba6_st")||"[]");
+        if (streams) setStreams(streams);
         
-        // Charger les streams
-        const streams = await db.getStreams(user.email);
-        if (streams) {
-          setStreams(streams);
-          localStorage.setItem("ba6_st", JSON.stringify(streams));
-        }
+        const codes = JSON.parse(localStorage.getItem("ba6_cd")||"[]");
+        if (codes) setCodes(codes);
         
-        // Charger les codes
-        const codes = await db.getCodes();
-        if (codes) {
-          setCodes(codes);
-          localStorage.setItem("ba6_cd", JSON.stringify(codes));
-        }
+        const contrats = JSON.parse(localStorage.getItem("ba6_co")||"[]");
+        if (contrats) setContrats(contrats);
         
-        // Charger les contrats
-        const contrats = await db.getContrats();
-        if (contrats) {
-          setContrats(contrats);
-          localStorage.setItem("ba6_co", JSON.stringify(contrats));
-        }
-        
-        // Charger les parrainages
-        const referrals = await db.getReferrals();
+        const referrals = JSON.parse(localStorage.getItem("ba6_ref")||"[]");
         if (referrals) {
           setReferrals(referrals);
-          localStorage.setItem("ba6_ref", JSON.stringify(referrals));
           setAdminRefs(referrals);
         }
       } catch(e) {
-        console.log("Erreur chargement données Supabase:", e);
+        console.log("Erreur chargement localStorage:", e);
       }
-    };
-    
-    loadData();
+    }
   }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
