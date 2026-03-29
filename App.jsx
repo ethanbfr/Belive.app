@@ -671,45 +671,33 @@ const STRIPE_URLS = {
     }
   }
 
+  // Vérification simple au chargement uniquement (plus de vérification automatique)
   useEffect(() => {
-    // Vérifier périodiquement si l'utilisateur existe encore dans Supabase
-    const checkUserExists = async () => {
-      if (!user) return;
-      
-      // NE JAMAIS vérifier l'admin
-      if (user.email === "ethanbfr06@gmail.com") {
-        console.log("Admin détecté - pas de vérification");
-        return;
-      }
-      
+    if (!user || user.email === "ethanbfr06@gmail.com") return;
+    
+    // Vérification unique au chargement avec timeout
+    const checkOnce = async () => {
       try {
-        const supabaseUser = await db.getUser(user.email);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout")), 3000)
+        );
+        
+        const supabaseUser = await Promise.race([
+          db.getUser(user.email),
+          timeoutPromise
+        ]);
+        
         if (!supabaseUser || supabaseUser.length === 0) {
-          // L'utilisateur a été supprimé, le déconnecter immédiatement
-          alert("⚠️ Votre compte a été supprimé par l'administrateur. Vous êtes maintenant déconnecté.");
           localStorage.removeItem("ba6_session");
           setUser(null);
-          return;
         }
       } catch(e) {
-        console.log("Erreur vérification utilisateur:", e);
+        console.log("Vérification utilisateur ignorée (timeout ou erreur)");
       }
     };
     
-    // Vérifier au chargement
-    if (user && user.email !== "ethanbfr06@gmail.com") {
-      checkUserExists();
-    }
-    
-    // Vérifier toutes les 30 secondes
-    const interval = setInterval(() => {
-      if (user && user.email !== "ethanbfr06@gmail.com") {
-        checkUserExists();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [user]);
+    checkOnce();
+  }, [user?.email]);
   useEffect(()=>{localStorage.setItem("ba6_st",JSON.stringify(streams));},[streams]);
   // DÉSACTIVÉ - Les requêtes Supabase déconnectent l'admin
   // useEffect(() => {
@@ -724,7 +712,7 @@ const STRIPE_URLS = {
   // }, [user]);
 
   useEffect(() => {
-    // Charger les données depuis Supabase avec vraie suppression
+    // Charger les données depuis Supabase avec vraie suppression et protection contre les erreurs
     const loadData = async () => {
       if (!user) return;
       
@@ -748,46 +736,47 @@ const STRIPE_URLS = {
           }
         }
         
-        // Charger les autres données
-        try {
-          const streams = await db.getStreams(user.email);
-          if (streams) {
-            setStreams(streams);
-            localStorage.setItem("ba6_st", JSON.stringify(streams));
+        // Charger les autres données avec timeout et protection
+        const loadWithTimeout = async (loadFn, errorMsg) => {
+          try {
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Timeout")), 5000)
+            );
+            const result = await Promise.race([loadFn(), timeoutPromise]);
+            return result;
+          } catch(e) {
+            console.log(errorMsg, e.message);
+            return null;
           }
-        } catch(e) {
-          console.log("Erreur streams, utilisation localStorage");
+        };
+        
+        // Streams
+        const streams = await loadWithTimeout(() => db.getStreams(user.email), "Erreur streams, utilisation localStorage");
+        if (streams) {
+          setStreams(streams);
+          localStorage.setItem("ba6_st", JSON.stringify(streams));
         }
         
-        try {
-          const codes = await db.getCodes();
-          if (codes) {
-            setCodes(codes);
-            localStorage.setItem("ba6_cd", JSON.stringify(codes));
-          }
-        } catch(e) {
-          console.log("Erreur codes, utilisation localStorage");
+        // Codes
+        const codes = await loadWithTimeout(() => db.getCodes(), "Erreur codes, utilisation localStorage");
+        if (codes) {
+          setCodes(codes);
+          localStorage.setItem("ba6_cd", JSON.stringify(codes));
         }
         
-        try {
-          const contrats = await db.getContrats();
-          if (contrats) {
-            setContrats(contrats);
-            localStorage.setItem("ba6_co", JSON.stringify(contrats));
-          }
-        } catch(e) {
-          console.log("Erreur contrats, utilisation localStorage");
+        // Contrats
+        const contrats = await loadWithTimeout(() => db.getContrats(), "Erreur contrats, utilisation localStorage");
+        if (contrats) {
+          setContrats(contrats);
+          localStorage.setItem("ba6_co", JSON.stringify(contrats));
         }
         
-        try {
-          const referrals = await db.getReferrals();
-          if (referrals) {
-            setReferrals(referrals);
-            localStorage.setItem("ba6_ref", JSON.stringify(referrals));
-            setAdminRefs(referrals);
-          }
-        } catch(e) {
-          console.log("Erreur referrals, utilisation localStorage");
+        // Referrals
+        const referrals = await loadWithTimeout(() => db.getReferrals(), "Erreur referrals, utilisation localStorage");
+        if (referrals) {
+          setReferrals(referrals);
+          localStorage.setItem("ba6_ref", JSON.stringify(referrals));
+          setAdminRefs(referrals);
         }
         
       } catch(e) {
@@ -795,7 +784,9 @@ const STRIPE_URLS = {
       }
     };
     
-    loadData();
+    // Démarrer le chargement avec un petit délai pour éviter les blocages
+    const timer = setTimeout(loadData, 100);
+    return () => clearTimeout(timer);
   }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
@@ -921,6 +912,7 @@ const STRIPE_URLS = {
     if(sv[authEmail]&&sv[authEmail].password===authPass){
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
+      askNotifPermission();
       try{
         const supaStreams=await db.getStreams(authEmail);
         if(supaStreams&&supaStreams.length>0){
@@ -942,6 +934,7 @@ const STRIPE_URLS = {
           sv2[authEmail]=u2;
           localStorage.setItem("ba6_users",JSON.stringify(sv2));
           setUser({email:authEmail,...u2});
+          askNotifPermission();
           return;
         }
       }catch(e){}
@@ -2195,18 +2188,8 @@ const STRIPE_URLS = {
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
             {role==="admin"&&(() => {
-              // Afficher le chargement
-              if (usersLoading) {
-                return (
-                  <div style={{textAlign:"center",padding:"40px"}}>
-                    <div style={{fontSize:24,marginBottom:16}}>🔄</div>
-                    <div style={{color:M,fontSize:14}}>Chargement des utilisateurs...</div>
-                  </div>
-                );
-              }
-              
-              // Utiliser les utilisateurs valides vérifiés
-              const allUsers = validUsers.filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
+              // Utiliser les utilisateurs du localStorage directement
+              const allUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
