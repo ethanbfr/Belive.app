@@ -625,47 +625,57 @@ const STRIPE_URLS = {
     const loadData = async () => {
       if (!user) return;
       
-      // Charger les utilisateurs
-      const users = await db.getUsers();
-      if (users) {
-        const usersObj = {};
-        users.forEach(u => {
-          usersObj[u.email] = u;
-        });
-        localStorage.setItem("ba6_users", JSON.stringify(usersObj));
-      }
-      
-      // Charger les streams
-      const streams = await db.getStreams(user.email);
-      if (streams) {
-        setStreams(streams);
-        localStorage.setItem("ba6_st", JSON.stringify(streams));
-      }
-      
-      // Charger les codes
-      const codes = await db.getCodes();
-      if (codes) {
-        setCodes(codes);
-        localStorage.setItem("ba6_cd", JSON.stringify(codes));
-      }
-      
-      // Charger les contrats
-      const contrats = await db.getContrats();
-      if (contrats) {
-        setContrats(contrats);
-        localStorage.setItem("ba6_co", JSON.stringify(contrats));
-      }
-      
-      // Charger les parrainages
-      const referrals = await db.getReferrals();
-      if (referrals) {
-        setReferrals(referrals);
-        localStorage.setItem("ba6_ref", JSON.stringify(referrals));
-        setAdminRefs(referrals);
+      try {
+        // Charger les utilisateurs (priorité haute pour admin)
+        const users = await db.getUsers();
+        if (users) {
+          const usersObj = {};
+          users.forEach(u => {
+            usersObj[u.email] = u;
+          });
+          localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+        }
+        
+        // Charger les streams
+        const streams = await db.getStreams(user.email);
+        if (streams) {
+          setStreams(streams);
+          localStorage.setItem("ba6_st", JSON.stringify(streams));
+        }
+        
+        // Charger les codes
+        const codes = await db.getCodes();
+        if (codes) {
+          setCodes(codes);
+          localStorage.setItem("ba6_cd", JSON.stringify(codes));
+        }
+        
+        // Charger les contrats
+        const contrats = await db.getContrats();
+        if (contrats) {
+          setContrats(contrats);
+          localStorage.setItem("ba6_co", JSON.stringify(contrats));
+        }
+        
+        // Charger les parrainages
+        const referrals = await db.getReferrals();
+        if (referrals) {
+          setReferrals(referrals);
+          localStorage.setItem("ba6_ref", JSON.stringify(referrals));
+          setAdminRefs(referrals);
+        }
+      } catch(e) {
+        console.log("Erreur chargement données Supabase:", e);
       }
     };
     
     loadData();
+    
+    // Pour l'admin, synchroniser plus fréquemment
+    if (user?.email === "ethanbfr06@gmail.com") {
+      const interval = setInterval(loadData, 30000); // Toutes les 30 secondes
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
   // Génère un code de parrainage unique pour chaque créateur
@@ -2054,9 +2064,15 @@ const STRIPE_URLS = {
               <span style={{fontSize:20}}>💡</span>
               <div><div style={{fontSize:10,fontWeight:700,color:R,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Conseil du jour</div><div style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>{tip}</div></div>
             </div>
-            {role==="admin"&&(()=>{
-              // Récupère tous les utilisateurs inscrits
-              const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+            {role==="admin"&&(() => {
+              // Récupère tous les utilisateurs inscrits depuis localStorage
+              const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+              
+              // Fusionne avec les données Supabase de manière synchrone (utilise les données déjà chargées si disponibles)
+              const allUsersMap = new Map();
+              localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
+              
+              const allUsers = Array.from(allUsersMap.values());
               const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&u.offert!==true&&u.offert!=="true");
               const payantsPro=allUsers.filter(u=>u.plan==="pro"&&u.offert!==true&&u.offert!=="true");
               const gratuitVie=allUsers.filter(u=>u.offert===true);
@@ -2120,9 +2136,27 @@ const STRIPE_URLS = {
                 {/* Liste complète des inscrits */}
                 <Card style={{marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                    <div style={{fontWeight:800,fontSize:15}}>👥 Tous les inscrits ({allUsers.length})</div>
+                  <div style={{fontWeight:800,fontSize:15}}>👥 Tous les inscrits ({allUsers.length})</div>
+                  <div style={{display:"flex",gap:8}}>
+                    <Btn sz="sm" onClick={async()=>{
+                      try {
+                        const users = await db.getUsers();
+                        if (users) {
+                          const usersObj = {};
+                          users.forEach(u => {
+                            usersObj[u.email] = u;
+                          });
+                          localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+                          alert("✅ Données synchronisées depuis Supabase !");
+                          window.location.reload();
+                        }
+                      } catch(e) {
+                        alert("❌ Erreur de synchronisation: " + e.message);
+                      }
+                    }} icon="🔄">Synchroniser</Btn>
                     <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
                   </div>
+                </div>
                   {allUsers.length===0?(
                     <div style={{textAlign:"center",padding:"24px 0",color:M}}>Aucun inscrit pour l'instant</div>
                   ):allUsers.map((u,i)=>{
