@@ -626,14 +626,27 @@ const STRIPE_URLS = {
       if (!user) return;
       
       try {
-        // Charger les utilisateurs (priorité haute pour admin)
-        const users = await db.getUsers();
-        if (users) {
-          const usersObj = {};
-          users.forEach(u => {
-            usersObj[u.email] = u;
-          });
-          localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+        // Pour l'admin, synchroniser automatiquement les utilisateurs au chargement
+        if (user.email === "ethanbfr06@gmail.com") {
+          console.log("Admin détecté, synchronisation automatique...");
+          
+          // Essayer de synchroniser les utilisateurs
+          try {
+            const users = await db.getUsers();
+            if (users && users.length > 0) {
+              const usersObj = {};
+              users.forEach(u => {
+                usersObj[u.email] = u;
+              });
+              localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+              console.log("Synchronisation auto réussie:", users.length, "utilisateurs");
+              
+              // Forcer le rechargement du composant pour afficher les nouvelles données
+              window.location.reload();
+            }
+          } catch(syncError) {
+            console.log("Synchronisation échouée, utilisation des données locales:", syncError.message);
+          }
         }
         
         // Charger les streams
