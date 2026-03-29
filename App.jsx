@@ -896,39 +896,32 @@ const STRIPE_URLS = {
 
   async function doLogin(){
     setAuthErr("");
-    const u=ADMIN[authEmail];
+    // Admin direct - pas de vérification Supabase
+    if(authEmail==="ethanbfr06@gmail.com"&&authPass==="Belive2025!"){
+      setUser({email:authEmail,name:"Ethan",role:"admin",plan:"unlimited"});
+      localStorage.setItem("ba6_session",JSON.stringify({email:authEmail,name:"Ethan",role:"admin",plan:"unlimited"}));
+      return;
+    }
+    const u=createurs.find(c=>c.email===authEmail);
     if(u&&u.password===authPass){
       setUser({email:authEmail,...u});
       askNotifPermission();
       return;
     }
-    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-    if(sv[authEmail]&&sv[authEmail].password===authPass){
-      const loggedUser={email:authEmail,...sv[authEmail]};
-      setUser(loggedUser);
+    // Essayer Supabase si pas dans localStorage (sauf admin)
+    if(authEmail!=="ethanbfr06@gmail.com"){
       try{
-        const supaStreams=await db.getStreams(authEmail);
-        if(supaStreams&&supaStreams.length>0){
-          setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
+        const supaUser=await db.getUser(authEmail);
+        if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
+          const u2=supaUser[0];
+          const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+          sv2[authEmail]=u2;
+          localStorage.setItem("ba6_users",JSON.stringify(sv2));
+          setUser({email:authEmail,...u2});
+          return;
         }
-        // Charger les parrainages
-        const supaRefs=await db.getReferralsByParrain(authEmail);
-        if(supaRefs&&supaRefs.length>0) setParrainages(supaRefs);
-      }catch(e){console.log("Data load failed");}
-      return;
+      }catch(e){}
     }
-    // Essayer Supabase si pas dans localStorage
-    try{
-      const supaUser=await db.getUser(authEmail);
-      if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
-        const u2=supaUser[0];
-        const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-        sv2[authEmail]=u2;
-        localStorage.setItem("ba6_users",JSON.stringify(sv2));
-        setUser({email:authEmail,...u2});
-        return;
-      }
-    }catch(e){}
     setAuthErr("Email ou mot de passe incorrect.");
   }
 
