@@ -812,11 +812,14 @@ const STRIPE_URLS = {
     setAuthErr("");
     const u=ADMIN[authEmail];
     if(u&&u.password===authPass){
-      setUser({email:authEmail,...u});
+      const sessionData={email:authEmail,...u};
+      setUser(sessionData);
+      localStorage.setItem("ba6_session",JSON.stringify(sessionData));
       askNotifPermission();
       return;
     }
-    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      setUser(loggedUser);
+      localStorage.setItem("ba6_session",JSON.stringify(loggedUser));
     if(sv[authEmail]&&sv[authEmail].password===authPass){
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
@@ -839,7 +842,9 @@ const STRIPE_URLS = {
         const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
         sv2[authEmail]=u2;
         localStorage.setItem("ba6_users",JSON.stringify(sv2));
-        setUser({email:authEmail,...u2});
+        const sessionData2={email:authEmail,...u2};
+        setUser(sessionData2);
+        localStorage.setItem("ba6_session",JSON.stringify(sessionData2));
         return;
       }
     }catch(e){}
@@ -1999,7 +2004,7 @@ const STRIPE_URLS = {
           </div>
           <span style={{fontSize:12,color:M}}>›</span>
         </div>
-        <button onClick={()=>{setUser(null);setPage("dashboard");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
+        <button onClick={()=>{setUser(null);setPage("dashboard");localStorage.removeItem("ba6_session");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
       </div>
     </>
   );
@@ -2077,7 +2082,7 @@ const STRIPE_URLS = {
                 </button>
               </div>
               <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
-              <button onClick={()=>{setUser(null);}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
+              <button onClick={()=>{setUser(null);localStorage.removeItem("ba6_session");}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
             </div>
           </div>
         )}
