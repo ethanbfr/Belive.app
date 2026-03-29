@@ -2406,8 +2406,6 @@ const STRIPE_URLS = {
             </div>
           </div>
         )}
-          </div>
-        )}
 
         {/* AUTRES PAGES */}
         {page==="planning"&&(
