@@ -2073,6 +2073,12 @@ const STRIPE_URLS = {
               localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
               
               const allUsers = Array.from(allUsersMap.values());
+              
+              // Informations de débogage
+              console.log("=== ADMIN DASHBOARD DEBUG ===");
+              console.log("localStorageUsers count:", localStorageUsers.length);
+              console.log("allUsers count:", allUsers.length);
+              console.log("allUsers:", allUsers);
               const payantsBelive=allUsers.filter(u=>u.plan==="belive_creator"&&u.offert!==true&&u.offert!=="true");
               const payantsPro=allUsers.filter(u=>u.plan==="pro"&&u.offert!==true&&u.offert!=="true");
               const gratuitVie=allUsers.filter(u=>u.offert===true);
@@ -2138,22 +2144,77 @@ const STRIPE_URLS = {
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                   <div style={{fontWeight:800,fontSize:15}}>👥 Tous les inscrits ({allUsers.length})</div>
                   <div style={{display:"flex",gap:8}}>
+                    <Btn sz="sm" onClick={()=>{
+                      // Synchronisation simplifiée pour mobile
+                      const syncData = async () => {
+                        try {
+                          console.log("Début synchronisation...");
+                          const users = await db.getUsers();
+                          console.log("Utilisateurs récupérés:", users);
+                          
+                          if (users && users.length > 0) {
+                            const usersObj = {};
+                            users.forEach(u => {
+                              usersObj[u.email] = u;
+                            });
+                            localStorage.setItem("ba6_users", JSON.stringify(usersObj));
+                            console.log("LocalStorage mis à jour:", usersObj);
+                            alert("✅ " + users.length + " utilisateurs synchronisés !");
+                            window.location.reload();
+                          } else {
+                            alert("❌ Aucun utilisateur trouvé dans Supabase");
+                          }
+                        } catch(e) {
+                          console.error("Erreur synchronisation:", e);
+                          alert("❌ Erreur: " + e.message);
+                        }
+                      };
+                      
+                      syncData();
+                    }} icon="🔄">Synchroniser</Btn>
                     <Btn sz="sm" onClick={async()=>{
                       try {
-                        const users = await db.getUsers();
-                        if (users) {
-                          const usersObj = {};
-                          users.forEach(u => {
-                            usersObj[u.email] = u;
+                        const supabaseUsers = await db.getUsers();
+                        if (supabaseUsers) {
+                          const adminCount = supabaseUsers.filter(u => u.role === "admin").length;
+                          const creatorCount = supabaseUsers.filter(u => u.role === "createur").length;
+                          const totalCount = supabaseUsers.length;
+                          
+                          console.log("=== COMPTES SUPABASE ===");
+                          console.log("Tous les comptes:", supabaseUsers);
+                          console.log("Admin:", adminCount);
+                          console.log("Créateurs:", creatorCount);
+                          console.log("Total:", totalCount);
+                          
+                          let details = "📊 COMPTES DANS SUPABASE:\n\n";
+                          details += `Total: ${totalCount} comptes\n`;
+                          details += `Admin: ${adminCount} compte(s)\n`;
+                          details += `Créateurs: ${creatorCount} compte(s)\n\n`;
+                          details += "Liste des comptes:\n";
+                          
+                          supabaseUsers.forEach((u, i) => {
+                            details += `${i+1}. ${u.name} (${u.email}) - ${u.role}\n`;
                           });
-                          localStorage.setItem("ba6_users", JSON.stringify(usersObj));
-                          alert("✅ Données synchronisées depuis Supabase !");
-                          window.location.reload();
+                          
+                          alert(details);
+                        } else {
+                          alert("❌ Aucun utilisateur trouvé dans Supabase");
                         }
                       } catch(e) {
-                        alert("❌ Erreur de synchronisation: " + e.message);
+                        alert("❌ Erreur interrogation Supabase: " + e.message);
                       }
-                    }} icon="🔄">Synchroniser</Btn>
+                    }} icon="🗄️">Vérifier Supabase</Btn>
+                    <Btn sz="sm" onClick={()=>{
+                      // Débogage : afficher les données brutes
+                      const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                      const localStorageCount = Object.keys(localStorageData).length;
+                      
+                      console.log("=== DÉBOGAGE ADMIN ===");
+                      console.log("LocalStorage utilisateurs:", localStorageData);
+                      console.log("Nombre d'utilisateurs localStorage:", localStorageCount);
+                      
+                      alert(`📊 Débogage:\n\nLocalStorage: ${localStorageCount} utilisateurs\n\nVérifie la console (F12) pour voir les détails complets.`);
+                    }} icon="🔍">Déboguer</Btn>
                     <Btn sz="sm" onClick={()=>setModal("addCr")} icon="+">Ajouter manuellement</Btn>
                   </div>
                 </div>
@@ -2183,7 +2244,27 @@ const STRIPE_URLS = {
                               {u.instagram&&<span>📸 {u.instagram}</span>}
                             </div>
                           </div>
-                          <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
+                          <div style={{display:"flex",gap:6}}>
+                            <Btn sz="sm" v="ghost" onClick={()=>openContract({...u,id:i})}>📋</Btn>
+                            <Btn sz="sm" v="ghost" onClick={async()=>{
+                              if(!confirm(`⚠️ Supprimer définitivement ${u.name} (${u.email}) ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n• Le compte utilisateur\n• Toutes ses données associées\n• Ses accès à l'application`)) return;
+                              
+                              try {
+                                // Supprimer de Supabase
+                                await db.deleteUser(u.email);
+                                
+                                // Supprimer du localStorage
+                                const localStorageData = JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                                delete localStorageData[u.email];
+                                localStorage.setItem("ba6_users", JSON.stringify(localStorageData));
+                                
+                                alert(`✅ ${u.name} a été supprimé définitivement`);
+                                window.location.reload();
+                              } catch(e) {
+                                alert("❌ Erreur lors de la suppression: " + e.message);
+                              }
+                            }} style={{background:"none",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"5px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</Btn>
+                          </div>
                         </div>
                       </div>
                     );
