@@ -4771,5 +4771,6 @@ const STRIPE_URLS = {
       </Modal>
 
     </div>
+  </div>
   );
 }
