@@ -2164,11 +2164,8 @@ const STRIPE_URLS = {
                 choisis ton offre ci-dessous.
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
-                <button onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")} style={{background:R,color:"white",border:"none",borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                  🎯 Créateur Belive — 9,99€/mois
-                </button>
-                <button onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05","_blank")} style={{background:"rgba(255,255,255,0.08)",color:"white",border:`1px solid ${B}`,borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                  ⚡ Accès indépendant — 14,99€/mois
+                <button onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email="+encodeURIComponent(user?.email||""),"_blank")} style={{background:R,color:"white",border:"none",borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                  ⚡ S'abonner — 14,99€/mois
                 </button>
               </div>
               <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
@@ -2434,19 +2431,11 @@ const STRIPE_URLS = {
                         <div style={{display:"flex",gap:6}}>
                           <button onClick={()=>{navigator.clipboard?.writeText(u.phone||u.email);alert(`📋 ${u.phone||u.email} copié !`);}} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 10px",color:M,fontSize:11,cursor:"pointer"}}>📋 Copier</button>
                           <button onClick={()=>{
-                            // Envoyer notif cloche au créateur
+                            // Envoyer notif cloche au créateur pour passer Pro
                             const notifs=JSON.parse(localStorage.getItem("ba6_notifs_"+u.email)||"[]");
-                            notifs.unshift({msg:"🔔 Ton essai gratuit est terminé ! Passe à Premium pour continuer à profiter de Belive Academy — 14,99€/mois seulement.",time:new Date().toLocaleString("fr-FR"),read:false,type:"relance"});
+                            notifs.unshift({msg:"🚀 Belive Academy te propose de passer à Premium ! Accède à toutes les fonctionnalités pour seulement 14,99€/mois. Clique pour t'abonner.",time:new Date().toLocaleString("fr-FR"),read:false,type:"relance"});
                             localStorage.setItem("ba6_notifs_"+u.email,JSON.stringify(notifs.slice(0,20)));
-                            // Étendre le trial de 3 jours
-                            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                            if(sv[u.email]){
-                              sv[u.email].trial_start=new Date(Date.now()-11*24*60*60*1000).toISOString();
-                              sv[u.email].trialStart=sv[u.email].trial_start;
-                              localStorage.setItem("ba6_users",JSON.stringify(sv));
-                              db.updateUser(u.email,{trial_start:sv[u.email].trial_start});
-                            }
-                            alert(`✅ Relance envoyée à ${u.name} !\n\nIl/Elle a reçu une notification et a 3 jours supplémentaires pour s'abonner.`);
+                            alert(`✅ Notification envoyée à ${u.name} !\n\nIl/Elle verra la notification dès sa prochaine connexion avec un bouton pour s'abonner à 14,99€/mois.`);
                           }} style={{background:"rgba(212,16,63,0.1)",border:"1px solid rgba(212,16,63,0.25)",borderRadius:8,padding:"5px 10px",color:R,fontSize:11,cursor:"pointer",fontWeight:700}}>🔔 Relancer</button>
                         </div>
                       </div>
