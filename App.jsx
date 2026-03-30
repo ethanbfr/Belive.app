@@ -4284,10 +4284,10 @@ const STRIPE_URLS = {
       {/* PAYMENT MODAL */}
       <Modal open={modal==="payment"} onClose={()=>setModal(null)} title="Passer à Pro">
         <div style={{textAlign:"center",marginBottom:20}}>
-          <div style={{fontSize:13,color:M}}>Choisis ton offre</div>
+          <div style={{fontSize:13,color:M}}>{isBeliveCreator?"Ton tarif exclusif agence":"Accès illimité à toutes les fonctionnalités"}</div>
         </div>
 
-        {/* Créateur Belive → uniquement 9,99€ */}
+        {/* Créateur Belive → 9,99€ / Autres → 14,99€ uniquement */}
         {isBeliveCreator?(
           <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:14,padding:20,marginBottom:16}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
@@ -4298,21 +4298,12 @@ const STRIPE_URLS = {
               <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>9,99€<span style={{fontSize:13,color:M}}>/mois</span></div>
             </div>
             <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>✅ Accès complet • Coach IA • Partenariats • Templates • Communauté</div>
-            <Btn full onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")}>
+            <Btn full onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04?prefilled_email="+encodeURIComponent(user.email),"_blank")}>
               Souscrire à 9,99€/mois
             </Btn>
           </div>
         ):(
           <>
-            <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.25)`,borderRadius:14,padding:20,marginBottom:12}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                <div><div style={{fontWeight:800,fontSize:15}}>🎯 Créateur Belive</div><div style={{fontSize:12,color:M,marginTop:2}}>Pour les créateurs de l'agence</div></div>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>9,99€<span style={{fontSize:13,color:M}}>/mois</span></div>
-              </div>
-              <div style={{fontSize:12,color:M,marginBottom:14,lineHeight:1.6}}>✅ Accès complet • Coach IA • Partenariats • Templates • Communauté</div>
-              <Btn full onClick={()=>window.open("https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04","_blank")}>Souscrire à 9,99€/mois</Btn>
-              <div style={{textAlign:"center",marginTop:8,fontSize:11,color:M}}>Réservé aux créateurs Belive Academy</div>
-            </div>
             <div style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:14,padding:20,marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                 <div><div style={{fontWeight:800,fontSize:15}}>⚡ Application Belive</div><div style={{fontSize:12,color:M,marginTop:2}}>Accès indépendant</div></div>
