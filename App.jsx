@@ -4011,9 +4011,9 @@ const STRIPE_URLS = {
                   user_id:"MTTbA9t4YLXMDdk1I",
                   template_params:{
                     to_email:c.email,
-                    to_name:c.name,
+                    to_name:c.name.split(" ")[0],
                     from_name:"Ethan — Belive Academy",
-                    message:`Salut ${c.name} 👋\n\nTon essai gratuit Belive Academy est terminé. Pour continuer à profiter de toutes les fonctionnalités (coach IA, partenariats, classement, templates...), passe à Premium !\n\n🚀 Seulement 14,99€/mois\n\nClique ici pour t'abonner :\n${link}\n\nÀ bientôt sur la plateforme 🔥\nEthan — Belive Academy`,
+                    message:`Salut ${c.name.split(" ")[0]} 👋\n\nTon essai gratuit Belive Academy est terminé. Pour continuer à profiter de toutes les fonctionnalités (coach IA, partenariats, classement, templates...), passe à Premium !\n\n🚀 Seulement 14,99€/mois\n\nClique ici pour t'abonner :\n${link}\n\nÀ bientôt sur la plateforme 🔥\nEthan — Belive Academy`,
                   }
                 })
               });
@@ -4022,7 +4022,7 @@ const STRIPE_URLS = {
             }catch(e){
               // Fallback : ouvrir le mail client
               const subject=encodeURIComponent("💡 Continue ton aventure sur Belive Academy");
-              const body=encodeURIComponent(`Salut ${c.name} 👋\n\nTon essai gratuit est terminé. Passe à Premium pour 14,99€/mois !\n\n→ ${link}\n\nEthan — Belive Academy`);
+              const body=encodeURIComponent(`Salut ${c.name.split(" ")[0]} 👋\n\nTon essai gratuit est terminé. Passe à Premium pour 14,99€/mois !\n\n→ ${link}\n\nEthan — Belive Academy`);
               window.open(`mailto:${c.email}?subject=${subject}&body=${body}`);
             }
           }
