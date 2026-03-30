@@ -356,7 +356,8 @@ export default function App(){
           youtube: u.youtube, tiktok: u.tiktok, instagram: u.instagram,
           plan: u.plan || "free", offert: u.offert || false, paid: u.paid || false,
           role: u.role || "createur", status: "actif",
-          date: u.trialStart || new Date().toISOString(),
+          date: u.trial_start || u.trialStart || new Date().toISOString(),
+          trialStart: u.trial_start || u.trialStart || new Date().toISOString(),
           av: u.av || (u.name ? u.name.charAt(0) : "?"),
         }));
       if (list.length > 0) return list;
@@ -676,6 +677,7 @@ const STRIPE_URLS = {
                   plan: u.plan || "free", offert: u.offert || false, paid: u.paid || false,
                   role: u.role || "createur", status: "actif",
                   date: u.trial_start || u.trialStart || new Date().toISOString(),
+                  trialStart: u.trial_start || u.trialStart || new Date().toISOString(),
                   av: u.av || (u.name ? u.name.charAt(0) : "?"),
                 }));
               setCreateurs(creatList);
@@ -837,7 +839,8 @@ const STRIPE_URLS = {
               paid: u.paid || false,
               role: u.role || "createur",
               status: "actif",
-              date: u.trialStart || new Date().toISOString(),
+              date: u.trial_start || u.trialStart || new Date().toISOString(),
+              trialStart: u.trial_start || u.trialStart || new Date().toISOString(),
               av: u.av || (u.name ? u.name.charAt(0) : "?"),
             }));
           setCreateurs(creatList);
@@ -2209,8 +2212,8 @@ const STRIPE_URLS = {
               const gratuitVie=allUsers.filter(u=>u.offert===true);
               const revenuBelive=payantsBelive.length*9.99;
               const revenuPro=payantsPro.length*14.99;
-              const essai=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&u.trialStart&&Math.floor((Date.now()-new Date(u.trialStart).getTime())/(1000*60*60*24))<14);
-              const expires=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&(()=>{const ts=u.trialStart||u.trial_start;return !ts||Math.floor((Date.now()-new Date(ts).getTime())/(1000*60*60*24))>=14;})());
+              const essai=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&!u.offert&&(()=>{const ts=u.trialStart||u.trial_start||u.date;return ts&&Math.floor((Date.now()-new Date(ts).getTime())/(1000*60*60*24))<14;})());
+              const expires=allUsers.filter(u=>!["pro","belive_creator","unlimited"].includes(u.plan)&&!u.offert&&(()=>{const ts=u.trialStart||u.trial_start||u.date;return !ts||Math.floor((Date.now()-new Date(ts).getTime())/(1000*60*60*24))>=14;})());
               const revenuMensuel=revenuBelive+revenuPro;
               const potentielMax=revenuMensuel+(essai.length*14.99)+(expires.length*14.99);
 
@@ -3935,7 +3938,7 @@ const STRIPE_URLS = {
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {allCreateurs.map((c,i)=>{
-                    const rawTrialStart=c.trialStart||c.trial_start;
+                    const rawTrialStart=c.trialStart||c.trial_start||c.date;
                     const daysLeft=rawTrialStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawTrialStart).getTime())/(1000*60*60*24))):14;
                     const status=c.plan==="pro"?"pro":c.offert||c.plan==="belive_creator"?"offert":daysLeft>0?"trial":"expired";
                     return(
@@ -3988,13 +3991,13 @@ const STRIPE_URLS = {
           // Utilisateurs expirés = trial fini ET pas pro ET pas offert
           const expired=allUsers.filter(c=>{
             if(c.plan==="pro"||c.offert||c.plan==="belive_creator") return false;
-            const rawStart=c.trialStart||c.trial_start;
+            const rawStart=c.trialStart||c.trial_start||c.date;
             const daysLeft=rawStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawStart).getTime())/(1000*60*60*24))):14;
             return daysLeft===0;
           });
           const inTrial=allUsers.filter(c=>{
             if(c.plan==="pro"||c.offert||c.plan==="belive_creator") return false;
-            const rawStart=c.trialStart||c.trial_start;
+            const rawStart=c.trialStart||c.trial_start||c.date;
             const daysLeft=rawStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawStart).getTime())/(1000*60*60*24))):14;
             return daysLeft>0&&daysLeft<=3; // En fin d'essai (≤3j)
           });
@@ -4096,7 +4099,7 @@ const STRIPE_URLS = {
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
                     {inTrial.map((c,i)=>{
-                      const rawStart=c.trialStart||c.trial_start;
+                      const rawStart=c.trialStart||c.trial_start||c.date;
                       const dl=rawStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawStart).getTime())/(1000*60*60*24))):0;
                       return(
                         <div key={c.email||i} style={{background:C,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14}}>
