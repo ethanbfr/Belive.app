@@ -810,32 +810,28 @@ const STRIPE_URLS = {
 
   async function doLogin(){
     setAuthErr("");
-    // 1. Vérifier admin
     const u=ADMIN[authEmail];
     if(u&&u.password===authPass){
-      const sessionData={email:authEmail,...u};
-      setUser(sessionData);
-      localStorage.setItem("ba6_session",JSON.stringify(sessionData));
+      setUser({email:authEmail,...u});
       askNotifPermission();
       return;
     }
-    // 2. Vérifier localStorage
     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     if(sv[authEmail]&&sv[authEmail].password===authPass){
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
-      localStorage.setItem("ba6_session",JSON.stringify(loggedUser));
       try{
         const supaStreams=await db.getStreams(authEmail);
         if(supaStreams&&supaStreams.length>0){
           setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
         }
+        // Charger les parrainages
         const supaRefs=await db.getReferralsByParrain(authEmail);
         if(supaRefs&&supaRefs.length>0) setParrainages(supaRefs);
       }catch(e){console.log("Data load failed");}
       return;
     }
-    // 3. Essayer Supabase directement
+    // Essayer Supabase si pas dans localStorage
     try{
       const supaUser=await db.getUser(authEmail);
       if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
@@ -843,9 +839,7 @@ const STRIPE_URLS = {
         const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
         sv2[authEmail]=u2;
         localStorage.setItem("ba6_users",JSON.stringify(sv2));
-        const sessionData2={email:authEmail,...u2};
-        setUser(sessionData2);
-        localStorage.setItem("ba6_session",JSON.stringify(sessionData2));
+        setUser({email:authEmail,...u2});
         return;
       }
     }catch(e){}
@@ -2005,7 +1999,7 @@ const STRIPE_URLS = {
           </div>
           <span style={{fontSize:12,color:M}}>›</span>
         </div>
-        <button onClick={()=>{setUser(null);setPage("dashboard");localStorage.removeItem("ba6_session");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
+        <button onClick={()=>{setUser(null);setPage("dashboard");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
       </div>
     </>
   );
@@ -2083,7 +2077,7 @@ const STRIPE_URLS = {
                 </button>
               </div>
               <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
-              <button onClick={()=>{setUser(null);localStorage.removeItem("ba6_session");}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
+              <button onClick={()=>{setUser(null);}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
             </div>
           </div>
         )}
