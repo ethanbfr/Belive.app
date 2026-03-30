@@ -337,7 +337,24 @@ export default function App(){
   const [adminNotifs,setAdminNotifs]=useState(()=>JSON.parse(localStorage.getItem("ba6_notifs")||"[]"));
   const [notifPrefs,setNotifPrefs]=useState(()=>JSON.parse(localStorage.getItem("ba6_nprefs")||'{"planning":true,"messages":true,"partenariats":true,"classement":true}'));
 
-  const [createurs,setCreateurs]=useState(()=>JSON.parse(localStorage.getItem("ba6_cr")||"[]"));
+  const [createurs,setCreateurs]=useState(()=>{
+    // Charger les créateurs depuis ba6_users (source principale)
+    try {
+      const usersObj = JSON.parse(localStorage.getItem("ba6_users") || "{}");
+      const list = Object.entries(usersObj)
+        .filter(([email, u]) => u.role !== "admin")
+        .map(([email, u]) => ({
+          email, name: u.name, phone: u.phone, twitch: u.twitch,
+          youtube: u.youtube, tiktok: u.tiktok, instagram: u.instagram,
+          plan: u.plan || "free", offert: u.offert || false, paid: u.paid || false,
+          role: u.role || "createur", status: "actif",
+          date: u.trialStart || new Date().toISOString(),
+          av: u.av || (u.name ? u.name.charAt(0) : "?"),
+        }));
+      if (list.length > 0) return list;
+    } catch(e) {}
+    return JSON.parse(localStorage.getItem("ba6_cr") || "[]");
+  });
   const [streams,setStreams]=useState(()=>JSON.parse(localStorage.getItem("ba6_st")||"[]"));
   const [contrats,setContrats]=useState(()=>JSON.parse(localStorage.getItem("ba6_co")||"[]"));
   const [codes,setCodes]=useState(()=>JSON.parse(localStorage.getItem("ba6_cd")||"[]"));
@@ -789,6 +806,26 @@ const STRIPE_URLS = {
             }
           });
           localStorage.setItem("ba6_users",JSON.stringify(sv));
+          // Mettre à jour la liste des créateurs affichée
+          const creatList = Object.entries(sv)
+            .filter(([email, u]) => u.role !== "admin")
+            .map(([email, u]) => ({
+              email,
+              name: u.name,
+              phone: u.phone,
+              twitch: u.twitch,
+              youtube: u.youtube,
+              tiktok: u.tiktok,
+              instagram: u.instagram,
+              plan: u.plan || "free",
+              offert: u.offert || false,
+              paid: u.paid || false,
+              role: u.role || "createur",
+              status: "actif",
+              date: u.trialStart || new Date().toISOString(),
+              av: u.av || (u.name ? u.name.charAt(0) : "?"),
+            }));
+          setCreateurs(creatList);
         }
       }).catch(()=>{});
       // Charger les parrainages admin
@@ -812,7 +849,9 @@ const STRIPE_URLS = {
     setAuthErr("");
     const u=ADMIN[authEmail];
     if(u&&u.password===authPass){
-      setUser({email:authEmail,...u});
+      const sd={email:authEmail,...u};
+      setUser(sd);
+      localStorage.setItem("ba6_session",JSON.stringify(sd));
       askNotifPermission();
       return;
     }
@@ -820,6 +859,7 @@ const STRIPE_URLS = {
     if(sv[authEmail]&&sv[authEmail].password===authPass){
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
+      localStorage.setItem("ba6_session",JSON.stringify(loggedUser));
       try{
         const supaStreams=await db.getStreams(authEmail);
         if(supaStreams&&supaStreams.length>0){
@@ -839,7 +879,9 @@ const STRIPE_URLS = {
         const sv2=JSON.parse(localStorage.getItem("ba6_users")||"{}");
         sv2[authEmail]=u2;
         localStorage.setItem("ba6_users",JSON.stringify(sv2));
-        setUser({email:authEmail,...u2});
+        const sd2={email:authEmail,...u2};
+        setUser(sd2);
+        localStorage.setItem("ba6_session",JSON.stringify(sd2));
         return;
       }
     }catch(e){}
@@ -1999,7 +2041,7 @@ const STRIPE_URLS = {
           </div>
           <span style={{fontSize:12,color:M}}>›</span>
         </div>
-        <button onClick={()=>{setUser(null);setPage("dashboard");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
+        <button onClick={()=>{setUser(null);setPage("dashboard");localStorage.removeItem("ba6_session");}} style={{width:"100%",background:"transparent",border:`1px solid ${B}`,borderRadius:8,padding:"7px",color:M,fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
       </div>
     </>
   );
@@ -2077,7 +2119,7 @@ const STRIPE_URLS = {
                 </button>
               </div>
               <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
-              <button onClick={()=>{setUser(null);}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
+              <button onClick={()=>{setUser(null);localStorage.removeItem("ba6_session");}} style={{marginTop:16,background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:11,cursor:"pointer"}}>Se déconnecter</button>
             </div>
           </div>
         )}
