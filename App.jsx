@@ -474,8 +474,8 @@ const STRIPE_URLS = {
         alert(`🎉 Réduction de parrainage appliquée !\n\nTu bénéficies de -50% sur ton abonnement ce mois-ci.\nPrix: 7.49€ au lieu de 14.99€\nÉconomie: 7.50€`);
       }
 
-      // Rediriger vers Stripe Checkout
-      window.location.href = finalUrl;
+      // Rediriger vers Stripe Checkout avec email prérempli
+      window.location.href = finalUrl + "?prefilled_email=" + encodeURIComponent(userEmail) + "&client_reference_id=" + encodeURIComponent(userEmail);
 
       // Si réduction appliquée, la désactiver après utilisation
       if (discountApplied) {
