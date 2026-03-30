@@ -810,6 +810,7 @@ const STRIPE_URLS = {
 
   async function doLogin(){
     setAuthErr("");
+    // 1. Vérifier admin
     const u=ADMIN[authEmail];
     if(u&&u.password===authPass){
       const sessionData={email:authEmail,...u};
@@ -818,23 +819,23 @@ const STRIPE_URLS = {
       askNotifPermission();
       return;
     }
-      setUser(loggedUser);
-      localStorage.setItem("ba6_session",JSON.stringify(loggedUser));
+    // 2. Vérifier localStorage
+    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     if(sv[authEmail]&&sv[authEmail].password===authPass){
       const loggedUser={email:authEmail,...sv[authEmail]};
       setUser(loggedUser);
+      localStorage.setItem("ba6_session",JSON.stringify(loggedUser));
       try{
         const supaStreams=await db.getStreams(authEmail);
         if(supaStreams&&supaStreams.length>0){
           setStreams(supaStreams.map(s=>({id:s.id,date:s.date,duration:s.duration,viewers:s.viewers,platform:s.platform,user_email:s.user_email})));
         }
-        // Charger les parrainages
         const supaRefs=await db.getReferralsByParrain(authEmail);
         if(supaRefs&&supaRefs.length>0) setParrainages(supaRefs);
       }catch(e){console.log("Data load failed");}
       return;
     }
-    // Essayer Supabase si pas dans localStorage
+    // 3. Essayer Supabase directement
     try{
       const supaUser=await db.getUser(authEmail);
       if(supaUser&&supaUser[0]&&supaUser[0].password===authPass){
