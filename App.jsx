@@ -651,23 +651,30 @@ const STRIPE_URLS = {
         // Pour l'admin, synchroniser automatiquement les utilisateurs au chargement
         if (user.email === "ethanbfr06@gmail.com") {
           console.log("Admin détecté, synchronisation automatique...");
-          
-          // Essayer de synchroniser les utilisateurs
           try {
             const users = await db.getUsers();
             if (users && users.length > 0) {
-              // Fusionner avec localStorage sans écraser les suppressions locales
               const localUsers = JSON.parse(localStorage.getItem("ba6_users") || "{}");
               users.forEach(u => {
-                // Ne réajouter que si l'utilisateur existe encore dans Supabase
-                // et n'a pas été supprimé localement après la dernière sync
                 localUsers[u.email] = { ...localUsers[u.email], ...u };
               });
               localStorage.setItem("ba6_users", JSON.stringify(localUsers));
-              console.log("Synchronisation auto réussie:", users.length, "utilisateurs");
+              // Mettre à jour la liste affichée
+              const creatList = Object.entries(localUsers)
+                .filter(([em, u]) => u.role !== "admin")
+                .map(([em, u]) => ({
+                  email: em, name: u.name, phone: u.phone, twitch: u.twitch,
+                  youtube: u.youtube, tiktok: u.tiktok, instagram: u.instagram,
+                  plan: u.plan || "free", offert: u.offert || false, paid: u.paid || false,
+                  role: u.role || "createur", status: "actif",
+                  date: u.trial_start || u.trialStart || new Date().toISOString(),
+                  av: u.av || (u.name ? u.name.charAt(0) : "?"),
+                }));
+              setCreateurs(creatList);
+              console.log("Synchronisation réussie:", users.length, "utilisateurs");
             }
           } catch(syncError) {
-            console.log("Synchronisation échouée, utilisation des données locales:", syncError.message);
+            console.log("Synchronisation échouée:", syncError.message);
           }
         }
         
@@ -1013,7 +1020,8 @@ const STRIPE_URLS = {
     localStorage.setItem("ba6_users",JSON.stringify(usersStorage));
     // Sauvegarde dans Supabase
     try{
-      const result = await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,av:name.charAt(0).toUpperCase(),trial_start:new Date().toISOString(),referral_code:refCode,referred_by: referredBy});
+      // Uniquement les colonnes qui existent dans Supabase
+      const result = await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,trial_start:new Date().toISOString(),referral_code:refCode});
       if(!result) console.warn("Supabase createUser a retourné null");
       else console.log("✅ Utilisateur sauvegardé dans Supabase:", email);
     }catch(e){ console.warn("User save to Supabase failed:", e); }
