@@ -1675,6 +1675,7 @@ const STRIPE_URLS = {
     {id:"templates",    icon:"🎨",label:"Templates",     roles:["createur"]},
     {id:"parrainage",   icon:"🎁",label:"Parrainage",    roles:["createur"]},
     {id:"createurs",    icon:"▣", label:"Créateurs",     roles:["admin"],            section:"GESTION"},
+    {id:"relancer",     icon:"📨", label:"Relancer",      roles:["admin"],            badge:"!"},
     {id:"contrats",     icon:"▤", label:"Contrats",      roles:["admin"]},
     {id:"codes",        icon:"▧", label:"Codes",         roles:["admin"]},
     {id:"parrainages",  icon:"🎁", label:"Parrainages",   roles:["admin"]},
@@ -3934,8 +3935,9 @@ const STRIPE_URLS = {
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {allCreateurs.map((c,i)=>{
-                    const daysLeft=c.trialStart?Math.max(0,14-Math.floor((Date.now()-new Date(c.trialStart).getTime())/(1000*60*60*24))):0;
-                    const status=c.plan==="pro"?"pro":daysLeft>0?"trial":"expired";
+                    const rawTrialStart=c.trialStart||c.trial_start;
+                    const daysLeft=rawTrialStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawTrialStart).getTime())/(1000*60*60*24))):14;
+                    const status=c.plan==="pro"?"pro":c.offert||c.plan==="belive_creator"?"offert":daysLeft>0?"trial":"expired";
                     return(
                       <Card key={c.email||c.id||i}>
                         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
@@ -3944,7 +3946,8 @@ const STRIPE_URLS = {
                             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
                               <div style={{fontWeight:800,fontSize:14}}>{c.name}</div>
                               {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
-                              {status==="trial"&&<Pill color="yellow">⏳ {daysLeft}j</Pill>}
+                              {status==="offert"&&<Pill color="purple">🎁 Offert</Pill>}
+                              {status==="trial"&&<Pill color="yellow">⏳ {daysLeft}j essai</Pill>}
                               {status==="expired"&&<Pill color="red">🔒 Expiré</Pill>}
                             </div>
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,fontSize:11,color:M}}>
@@ -3969,6 +3972,173 @@ const STRIPE_URLS = {
                   })}
                 </div>
               )}
+            </div>
+          );
+        })()}
+
+        {/* RELANCER ADMIN */}
+        {page==="relancer"&&role==="admin"&&(()=>{
+          const allUsers=(()=>{
+            const lsU=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+            const map=new Map();
+            lsU.forEach(u=>map.set(u.email,u));
+            createurs.forEach(u=>map.set(u.email,{...(map.get(u.email)||{}),...u}));
+            return Array.from(map.values()).filter(u=>u.email!=="ethanbfr06@gmail.com");
+          })();
+          // Utilisateurs expirés = trial fini ET pas pro ET pas offert
+          const expired=allUsers.filter(c=>{
+            if(c.plan==="pro"||c.offert||c.plan==="belive_creator") return false;
+            const rawStart=c.trialStart||c.trial_start;
+            const daysLeft=rawStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawStart).getTime())/(1000*60*60*24))):14;
+            return daysLeft===0;
+          });
+          const inTrial=allUsers.filter(c=>{
+            if(c.plan==="pro"||c.offert||c.plan==="belive_creator") return false;
+            const rawStart=c.trialStart||c.trial_start;
+            const daysLeft=rawStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawStart).getTime())/(1000*60*60*24))):14;
+            return daysLeft>0&&daysLeft<=3; // En fin d'essai (≤3j)
+          });
+
+          async function sendRelance(c){
+            const link=`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(c.email)}`;
+            try{
+              await fetch("https://api.emailjs.com/api/v1.0/email/send",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({
+                  service_id:"service_on459ks",
+                  template_id:"template_ey0hwpz",
+                  user_id:"MTTbA9t4YLXMDdk1I",
+                  template_params:{
+                    to_email:c.email,
+                    to_name:c.name,
+                    from_name:"Ethan — Belive Academy",
+                    message:`Salut ${c.name} 👋\n\nTon essai gratuit Belive Academy est terminé. Pour continuer à profiter de toutes les fonctionnalités (coach IA, partenariats, classement, templates...), passe à Premium !\n\n🚀 Seulement 14,99€/mois\n\nClique ici pour t'abonner :\n${link}\n\nÀ bientôt sur la plateforme 🔥\nEthan — Belive Academy`,
+                  }
+                })
+              });
+              alert(`✅ Email de relance envoyé à ${c.email} avec le lien de paiement !`);
+              storeAdminNotif(`📨 Relance envoyée à ${c.name} (${c.email})`);
+            }catch(e){
+              // Fallback : ouvrir le mail client
+              const subject=encodeURIComponent("💡 Continue ton aventure sur Belive Academy");
+              const body=encodeURIComponent(`Salut ${c.name} 👋\n\nTon essai gratuit est terminé. Passe à Premium pour 14,99€/mois !\n\n→ ${link}\n\nEthan — Belive Academy`);
+              window.open(`mailto:${c.email}?subject=${subject}&body=${body}`);
+            }
+          }
+
+          function sendRelanceAll(){
+            if(!confirm(`⚠️ Envoyer une relance à ${expired.length} créateur(s) expiré(s) ?`))return;
+            expired.forEach(c=>sendRelance(c));
+          }
+
+          return(
+            <div className="fade">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                <div>
+                  <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>RELANCER</div>
+                  <div style={{fontSize:13,color:M}}>Créateurs à convertir en abonnés</div>
+                </div>
+                {expired.length>0&&<Btn onClick={sendRelanceAll} icon="📨">Relancer tout ({expired.length})</Btn>}
+              </div>
+
+              {/* Stats */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
+                {[
+                  {label:"Expirés",val:expired.length,color:"red",icon:"🔒"},
+                  {label:"Fin d'essai (≤3j)",val:inTrial.length,color:"yellow",icon:"⏳"},
+                  {label:"À convertir total",val:expired.length+inTrial.length,color:"blue",icon:"📨"},
+                ].map(s=>(
+                  <div key={s.label} style={{background:C,border:`1px solid ${B}`,borderRadius:14,padding:"16px 18px"}}>
+                    <div style={{fontSize:24,marginBottom:6}}>{s.icon}</div>
+                    <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:s.color==="red"?R:s.color==="yellow"?YE:BL}}>{s.val}</div>
+                    <div style={{fontSize:11,color:M,marginTop:2}}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Expirés */}
+              {expired.length>0&&(
+                <div style={{marginBottom:24}}>
+                  <div style={{fontWeight:800,fontSize:15,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+                    <Pill color="red">🔒 Expirés — {expired.length}</Pill>
+                    <span style={{fontSize:12,color:M,fontWeight:400}}>Essai terminé, pas encore abonné</span>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {expired.map((c,i)=>(
+                      <div key={c.email||i} style={{background:C,border:`1px solid rgba(212,16,63,0.2)`,borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14}}>
+                        <div style={{width:40,height:40,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0}}>{(c.name||"?").charAt(0)}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:800,fontSize:13,marginBottom:2}}>{c.name}</div>
+                          <div style={{fontSize:11,color:M}}>📧 {c.email}{c.twitch&&` • 🟣 @${c.twitch}`}</div>
+                        </div>
+                        <div style={{display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
+                          <Pill color="red" xs>Expiré</Pill>
+                          <Btn sz="sm" onClick={()=>sendRelance(c)} icon="📨">Relancer</Btn>
+                          <Btn sz="sm" v="ghost" onClick={()=>{
+                            const link=`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(c.email)}`;
+                            navigator.clipboard?.writeText(link).catch(()=>{});
+                            alert(`✅ Lien copié !\n${link}`);
+                          }} icon="🔗">Lien</Btn>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* En fin d'essai */}
+              {inTrial.length>0&&(
+                <div style={{marginBottom:24}}>
+                  <div style={{fontWeight:800,fontSize:15,marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+                    <Pill color="yellow">⏳ Fin d'essai — {inTrial.length}</Pill>
+                    <span style={{fontSize:12,color:M,fontWeight:400}}>Il reste ≤ 3 jours — le bon moment pour relancer</span>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {inTrial.map((c,i)=>{
+                      const rawStart=c.trialStart||c.trial_start;
+                      const dl=rawStart?Math.max(0,14-Math.floor((Date.now()-new Date(rawStart).getTime())/(1000*60*60*24))):0;
+                      return(
+                        <div key={c.email||i} style={{background:C,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14}}>
+                          <div style={{width:40,height:40,background:"rgba(251,191,36,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0}}>{(c.name||"?").charAt(0)}</div>
+                          <div style={{flex:1}}>
+                            <div style={{fontWeight:800,fontSize:13,marginBottom:2}}>{c.name}</div>
+                            <div style={{fontSize:11,color:M}}>📧 {c.email}{c.twitch&&` • 🟣 @${c.twitch}`}</div>
+                          </div>
+                          <div style={{display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
+                            <Pill color="yellow" xs>⏳ {dl}j restants</Pill>
+                            <Btn sz="sm" onClick={()=>sendRelance(c)} icon="📨">Relancer</Btn>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {expired.length===0&&inTrial.length===0&&(
+                <div style={{background:C,border:`1px solid ${B}`,borderRadius:14,padding:"48px 20px",textAlign:"center"}}>
+                  <div style={{fontSize:48,marginBottom:12}}>🎉</div>
+                  <div style={{fontWeight:800,fontSize:16,marginBottom:8}}>Tout le monde est à jour !</div>
+                  <div style={{color:M}}>Aucun créateur expiré ou en fin d'essai pour l'instant</div>
+                </div>
+              )}
+
+              {/* Template de message */}
+              <div style={{marginTop:20,background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:14,padding:"18px 20px"}}>
+                <div style={{fontWeight:800,marginBottom:10,fontSize:14}}>📝 Template du message envoyé</div>
+                <div style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"14px 16px",fontSize:12,color:M,lineHeight:1.8,fontFamily:"monospace"}}>
+                  Salut [Prénom] 👋<br/>
+                  <br/>
+                  Ton essai gratuit Belive Academy est terminé.<br/>
+                  Pour continuer : coach IA, partenariats, classement, templates...<br/>
+                  <br/>
+                  🚀 <strong style={{color:"white"}}>Seulement 14,99€/mois</strong><br/>
+                  → [Lien Stripe personnalisé]<br/>
+                  <br/>
+                  Ethan — Belive Academy
+                </div>
+              </div>
             </div>
           );
         })()}
