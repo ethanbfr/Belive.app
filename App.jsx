@@ -47,6 +47,15 @@ const db = {
   addPartner:     (data)          => supabase("POST",   "partners", data),
   updatePartner:  (id, data)      => supabase("PATCH",  "partners", data, `id=eq.${id}`),
   deletePartner:  (id)            => supabase("DELETE", "partners", null, `id=eq.${id}`),
+  // Communauté posts
+  getPosts:       ()              => supabase("GET",    "community_posts", null, "order=created_at.desc&limit=100"),
+  addPost:        (data)          => supabase("POST",   "community_posts", data),
+  deletePost:     (id)            => supabase("DELETE", "community_posts", null, `id=eq.${id}`),
+  likePost:       (id, likes)     => supabase("PATCH",  "community_posts", {likes}, `id=eq.${id}`),
+  // Tchat live
+  getChat:        ()              => supabase("GET",    "chat_messages",   null, "order=created_at.asc&limit=100"),
+  addChat:        (data)          => supabase("POST",   "chat_messages",   data),
+  deleteChat:     (id)            => supabase("DELETE", "chat_messages",   null, `id=eq.${id}`),
 };
 
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
@@ -432,7 +441,10 @@ export default function App(){
   const [ms,setMs]=useState(()=>JSON.parse(localStorage.getItem("ba6_ms")||'{"twitch":0,"youtube":0,"tiktok":0}'));
   const [schedule,setSchedule]=useState(()=>JSON.parse(localStorage.getItem("ba6_sc")||"[]"));
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
-  const [posts,setPosts]=useState(IPOSTS);
+  const [posts,setPosts]=useState(()=>JSON.parse(localStorage.getItem("ba6_posts")||"[]"));
+  const [chatMessages,setChatMessages]=useState([]);
+  const [chatInput,setChatInput]=useState("");
+  const [commTab,setCommTab]=useState("posts"); // 'posts' | 'tchat'
   const [parrainages,setParrainages]=useState([]);
   const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
@@ -918,6 +930,56 @@ const STRIPE_URLS = {
       }).catch(()=>{});
     }
   },[role]);
+
+  // Charger posts communauté depuis Supabase
+  useEffect(()=>{
+    if(!user) return;
+    const loadPosts=async()=>{
+      try{
+        const data=await db.getPosts();
+        if(data&&data.length>0){
+          const mapped=data.map(p=>({
+            id:p.id,
+            user:p.user_name,
+            av:p.user_av||p.user_name?.charAt(0)||"?",
+            time:new Date(p.created_at).toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),
+            content:p.content,
+            likes:p.likes||0,
+            liked:false,
+            replies:p.replies?JSON.parse(p.replies):[],
+            showReplies:false,
+            replyInput:"",
+            category:p.category||"conseil",
+            user_email:p.user_email,
+          }));
+          setPosts(mapped);
+          localStorage.setItem("ba6_posts",JSON.stringify(mapped));
+        }
+      }catch(e){console.log("Posts load failed");}
+    };
+    loadPosts();
+  },[user]);
+
+  // Polling tchat toutes les 5 secondes
+  useEffect(()=>{
+    if(!user) return;
+    const loadChat=async()=>{
+      try{
+        const data=await db.getChat();
+        if(data) setChatMessages(data.map(m=>({
+          id:m.id,
+          user:m.user_name,
+          av:m.user_av||m.user_name?.charAt(0)||"?",
+          email:m.user_email,
+          text:m.text,
+          time:new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
+        })));
+      }catch(e){}
+    };
+    loadChat();
+    const interval=setInterval(loadChat,5000);
+    return()=>clearInterval(interval);
+  },[user]);
   const totalH=streams.reduce((s,r)=>s+r.duration,0);
   const avgV=streams.length?Math.round(streams.reduce((s,r)=>s+r.viewers,0)/streams.length):0;
   const maxV=streams.length?Math.max(...streams.map(s=>s.viewers)):0;
@@ -3337,111 +3399,237 @@ const STRIPE_URLS = {
             const ms=!commSearch||p.content?.toLowerCase().includes(commSearch.toLowerCase())||p.user?.toLowerCase().includes(commSearch.toLowerCase());
             return mc&&ms;
           });
+
+          async function publishPost(){
+            if(!newPost.trim())return;
+            const banned=["agence","recrutement","rejoins nous","whatsapp","telegram","http","www",".com",".fr","€","euro","gratuit","offre","deal"];
+            const low=newPost.toLowerCase();
+            if(banned.find(w=>low.includes(w))){alert("⚠️ Message non autorisé.");return;}
+            const p={
+              user_name:user.name,
+              user_av:user.av||(user.name||"?").charAt(0),
+              user_email:user.email,
+              content:newPost,
+              category:commCat,
+              likes:0,
+              replies:JSON.stringify([]),
+              created_at:new Date().toISOString(),
+            };
+            try{
+              const res=await db.addPost(p);
+              const newId=res?.[0]?.id||Date.now();
+              const local={id:newId,...p,user:user.name,av:p.user_av,time:"À l'instant",liked:false,replies:[],showReplies:false,replyInput:""};
+              const updated=[local,...posts];
+              setPosts(updated);
+              localStorage.setItem("ba6_posts",JSON.stringify(updated));
+              setNewPost("");
+            }catch(e){alert("❌ Erreur publication. Réessaie.");}
+          }
+
+          async function deletePost(p){
+            if(!confirm("Supprimer ce message ?"))return;
+            try{
+              await db.deletePost(p.id);
+              const updated=posts.filter(x=>x.id!==p.id);
+              setPosts(updated);
+              localStorage.setItem("ba6_posts",JSON.stringify(updated));
+            }catch(e){
+              const updated=posts.filter(x=>x.id!==p.id);
+              setPosts(updated);
+              localStorage.setItem("ba6_posts",JSON.stringify(updated));
+            }
+          }
+
+          async function sendChat(){
+            if(!chatInput.trim())return;
+            const msg={
+              user_name:user.name,
+              user_av:user.av||(user.name||"?").charAt(0),
+              user_email:user.email,
+              text:chatInput,
+              created_at:new Date().toISOString(),
+            };
+            setChatInput("");
+            try{
+              await db.addChat(msg);
+            }catch(e){}
+          }
+
+          async function deleteChatMsg(m){
+            try{
+              await db.deleteChat(m.id);
+              setChatMessages(prev=>prev.filter(x=>x.id!==m.id));
+            }catch(e){setChatMessages(prev=>prev.filter(x=>x.id!==m.id));}
+          }
+
           return(
             <div>
-              <div style={{marginBottom:20}}>
+              <div style={{marginBottom:16}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>COMMUNAUTÉ</div>
                 <div style={{fontSize:13,color:M,marginTop:2}}>Échange avec les créateurs Belive</div>
               </div>
 
-              {/* Composer */}
-              <Card style={{marginBottom:18}}>
-                <div style={{display:"flex",gap:12,marginBottom:12}}>
-                  <Av name={user.name} size={36}/>
-                  <textarea value={newPost} onChange={e=>setNewPost(e.target.value)} placeholder="Partage un conseil, demande un raid, célèbre une victoire..." style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:12,padding:"11px 14px",color:"white",fontSize:13,outline:"none",resize:"none",minHeight:80,lineHeight:1.6,fontFamily:"'Manrope',sans-serif"}}/>
-                </div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                    {CATS.filter(c=>c.id!=="all").map(c=>(
-                      <button key={c.id} onClick={()=>setCommCat(c.id)} style={{background:commCat===c.id?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.04)",border:`1px solid ${commCat===c.id?"rgba(212,16,63,0.4)":B}`,borderRadius:100,padding:"5px 12px",color:commCat===c.id?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                        {c.icon} {c.l}
-                      </button>
-                    ))}
-                  </div>
-                  <Btn sz="sm" onClick={()=>{
-                    if(!newPost.trim())return;
-                    const banned=["agence","recrutement","rejoins nous","contact","whatsapp","telegram","discord","instagram","dm","mp","@","http","www",".com",".fr","euro","€","gratuit","offre","deal","proposition"];
-                    const low=newPost.toLowerCase();
-                    const found=banned.find(w=>low.includes(w));
-                    if(found){alert(`⚠️ Message non autorisé — ce contenu n'est pas permis dans la communauté Belive Academy.`);return;}
-                    setPosts(p=>[{id:Date.now(),user:user.name,av:(user.av||(user.name||"?").charAt(0)),time:"À l'instant",content:newPost,likes:0,liked:false,replies:[],showReplies:false,replyInput:"",category:commCat},...p]);
-                    setNewPost("");
-                  }}>Publier</Btn>
-                </div>
-              </Card>
-
-              {/* Filtres */}
-              <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-                <input value={commSearch} onChange={e=>setCommSearch(e.target.value)} placeholder="🔍 Rechercher..." style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"8px 14px",color:"white",fontSize:12,outline:"none",width:160,fontFamily:"'Manrope',sans-serif"}}/>
-                {CATS.map(c=>(
-                  <button key={c.id} onClick={()=>setCommFilter(c.id)} style={{background:commFilter===c.id?"rgba(212,16,63,0.12)":"transparent",border:`1px solid ${commFilter===c.id?"rgba(212,16,63,0.3)":B}`,borderRadius:100,padding:"5px 12px",color:commFilter===c.id?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                    {c.icon} {c.l}
+              {/* Tabs */}
+              <div style={{display:"flex",gap:8,marginBottom:18,borderBottom:`1px solid ${B}`,paddingBottom:12}}>
+                {[{id:"posts",icon:"📝",l:"Posts"},{id:"tchat",icon:"💬",l:"Tchat Live"}].map(t=>(
+                  <button key={t.id} onClick={()=>setCommTab(t.id)} style={{background:commTab===t.id?"rgba(212,16,63,0.12)":"transparent",border:`1px solid ${commTab===t.id?"rgba(212,16,63,0.35)":B}`,borderRadius:10,padding:"8px 18px",color:commTab===t.id?R:M,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                    {t.icon} {t.l}
+                    {t.id==="tchat"&&chatMessages.length>0&&<span style={{background:R,color:"white",borderRadius:100,fontSize:9,fontWeight:800,padding:"1px 6px"}}>{chatMessages.length}</span>}
                   </button>
                 ))}
               </div>
 
-              {/* Posts */}
-              {filtered.length===0?(
-                <Card style={{textAlign:"center",padding:"40px 20px"}}>
-                  <div style={{fontSize:36,marginBottom:10}}>🔍</div>
-                  <div style={{fontWeight:800,marginBottom:6}}>Aucun post trouvé</div>
-                  <div style={{color:M,fontSize:13}}>Sois le premier à poster ici !</div>
+              {/* ── POSTS ── */}
+              {commTab==="posts"&&(<>
+                <Card style={{marginBottom:18}}>
+                  <div style={{display:"flex",gap:12,marginBottom:12}}>
+                    <Av name={user.name} size={36}/>
+                    <textarea value={newPost} onChange={e=>setNewPost(e.target.value)} placeholder="Partage un conseil, demande un raid, célèbre une victoire..." style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:12,padding:"11px 14px",color:"white",fontSize:13,outline:"none",resize:"none",minHeight:80,lineHeight:1.6,fontFamily:"'Manrope',sans-serif"}}/>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {CATS.filter(c=>c.id!=="all").map(c=>(
+                        <button key={c.id} onClick={()=>setCommCat(c.id)} style={{background:commCat===c.id?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.04)",border:`1px solid ${commCat===c.id?"rgba(212,16,63,0.4)":B}`,borderRadius:100,padding:"5px 12px",color:commCat===c.id?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          {c.icon} {c.l}
+                        </button>
+                      ))}
+                    </div>
+                    <Btn sz="sm" onClick={publishPost}>Publier</Btn>
+                  </div>
                 </Card>
-              ):filtered.map((p,i)=>{
-                const catIcon={all:"🌐",raid:"⚔️",conseil:"💡",milestone:"🏆",question:"❓",collab:"🤝"}[p.category]||"💬";
-                const catLabel={raid:"Raid",conseil:"Conseil",milestone:"Succès",question:"Question",collab:"Collab"}[p.category]||"";
-                return(
-                  <Card key={p.id||i} style={{marginBottom:12}}>
-                    <div style={{display:"flex",gap:12,marginBottom:12}}>
-                      <Av name={p.user} size={36}/>
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                          <div style={{fontWeight:700,fontSize:14}}>{p.user}</div>
-                          {catLabel&&<span style={{background:"rgba(255,255,255,0.06)",borderRadius:100,padding:"2px 8px",fontSize:10,color:M}}>{catIcon} {catLabel}</span>}
+
+                <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+                  <input value={commSearch} onChange={e=>setCommSearch(e.target.value)} placeholder="🔍 Rechercher..." style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"8px 14px",color:"white",fontSize:12,outline:"none",width:160,fontFamily:"'Manrope',sans-serif"}}/>
+                  {CATS.map(c=>(
+                    <button key={c.id} onClick={()=>setCommFilter(c.id)} style={{background:commFilter===c.id?"rgba(212,16,63,0.12)":"transparent",border:`1px solid ${commFilter===c.id?"rgba(212,16,63,0.3)":B}`,borderRadius:100,padding:"5px 12px",color:commFilter===c.id?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                      {c.icon} {c.l}
+                    </button>
+                  ))}
+                </div>
+
+                {filtered.length===0?(
+                  <Card style={{textAlign:"center",padding:"40px 20px"}}>
+                    <div style={{fontSize:36,marginBottom:10}}>🔍</div>
+                    <div style={{fontWeight:800,marginBottom:6}}>Aucun post</div>
+                    <div style={{color:M,fontSize:13}}>Sois le premier à poster !</div>
+                  </Card>
+                ):filtered.map((p,i)=>{
+                  const catIcon={raid:"⚔️",conseil:"💡",milestone:"🏆",question:"❓",collab:"🤝"}[p.category]||"💬";
+                  const catLabel={raid:"Raid",conseil:"Conseil",milestone:"Succès",question:"Question",collab:"Collab"}[p.category]||"";
+                  const canDelete=role==="admin"||p.user_email===user.email||p.user===user.name;
+                  return(
+                    <Card key={p.id||i} style={{marginBottom:12}}>
+                      <div style={{display:"flex",gap:12,marginBottom:12}}>
+                        <Av name={p.user} size={36}/>
+                        <div style={{flex:1}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                            <div style={{fontWeight:700,fontSize:14}}>{p.user}</div>
+                            {catLabel&&<span style={{background:"rgba(255,255,255,0.06)",borderRadius:100,padding:"2px 8px",fontSize:10,color:M}}>{catIcon} {catLabel}</span>}
+                            {role==="admin"&&<Pill color="red" xs>admin</Pill>}
+                          </div>
+                          <div style={{fontSize:11,color:M}}>{p.time}</div>
                         </div>
-                        <div style={{fontSize:11,color:M}}>{p.time}</div>
+                        {canDelete&&(
+                          <button onClick={()=>deletePost(p)} style={{background:"none",border:"none",color:"rgba(212,16,63,0.5)",cursor:"pointer",fontSize:16,padding:"0 4px",alignSelf:"flex-start"}} title="Supprimer">🗑️</button>
+                        )}
                       </div>
-                    </div>
-                    <div style={{fontSize:14,color:"rgba(255,255,255,0.82)",lineHeight:1.65,marginBottom:14}}>{p.content}</div>
-                    <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-                      <button onClick={()=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,likes:(x.liked?x.likes-1:x.likes+1),liked:!x.liked}))} style={{background:p.liked?"rgba(212,16,63,0.1)":"none",border:`1px solid ${p.liked?"rgba(212,16,63,0.3)":B}`,borderRadius:8,padding:"6px 14px",color:p.liked?R:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                        {p.liked?"❤️":"🤍"} {p.likes}
-                      </button>
-                      <button onClick={()=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,showReplies:!x.showReplies}))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"6px 14px",color:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                        💬 {(p.replies||[]).length}
-                      </button>
-                      {p.category==="raid"&&(
-                        <button style={{background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"6px 14px",color:R,fontSize:12,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>⚔️ Je participe</button>
-                      )}
-                    </div>
-                    {p.showReplies&&(
-                      <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${B}`}}>
-                        {(p.replies||[]).map((r,ri)=>(
-                          <div key={ri} style={{display:"flex",gap:10,marginBottom:10}}>
-                            <div style={{width:28,height:28,background:"rgba(212,16,63,0.2)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(r.av||r.user.charAt(0)).toUpperCase()}</div>
-                            <div style={{flex:1,background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"8px 12px"}}>
-                              <div style={{display:"flex",gap:8,marginBottom:4}}>
-                                <span style={{fontWeight:700,fontSize:12}}>{r.user}</span>
-                                <span style={{fontSize:11,color:M}}>{r.time}</span>
+                      <div style={{fontSize:14,color:"rgba(255,255,255,0.82)",lineHeight:1.65,marginBottom:14}}>{p.content}</div>
+                      <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+                        <button onClick={()=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,likes:(x.liked?x.likes-1:x.likes+1),liked:!x.liked}))} style={{background:p.liked?"rgba(212,16,63,0.1)":"none",border:`1px solid ${p.liked?"rgba(212,16,63,0.3)":B}`,borderRadius:8,padding:"6px 14px",color:p.liked?R:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                          {p.liked?"❤️":"🤍"} {p.likes}
+                        </button>
+                        <button onClick={()=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,showReplies:!x.showReplies}))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"6px 14px",color:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                          💬 {(p.replies||[]).length}
+                        </button>
+                        {p.category==="raid"&&(
+                          <button style={{background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"6px 14px",color:R,fontSize:12,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>⚔️ Je participe</button>
+                        )}
+                      </div>
+                      {p.showReplies&&(
+                        <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${B}`}}>
+                          {(p.replies||[]).map((r,ri)=>(
+                            <div key={ri} style={{display:"flex",gap:10,marginBottom:10}}>
+                              <div style={{width:28,height:28,background:"rgba(212,16,63,0.2)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(r.av||r.user?.charAt(0)||"?").toUpperCase()}</div>
+                              <div style={{flex:1,background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"8px 12px"}}>
+                                <div style={{display:"flex",gap:8,marginBottom:4}}>
+                                  <span style={{fontWeight:700,fontSize:12}}>{r.user}</span>
+                                  <span style={{fontSize:11,color:M}}>{r.time}</span>
+                                </div>
+                                <div style={{fontSize:13,color:"rgba(255,255,255,0.75)"}}>{r.text}</div>
                               </div>
-                              <div style={{fontSize:13,color:"rgba(255,255,255,0.75)"}}>{r.text}</div>
+                            </div>
+                          ))}
+                          <div style={{display:"flex",gap:10,marginTop:10}}>
+                            <div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(user.av||(user.name||"?").charAt(0)).toUpperCase()}</div>
+                            <input value={p.replyInput||""} onChange={e=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replyInput:e.target.value}))}
+                              onKeyDown={e=>{if(e.key==="Enter"&&p.replyInput?.trim()){
+                                setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replies:[...(x.replies||[]),{user:user.name,av:(user.av||(user.name||"?").charAt(0)),text:x.replyInput,time:"À l'instant"}],replyInput:"",showReplies:true}));
+                              }}}
+                              placeholder="Ta réponse... (Entrée pour envoyer)" style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </>)}
+
+              {/* ── TCHAT LIVE ── */}
+              {commTab==="tchat"&&(
+                <div>
+                  <div style={{background:"rgba(34,197,94,0.06)",border:`1px solid rgba(34,197,94,0.2)`,borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:8,height:8,background:G,borderRadius:"50%"}}/>
+                    <div style={{fontSize:12,color:G,fontWeight:700}}>Tchat en direct — rafraîchi toutes les 5 secondes</div>
+                  </div>
+
+                  {/* Messages */}
+                  <div style={{background:C,border:`1px solid ${B}`,borderRadius:14,padding:14,minHeight:400,maxHeight:500,overflowY:"auto",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+                    {chatMessages.length===0?(
+                      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8,color:M}}>
+                        <div style={{fontSize:36}}>💬</div>
+                        <div style={{fontWeight:700}}>Personne n'a encore écrit</div>
+                        <div style={{fontSize:12}}>Sois le premier à dire bonjour !</div>
+                      </div>
+                    ):chatMessages.map((m,i)=>{
+                      const isMe=m.email===user.email||m.user===user.name;
+                      const canDel=role==="admin"||isMe;
+                      return(
+                        <div key={m.id||i} style={{display:"flex",gap:8,alignItems:"flex-start",flexDirection:isMe?"row-reverse":"row"}}>
+                          <div style={{width:32,height:32,background:isMe?"rgba(212,16,63,0.2)":"rgba(255,255,255,0.08)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,flexShrink:0}}>
+                            {(m.av||m.user?.charAt(0)||"?").toUpperCase()}
+                          </div>
+                          <div style={{maxWidth:"70%"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}>
+                              <span style={{fontSize:11,fontWeight:700,color:isMe?R:"white"}}>{isMe?"Toi":m.user}</span>
+                              <span style={{fontSize:10,color:M}}>{m.time}</span>
+                              {canDel&&<button onClick={()=>deleteChatMsg(m)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.2)",cursor:"pointer",fontSize:11,padding:0}}>✕</button>}
+                            </div>
+                            <div style={{background:isMe?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.06)",border:`1px solid ${isMe?"rgba(212,16,63,0.25)":B}`,borderRadius:isMe?"14px 4px 14px 14px":"4px 14px 14px 14px",padding:"8px 12px",fontSize:13,color:"white",lineHeight:1.5}}>
+                              {m.text}
                             </div>
                           </div>
-                        ))}
-                        <div style={{display:"flex",gap:10,marginTop:10}}>
-                          <div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(user.av||(user.name||"?").charAt(0)).toUpperCase()}</div>
-                          <input value={p.replyInput||""} onChange={e=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replyInput:e.target.value}))}
-                            onKeyDown={e=>{if(e.key==="Enter"&&p.replyInput?.trim()){
-                              setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replies:[...(x.replies||[]),{user:user.name,av:(user.av||(user.name||"?").charAt(0)),text:x.replyInput,time:"À l'instant"}],replyInput:"",showReplies:true}));
-                              if(notifPrefs.messages){sendNotif("💬 Nouveau message",`${user.name} a répondu dans la communauté`,"msg");}
-                            }}}
-                            placeholder="Ta réponse... (Entrée pour envoyer)" style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
                         </div>
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
+                      );
+                    })}
+                  </div>
+
+                  {/* Input */}
+                  <div style={{display:"flex",gap:10}}>
+                    <input
+                      value={chatInput}
+                      onChange={e=>setChatInput(e.target.value)}
+                      onKeyDown={e=>e.key==="Enter"&&sendChat()}
+                      placeholder="Écris un message... (Entrée pour envoyer)"
+                      style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 14px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}
+                    />
+                    <Btn onClick={sendChat} icon="➤">Envoyer</Btn>
+                  </div>
+
+                  <div style={{marginTop:10,fontSize:11,color:M,textAlign:"center"}}>
+                    💡 Utilise le tchat pour trouver des coéquipiers, organiser des raids, des co-streams...
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
