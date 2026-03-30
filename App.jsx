@@ -390,7 +390,7 @@ export default function App(){
   const [authPass,setAuthPass]=useState("");
   const [authErr,setAuthErr]=useState("");
   const [isReg,setIsReg]=useState(false);
-  const [reg,setReg]=useState({name:"",email:"",pass:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",code:"",referralCode:""});
+  const [reg,setReg]=useState({name:"",email:"",pass:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",code:"",referralCode:"",username:""});
   const [regAge,setRegAge]=useState(false);
   const [regCGU,setRegCGU]=useState(false);
   const [showPass,setShowPass]=useState(false);
@@ -414,7 +414,7 @@ export default function App(){
     return [];
   });
   const [showUserNotifs,setShowUserNotifs]=useState(false);
-  const [notifPrefs,setNotifPrefs]=useState(()=>JSON.parse(localStorage.getItem("ba6_nprefs")||'{"planning":true,"messages":true,"partenariats":true,"classement":true}'));
+  const [notifPrefs,setNotifPrefs]=useState(()=>JSON.parse(localStorage.getItem("ba6_nprefs")||'{"planning":true,"messages":true,"partenariats":true,"classement":true,"collab":true,"tchat":true}'));
 
   const [createurs,setCreateurs]=useState(()=>{
     // Charger les créateurs depuis ba6_users (source principale)
@@ -931,7 +931,35 @@ const STRIPE_URLS = {
     }
   },[role]);
 
-  // Charger posts communauté depuis Supabase
+  // Notif collab match au chargement
+  useEffect(()=>{
+    if(!user||role==="admin") return;
+    if(!notifPrefs.collab) return;
+    // Vérifier si on a des matches
+    const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}"))
+      .map(([email,u])=>({email,...u}))
+      .filter(u=>u.email!==user.email&&u.role!=="admin"&&u.games);
+    if(!user.games) return;
+    const myGames=(user.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+    const matches=allUsers.filter(u=>{
+      const og=(u.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+      return myGames.some(g=>og.some(og=>og.includes(g)||g.includes(og)));
+    });
+    if(matches.length>0){
+      const lastNotif=localStorage.getItem("ba6_lastMatchNotif");
+      const now=Date.now();
+      // Notif max 1 fois par jour
+      if(!lastNotif||now-parseInt(lastNotif)>86400000){
+        const notif={msg:`🤝 ${matches.length} créateur${matches.length>1?"s":"" } compatible${matches.length>1?"s":""} trouvé${matches.length>1?"s":""} cette semaine ! Va dans Collab Match pour les contacter 🎮`,time:new Date().toLocaleString("fr-FR"),read:false,type:"collab"};
+        setUserNotifs(prev=>{
+          const updated=[notif,...prev];
+          if(user?.email) localStorage.setItem("ba6_notifs_"+user.email,JSON.stringify(updated.slice(0,30)));
+          return updated.slice(0,30);
+        });
+        localStorage.setItem("ba6_lastMatchNotif",String(now));
+      }
+    }
+  },[user,notifPrefs.collab]);
   useEffect(()=>{
     if(!user) return;
     const loadPosts=async()=>{
@@ -963,23 +991,44 @@ const STRIPE_URLS = {
   // Polling tchat toutes les 5 secondes
   useEffect(()=>{
     if(!user) return;
+    let lastCount=0;
     const loadChat=async()=>{
       try{
         const data=await db.getChat();
-        if(data) setChatMessages(data.map(m=>({
-          id:m.id,
-          user:m.user_name,
-          av:m.user_av||m.user_name?.charAt(0)||"?",
-          email:m.user_email,
-          text:m.text,
-          time:new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
-        })));
+        if(data){
+          const msgs=data.map(m=>({
+            id:m.id,
+            user:m.user_name,
+            av:m.user_av||m.user_name?.charAt(0)||"?",
+            email:m.user_email,
+            text:m.text,
+            time:new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
+          }));
+          // Notif si nouveau message qui me mentionne
+          if(lastCount>0&&msgs.length>lastCount&&notifPrefs.tchat){
+            const newMsgs=msgs.slice(0,msgs.length-lastCount);
+            newMsgs.forEach(m=>{
+              const mentioned=m.text?.toLowerCase().includes("@"+user.name.toLowerCase())||m.text?.toLowerCase().includes("@"+(user.twitch||"").toLowerCase());
+              if(mentioned&&m.email!==user.email){
+                const notif={msg:`💬 ${m.user} t'a mentionné dans le tchat : "${m.text.slice(0,50)}..."`,time:new Date().toLocaleString("fr-FR"),read:false,type:"tchat"};
+                setUserNotifs(prev=>{
+                  const updated=[notif,...prev];
+                  if(user?.email) localStorage.setItem("ba6_notifs_"+user.email,JSON.stringify(updated.slice(0,30)));
+                  return updated.slice(0,30);
+                });
+                sendNotif("💬 Mention dans le tchat",`${m.user} : ${m.text.slice(0,60)}`,"tchat");
+              }
+            });
+          }
+          lastCount=msgs.length;
+          setChatMessages(msgs);
+        }
       }catch(e){}
     };
     loadChat();
     const interval=setInterval(loadChat,5000);
     return()=>clearInterval(interval);
-  },[user]);
+  },[user,notifPrefs.tchat]);
   const totalH=streams.reduce((s,r)=>s+r.duration,0);
   const avgV=streams.length?Math.round(streams.reduce((s,r)=>s+r.viewers,0)/streams.length):0;
   const maxV=streams.length?Math.max(...streams.map(s=>s.viewers)):0;
@@ -1086,10 +1135,37 @@ const STRIPE_URLS = {
   }
 
   async function doReg(){
-    const{name,email,pass,phone,twitch,youtube,tiktok,instagram,code}=reg;
+    const{name,email,pass,phone,twitch,youtube,tiktok,instagram,code,username}=reg;
     if(!name||!email||!pass||!phone){alert("Nom, email, mot de passe et téléphone obligatoires.");return;}
+    if(!username||username.length<3){alert("❌ Choisis un nom d'utilisateur (minimum 3 caractères).");return;}
     if(!regAge){alert("⚠️ Tu dois confirmer avoir 18 ans ou plus.");return;}
     if(!regCGU){alert("⚠️ Tu dois accepter les CGU et la politique de confidentialité.");return;}
+
+    // Vérifier email unique
+    const usersExist=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+    if(usersExist[email]){alert("❌ Un compte existe déjà avec cet email.");return;}
+
+    // Vérifier nom unique
+    const nameTaken=Object.values(usersExist).some(u=>u.name?.toLowerCase().trim()===name.toLowerCase().trim());
+    if(nameTaken){alert(`❌ Le nom "${name}" est déjà utilisé.\n\nChoisis un nom différent.`);return;}
+
+    // Vérifier username unique
+    const usernameTaken=Object.values(usersExist).some(u=>u.username?.toLowerCase()===username.toLowerCase());
+    if(usernameTaken){alert(`❌ Le nom d'utilisateur "@${username}" est déjà pris.\n\nEssaie avec un point ou un chiffre : @${username}1`);return;}
+
+    // Vérifier aussi dans Supabase
+    try{
+      const supaUsers=await db.getUsers();
+      if(supaUsers){
+        if(supaUsers.find(u=>u.email===email)){alert("❌ Un compte existe déjà avec cet email.");return;}
+        if(supaUsers.find(u=>u.name?.toLowerCase().trim()===name.toLowerCase().trim())){
+          alert(`❌ Le nom "${name}" est déjà utilisé.\n\nChoisis un nom différent.`);return;
+        }
+        if(supaUsers.find(u=>u.username?.toLowerCase()===username.toLowerCase())){
+          alert(`❌ Le nom d'utilisateur "@${username}" est déjà pris.`);return;
+        }
+      }
+    }catch(e){}
     
     let r2="createur";
     let plan="free";
@@ -1150,14 +1226,13 @@ const STRIPE_URLS = {
     const trialEnd=new Date(Date.now()+trialDaysFromCode*24*60*60*1000).toISOString();
     // Génère un code parrain unique
     const refCode=generateReferralCode();
-    const nu={name,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString(),referral_code:refCode,referred_by: referredBy, discount_applied: discountApplied};
+    const nu={name,username,role:r2,password:pass,av:name.charAt(0).toUpperCase(),plan,offert:plan==="pro"?true:false,phone,twitch,youtube,tiktok,instagram,trialStart:new Date().toISOString(),trialEnd,ageVerified:true,cguAccepted:new Date().toISOString(),referral_code:refCode,referred_by:referredBy,discount_applied:discountApplied};
     const usersStorage=JSON.parse(localStorage.getItem("ba6_users")||"{}");
     usersStorage[email]=nu;
     localStorage.setItem("ba6_users",JSON.stringify(usersStorage));
     // Sauvegarde dans Supabase
     try{
-      // Uniquement les colonnes qui existent dans Supabase
-      const result = await db.createUser({email,name,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,trial_start:new Date().toISOString(),referral_code:refCode});
+      const result = await db.createUser({email,name,username,role:r2,password:pass,plan,phone,twitch,youtube,tiktok,instagram,trial_start:new Date().toISOString(),referral_code:refCode});
       if(!result) console.warn("Supabase createUser a retourné null");
       else console.log("✅ Utilisateur sauvegardé dans Supabase:", email);
     }catch(e){ console.warn("User save to Supabase failed:", e); }
@@ -1199,8 +1274,8 @@ const STRIPE_URLS = {
     }
     
     // Connecter l'utilisateur
-    setUser({email,role:r2,name,phone,twitch,youtube,tiktok,instagram,plan,offert:isOffert,trialStart:new Date().toISOString(),trialEnd,av:name.charAt(0).toUpperCase(),referral_code:refCode});
-    localStorage.setItem("ba6_session",JSON.stringify({email,role:r2,name,phone,twitch,youtube,tiktok,instagram,plan,offert:isOffert,trialStart:new Date().toISOString(),trialEnd,av:name.charAt(0).toUpperCase(),referral_code:refCode}));
+    setUser({email,role:r2,name,username,phone,twitch,youtube,tiktok,instagram,plan,offert:isOffert,trialStart:new Date().toISOString(),trialEnd,av:name.charAt(0).toUpperCase(),referral_code:refCode});
+    localStorage.setItem("ba6_session",JSON.stringify({email,role:r2,name,username,phone,twitch,youtube,tiktok,instagram,plan,offert:isOffert,trialStart:new Date().toISOString(),trialEnd,av:name.charAt(0).toUpperCase(),referral_code:refCode}));
     
     // Réinitialiser le formulaire
     setReg({name:"",email:"",pass:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:"",code:"",referralCode:""});
@@ -1798,6 +1873,7 @@ const STRIPE_URLS = {
     {id:"planning",     icon:"◷", label:"Planning",      roles:["admin","createur"]},
     {id:"partenariats", icon:"◉", label:"Partenariats",  roles:["admin","createur"], badge:"NEW"},
     {id:"communaute",   icon:"◎", label:"Communauté",    roles:["admin","createur"]},
+    {id:"collab",       icon:"🤝", label:"Collab Match",  roles:["admin","createur"], badge:"NEW"},
     {id:"classement",   icon:"◆", label:"Classement",    roles:["admin","createur"]},
     {id:"templates",    icon:"🎨",label:"Templates",     roles:["createur"]},
     {id:"parrainage",   icon:"🎁",label:"Parrainage",    roles:["createur"]},
@@ -1956,6 +2032,40 @@ const STRIPE_URLS = {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
               <Field label="Prénom *" value={reg.name.split(" ")[0]||""} onChange={e=>setReg({...reg,name:e.target.value+" "+(reg.name.split(" ")[1]||"")})} placeholder="Prénom"/>
               <Field label="Nom *" value={reg.name.split(" ")[1]||""} onChange={e=>setReg({...reg,name:(reg.name.split(" ")[0]||"")+" "+e.target.value})} placeholder="Nom"/>
+            </div>
+            {/* Username */}
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>Nom d'utilisateur * <span style={{color:M,fontWeight:400,textTransform:"none",letterSpacing:0}}>(utilisé pour les @mentions)</span></div>
+              <div style={{position:"relative"}}>
+                <div style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:M,fontSize:13,pointerEvents:"none"}}>@</div>
+                <input
+                  value={reg.username}
+                  onChange={e=>{
+                    // Autorise uniquement lettres, chiffres, points, underscores
+                    const val=e.target.value.replace(/[^a-zA-Z0-9._]/g,"").toLowerCase().slice(0,20);
+                    setReg({...reg,username:val});
+                  }}
+                  placeholder={reg.name?(reg.name.split(" ")[0]+"."+(reg.name.split(" ")[1]||"xx")).toLowerCase().replace(/\s/g,""):"prenom.nom_"}
+                  style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${reg.username.length>=3?"rgba(34,197,94,0.4)":B}`,borderRadius:10,padding:"11px 14px 11px 28px",color:"white",fontSize:13,outline:"none"}}
+                />
+                {reg.username.length>=3&&<div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:G,fontSize:12}}>✓</div>}
+              </div>
+              {/* Suggestion auto */}
+              {reg.name&&!reg.username&&(
+                <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <div style={{fontSize:11,color:M}}>Suggestions :</div>
+                  {[
+                    (reg.name.split(" ")[0]+"."+(reg.name.split(" ")[1]||"")).toLowerCase().replace(/\s/g,"").replace(/\.$/,""),
+                    (reg.name.split(" ")[0]+"_"+(reg.name.split(" ")[1]||"")).toLowerCase().replace(/\s/g,"").replace(/_$/,""),
+                    (reg.name.replace(/\s/g,"")).toLowerCase(),
+                  ].filter(s=>s.length>2).map((s,i)=>(
+                    <button key={i} onClick={()=>setReg({...reg,username:s.slice(0,20)})} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${B}`,borderRadius:6,padding:"2px 8px",color:M,fontSize:11,cursor:"pointer"}}>
+                      @{s.slice(0,20)}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{fontSize:10,color:M,marginTop:4}}>Lettres, chiffres, points et _ uniquement • Max 20 caractères</div>
             </div>
             <Field label="Email *" type="email" value={reg.email} onChange={e=>setReg({...reg,email:e.target.value})} placeholder="ton@email.com"/>
             <div style={{marginBottom:14}}>
@@ -2227,28 +2337,73 @@ const STRIPE_URLS = {
       </div>
       {/* Panel notifications créateur */}
       {showUserNotifs&&role!=="admin"&&(
-        <div style={{position:"fixed",top:54,right:8,width:320,background:C2,border:`1px solid ${B}`,borderRadius:16,zIndex:300,maxHeight:400,overflowY:"auto",boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
-          <div style={{padding:"14px 16px",borderBottom:`1px solid ${B}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{position:"fixed",top:54,right:8,width:340,background:C2,border:`1px solid ${B}`,borderRadius:16,zIndex:300,maxHeight:480,display:"flex",flexDirection:"column",boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+          <div style={{padding:"14px 16px",borderBottom:`1px solid ${B}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
             <div style={{fontWeight:800,fontSize:14}}>🔔 Notifications</div>
-            {userNotifs.filter(n=>!n.read).length>0&&(
-              <button onClick={()=>{
-                const updated=userNotifs.map(n=>({...n,read:true}));
-                setUserNotifs(updated);
-                if(user?.email) localStorage.setItem("ba6_notifs_"+user.email,JSON.stringify(updated));
-              }} style={{background:"none",border:"none",color:M,fontSize:11,cursor:"pointer"}}>Tout lire</button>
-            )}
-          </div>
-          {userNotifs.length===0?(
-            <div style={{padding:20,textAlign:"center",color:M,fontSize:13}}>Aucune notification</div>
-          ):userNotifs.map((n,i)=>(
-            <div key={i} style={{padding:"12px 16px",borderBottom:`1px solid ${B}`,background:n.read?"transparent":"rgba(212,16,63,0.05)"}}>
-              <div style={{fontSize:12,color:n.read?M:"white",lineHeight:1.5}}>{n.msg}</div>
-              <div style={{fontSize:10,color:M,marginTop:4}}>{n.time}</div>
-              {n.type==="relance"&&(
-                <button onClick={()=>{setShowUserNotifs(false);setPage("profil");}} style={{marginTop:8,background:R,color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>S'abonner maintenant →</button>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              {userNotifs.filter(n=>!n.read).length>0&&(
+                <button onClick={()=>{
+                  const updated=userNotifs.map(n=>({...n,read:true}));
+                  setUserNotifs(updated);
+                  if(user?.email) localStorage.setItem("ba6_notifs_"+user.email,JSON.stringify(updated));
+                }} style={{background:"none",border:"none",color:M,fontSize:11,cursor:"pointer"}}>Tout lire</button>
               )}
+              <button onClick={()=>{
+                setUserNotifs([]);
+                if(user?.email) localStorage.setItem("ba6_notifs_"+user.email,JSON.stringify([]));
+              }} style={{background:"none",border:"none",color:"rgba(212,16,63,0.6)",fontSize:11,cursor:"pointer"}}>Tout supprimer</button>
             </div>
-          ))}
+          </div>
+
+          {/* Préférences notifs */}
+          <div style={{padding:"10px 16px",borderBottom:`1px solid ${B}`,flexShrink:0}}>
+            <div style={{fontSize:10,fontWeight:700,color:M,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Activer / désactiver</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {[
+                {k:"collab",l:"🤝 Collab"},
+                {k:"tchat",l:"💬 Mentions"},
+                {k:"messages",l:"📝 Posts"},
+                {k:"partenariats",l:"🤝 Deals"},
+                {k:"planning",l:"📅 Planning"},
+              ].map(n=>(
+                <button key={n.k} onClick={()=>{
+                  const np={...notifPrefs,[n.k]:!notifPrefs[n.k]};
+                  setNotifPrefs(np);
+                  localStorage.setItem("ba6_nprefs",JSON.stringify(np));
+                }} style={{background:notifPrefs[n.k]?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${notifPrefs[n.k]?"rgba(212,16,63,0.3)":B}`,borderRadius:100,padding:"4px 10px",color:notifPrefs[n.k]?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  {n.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Liste notifs */}
+          <div style={{overflowY:"auto",flex:1}}>
+            {userNotifs.length===0?(
+              <div style={{padding:20,textAlign:"center",color:M,fontSize:13}}>Aucune notification</div>
+            ):userNotifs.map((n,i)=>(
+              <div key={i} style={{padding:"12px 16px",borderBottom:`1px solid ${B}`,background:n.read?"transparent":"rgba(212,16,63,0.05)",display:"flex",gap:8,alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,color:n.read?M:"white",lineHeight:1.5}}>{n.msg}</div>
+                  <div style={{fontSize:10,color:M,marginTop:4}}>{n.time}</div>
+                  {n.type==="relance"&&(
+                    <button onClick={()=>{setShowUserNotifs(false);setPage("profil");}} style={{marginTop:8,background:R,color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>S'abonner →</button>
+                  )}
+                  {n.type==="collab"&&(
+                    <button onClick={()=>{setShowUserNotifs(false);setPage("collab");}} style={{marginTop:8,background:"rgba(167,139,250,0.15)",color:PU,border:`1px solid rgba(167,139,250,0.3)`,borderRadius:8,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>Voir mes matches →</button>
+                  )}
+                  {n.type==="tchat"&&(
+                    <button onClick={()=>{setShowUserNotifs(false);setPage("communaute");setCommTab("tchat");}} style={{marginTop:8,background:"rgba(96,165,250,0.12)",color:BL,border:`1px solid rgba(96,165,250,0.25)`,borderRadius:8,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>Voir le tchat →</button>
+                  )}
+                </div>
+                <button onClick={()=>{
+                  const updated=userNotifs.filter((_,j)=>j!==i);
+                  setUserNotifs(updated);
+                  if(user?.email) localStorage.setItem("ba6_notifs_"+user.email,JSON.stringify(updated));
+                }} style={{background:"none",border:"none",color:"rgba(255,255,255,0.2)",cursor:"pointer",fontSize:14,padding:"0 2px",flexShrink:0}}>✕</button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -2341,6 +2496,21 @@ const STRIPE_URLS = {
               const revenuMensuel=revenuBelive+revenuPro;
               const potentielMax=revenuMensuel+(essai.length*14.99)+(expires.length*14.99);
 
+              // Calcul des matches collab
+              const withProfile=allUsers.filter(u=>u.games&&u.stream_days);
+              let totalMatches=0;
+              const matchPairs=[];
+              for(let i=0;i<withProfile.length;i++){
+                for(let j=i+1;j<withProfile.length;j++){
+                  const a=withProfile[i],b=withProfile[j];
+                  const ag=(a.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+                  const bg=(b.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+                  const common=ag.filter(g=>bg.some(bg=>bg.includes(g)||g.includes(bg)));
+                  if(common.length>0){totalMatches++;matchPairs.push({a:a.name,b:b.name,games:common,score:Math.min(100,common.length*30+20)});}
+                }
+              }
+              const topPairs=matchPairs.sort((x,y)=>y.score-x.score).slice(0,5);
+
               return(<>
                 {/* KPIs */}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
@@ -2348,7 +2518,7 @@ const STRIPE_URLS = {
                   <SC label="Revenu réel" value={`${revenuMensuel.toFixed(2)}€`} sub="ce mois" icon="💰" color="green"/>
                   <SC label="En essai" value={essai.length} sub={`${essai.length} gratuits`} icon="⏳" color="yellow"/>
                   <SC label="Expirés" value={expires.length} sub="à relancer" icon="🔒" color="red"/>
-                  <SC label="Gratuit à vie" value={gratuitVie.length} sub="offerts" icon="🎁" color="purple"/>
+                  <SC label="Matches collab" value={totalMatches} sub="paires actives" icon="🤝" color="purple"/>
                   <SC label="Contrats" value={contrats.length} sub="générés" icon="📋" color="blue"/>
                 </div>
 
@@ -2390,6 +2560,44 @@ const STRIPE_URLS = {
                     </div>
                   </div>
                 </Card>
+
+                {/* Matches Collab */}
+                {totalMatches>0&&(
+                  <Card style={{marginBottom:20,background:"rgba(167,139,250,0.04)",border:`1px solid rgba(167,139,250,0.2)`}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+                      <div>
+                        <div style={{fontSize:11,fontWeight:700,color:PU,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>🤝 Collab Match — Statistiques</div>
+                        <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:36,color:PU,lineHeight:1}}>{totalMatches} paires</div>
+                        <div style={{fontSize:12,color:M,marginTop:4}}>{withProfile.length} créateurs avec profil complet sur {allUsers.length}</div>
+                      </div>
+                      <div style={{background:"rgba(167,139,250,0.1)",border:`1px solid rgba(167,139,250,0.2)`,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
+                        <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:22,color:PU}}>{allUsers.length-withProfile.length}</div>
+                        <div style={{fontSize:11,color:M}}>profils incomplets</div>
+                        <div style={{fontSize:10,color:M,marginTop:2}}>→ matches potentiels manqués</div>
+                      </div>
+                    </div>
+                    {topPairs.length>0&&(
+                      <div>
+                        <div style={{fontSize:11,fontWeight:700,color:M,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>TOP MATCHES À METTRE EN AVANT</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                          {topPairs.map((p,i)=>(
+                            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"rgba(167,139,250,0.06)",borderRadius:10,border:`1px solid rgba(167,139,250,0.12)`}}>
+                              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:16,color:PU,minWidth:24}}>#{i+1}</div>
+                              <div style={{flex:1}}>
+                                <div style={{fontWeight:700,fontSize:13}}>{p.a} × {p.b}</div>
+                                <div style={{fontSize:11,color:M}}>🎮 {p.games.join(", ")}</div>
+                              </div>
+                              <div style={{background:"rgba(167,139,250,0.12)",color:PU,borderRadius:100,padding:"2px 10px",fontSize:11,fontWeight:700}}>{p.score}%</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{marginTop:12,fontSize:11,color:M,background:"rgba(255,255,255,0.03)",borderRadius:8,padding:"8px 12px"}}>
+                          💡 Partage ces matches sur tes réseaux — "2 créateurs Belive ont matché sur Valorant cette semaine 🔥"
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                )}
 
                 {/* Liste complète des inscrits */}
                 <Card style={{marginBottom:16}}>
@@ -3442,18 +3650,39 @@ const STRIPE_URLS = {
 
           async function sendChat(){
             if(!chatInput.trim())return;
+            const mentions=[];
+            const mentionRegex=/@(\w[\w.]*)/g;
+            let match;
+            while((match=mentionRegex.exec(chatInput))!==null) mentions.push(match[1].toLowerCase());
             const msg={
-              user_name:user.name,
+              user_name:user.username||user.name,
               user_av:user.av||(user.name||"?").charAt(0),
               user_email:user.email,
               text:chatInput,
+              mentions:JSON.stringify(mentions),
               created_at:new Date().toISOString(),
             };
             setChatInput("");
-            try{
-              await db.addChat(msg);
-            }catch(e){}
+            try{ await db.addChat(msg); }catch(e){}
           }
+
+          function renderChatText(text){
+            if(!text.includes("@")) return text;
+            const parts=text.split(/(@[\w.]+)/g);
+            return parts.map((p,i)=>{
+              if(p.startsWith("@")){
+                const mentioned=p.slice(1).toLowerCase();
+                const myUsername=(user.username||user.name).toLowerCase();
+                const isMe=myUsername===mentioned||myUsername.startsWith(mentioned);
+                return <span key={i} style={{background:isMe?"rgba(212,16,63,0.25)":"rgba(255,255,255,0.12)",color:isMe?R:"white",borderRadius:4,padding:"0 4px",fontWeight:700}}>{p}</span>;
+              }
+              return p;
+            });
+          }
+
+          const mentionSearch=chatInput.match(/@([\w.]*)$/)?.[1]||null;
+          const allChatUsers=[...new Set(chatMessages.map(m=>m.user))].filter(n=>n&&n!==(user.username||user.name));
+          const mentionSuggestions=mentionSearch!==null?allChatUsers.filter(n=>n.toLowerCase().startsWith(mentionSearch.toLowerCase())).slice(0,4):[];
 
           async function deleteChatMsg(m){
             try{
@@ -3591,8 +3820,10 @@ const STRIPE_URLS = {
                         <div style={{fontSize:12}}>Sois le premier à dire bonjour !</div>
                       </div>
                     ):chatMessages.map((m,i)=>{
-                      const isMe=m.email===user.email||m.user===user.name;
+                      const isMe=m.email===user.email||m.user===(user.username||user.name);
                       const canDel=role==="admin"||isMe;
+                      const myUsername=(user.username||user.name).toLowerCase();
+                      const isMentioned=m.text?.toLowerCase().includes("@"+myUsername);
                       return(
                         <div key={m.id||i} style={{display:"flex",gap:8,alignItems:"flex-start",flexDirection:isMe?"row-reverse":"row"}}>
                           <div style={{width:32,height:32,background:isMe?"rgba(212,16,63,0.2)":"rgba(255,255,255,0.08)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,flexShrink:0}}>
@@ -3604,8 +3835,9 @@ const STRIPE_URLS = {
                               <span style={{fontSize:10,color:M}}>{m.time}</span>
                               {canDel&&<button onClick={()=>deleteChatMsg(m)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.2)",cursor:"pointer",fontSize:11,padding:0}}>✕</button>}
                             </div>
-                            <div style={{background:isMe?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.06)",border:`1px solid ${isMe?"rgba(212,16,63,0.25)":B}`,borderRadius:isMe?"14px 4px 14px 14px":"4px 14px 14px 14px",padding:"8px 12px",fontSize:13,color:"white",lineHeight:1.5}}>
-                              {m.text}
+                            <div style={{background:isMentioned?"rgba(212,16,63,0.18)":isMe?"rgba(212,16,63,0.12)":"rgba(255,255,255,0.06)",border:`1px solid ${isMentioned?"rgba(212,16,63,0.5)":isMe?"rgba(212,16,63,0.25)":B}`,borderRadius:isMe?"14px 4px 14px 14px":"4px 14px 14px 14px",padding:"8px 12px",fontSize:13,color:"white",lineHeight:1.5}}>
+                              {renderChatText(m.text)}
+                              {isMentioned&&!isMe&&<div style={{fontSize:10,color:R,marginTop:4,fontWeight:700}}>📣 Tu es mentionné</div>}
                             </div>
                           </div>
                         </div>
@@ -3613,23 +3845,192 @@ const STRIPE_URLS = {
                     })}
                   </div>
 
+                  {/* Autocomplete @mention */}
+                  {mentionSuggestions.length>0&&(
+                    <div style={{background:C2,border:`1px solid ${B}`,borderRadius:10,marginBottom:8,overflow:"hidden"}}>
+                      {mentionSuggestions.map((n,i)=>(
+                        <div key={i} onClick={()=>setChatInput(chatInput.replace(/@\w*$/,"@"+n+" "))} style={{padding:"8px 14px",fontSize:13,cursor:"pointer",color:"white",display:"flex",alignItems:"center",gap:8,borderBottom:i<mentionSuggestions.length-1?`1px solid ${B}`:"none"}}>
+                          <div style={{width:24,height:24,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:R}}>{n.charAt(0).toUpperCase()}</div>
+                          <span>@{n}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {/* Input */}
                   <div style={{display:"flex",gap:10}}>
                     <input
                       value={chatInput}
                       onChange={e=>setChatInput(e.target.value)}
                       onKeyDown={e=>e.key==="Enter"&&sendChat()}
-                      placeholder="Écris un message... (Entrée pour envoyer)"
+                      placeholder="Écris un message... @nom pour mentionner"
                       style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"11px 14px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}
                     />
                     <Btn onClick={sendChat} icon="➤">Envoyer</Btn>
                   </div>
 
                   <div style={{marginTop:10,fontSize:11,color:M,textAlign:"center"}}>
-                    💡 Utilise le tchat pour trouver des coéquipiers, organiser des raids, des co-streams...
+                    💡 Tape <strong style={{color:"white"}}>@pseudo</strong> pour mentionner quelqu'un — il verra son message surligné
                   </div>
                 </div>
               )}
+            </div>
+          );
+        })()}
+
+        {/* COLLAB MATCH */}
+        {page==="collab"&&(()=>{
+          // Récupérer tous les créateurs avec leurs infos
+          const allUsers=(()=>{
+            const lsU=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+            return lsU.filter(u=>u.email!==user.email&&u.role!=="admin"&&(u.plan==="pro"||u.plan==="belive_creator"||(()=>{const ts=u.trial_start||u.trialStart;return ts&&Math.max(0,14-Math.floor((Date.now()-new Date(ts).getTime())/(1000*60*60*24)))>0;})()));
+          })();
+
+          // Calcul score de compatibilité
+          function calcScore(other){
+            let score=0;
+            // Jeux en commun
+            const myGames=(user.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+            const otherGames=(other.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+            const commonGames=myGames.filter(g=>otherGames.some(og=>og.includes(g)||g.includes(og)));
+            score+=commonGames.length*30;
+            // Horaires compatibles
+            const myDays=(user.stream_days||"").toLowerCase();
+            const otherDays=(other.stream_days||"").toLowerCase();
+            const days=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+            const commonDays=days.filter(d=>myDays.includes(d)&&otherDays.includes(d));
+            score+=commonDays.length*10;
+            // Heures similaires
+            if(user.stream_hours&&other.stream_hours&&user.stream_hours===other.stream_hours) score+=20;
+            // Niveau similaire (followers)
+            const myF=ms.twitch||0;
+            const otherF=other.twitch_followers||0;
+            if(myF>0&&otherF>0){
+              const ratio=Math.min(myF,otherF)/Math.max(myF,otherF);
+              score+=Math.round(ratio*20);
+            }
+            // Même plateforme
+            if(user.twitch&&other.twitch) score+=10;
+            return Math.min(100,score);
+          }
+
+          const scored=allUsers.map(u=>({...u,score:calcScore(u)})).sort((a,b)=>b.score-a.score);
+          const top=scored.slice(0,5);
+
+          return(
+            <div className="fade">
+              <div style={{marginBottom:20}}>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>COLLAB MATCH</div>
+                <div style={{fontSize:13,color:M}}>Créateurs compatibles avec toi cette semaine</div>
+              </div>
+
+              {/* Remplis ton profil si vide */}
+              {(!user.games||!user.stream_days)&&(
+                <div style={{background:"rgba(251,191,36,0.07)",border:`1px solid rgba(251,191,36,0.2)`,borderRadius:14,padding:"14px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{fontSize:24}}>⚠️</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:13,color:YE,marginBottom:2}}>Complète ton profil pour de meilleurs matchs</div>
+                    <div style={{fontSize:12,color:M}}>Renseigne tes jeux et tes horaires dans ton profil</div>
+                  </div>
+                  <Btn sz="sm" v="ghost" onClick={()=>setPage("profil")}>Mon profil →</Btn>
+                </div>
+              )}
+
+              {/* Mes infos */}
+              <Card style={{marginBottom:16,background:"rgba(212,16,63,0.04)",border:`1px solid rgba(212,16,63,0.15)`}}>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:10}}>🎮 Mon profil collab</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:12,color:M}}>
+                  <div>🎮 Jeux : <span style={{color:"white"}}>{user.games||"Non renseigné"}</span></div>
+                  <div>📅 Jours : <span style={{color:"white"}}>{user.stream_days||"Non renseigné"}</span></div>
+                  <div>⏰ Horaires : <span style={{color:"white"}}>{user.stream_hours||"Non renseigné"}</span></div>
+                  <div>🟣 Twitch : <span style={{color:"white"}}>{user.twitch?"@"+user.twitch:"Non renseigné"}</span></div>
+                </div>
+              </Card>
+
+              {/* Suggestions */}
+              {top.length===0?(
+                <Card style={{textAlign:"center",padding:"48px 20px"}}>
+                  <div style={{fontSize:44,marginBottom:12}}>🤝</div>
+                  <div style={{fontWeight:800,fontSize:16,marginBottom:8}}>Aucun créateur à matcher pour l'instant</div>
+                  <div style={{color:M,fontSize:13}}>Il faut que d'autres créateurs complètent leur profil</div>
+                </Card>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                  {top.map((c,i)=>{
+                    const myGames=(user.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+                    const otherGames=(c.games||"").toLowerCase().split(",").map(g=>g.trim()).filter(Boolean);
+                    const commonGames=myGames.filter(g=>otherGames.some(og=>og.includes(g)||g.includes(og)));
+                    const myDays=(user.stream_days||"").toLowerCase();
+                    const otherDays=(c.stream_days||"").toLowerCase();
+                    const days=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+                    const commonDays=days.filter(d=>myDays.includes(d)&&otherDays.includes(d));
+                    const scoreColor=c.score>=80?G:c.score>=50?YE:M;
+                    return(
+                      <Card key={c.email||i} style={{border:`1px solid ${c.score>=80?"rgba(34,197,94,0.2)":c.score>=50?"rgba(251,191,36,0.15)":B}`}}>
+                        <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:12}}>
+                          <div style={{width:42,height:42,background:`${scoreColor}22`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0,color:scoreColor}}>{(c.name||"?").charAt(0)}</div>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                              <div style={{fontWeight:800,fontSize:14}}>{c.name}</div>
+                              <span style={{background:`${scoreColor}22`,color:scoreColor,border:`1px solid ${scoreColor}44`,borderRadius:100,padding:"2px 10px",fontSize:11,fontWeight:700}}>{c.score}% compatible</span>
+                              {i===0&&<span style={{background:"rgba(212,16,63,0.12)",color:R,border:`1px solid rgba(212,16,63,0.25)`,borderRadius:100,padding:"2px 8px",fontSize:10,fontWeight:700}}>⭐ Meilleur match</span>}
+                            </div>
+                            {c.twitch&&<div style={{fontSize:12,color:M}}>🟣 @{c.twitch}</div>}
+                          </div>
+                        </div>
+
+                        {/* Détails compatibilité */}
+                        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px"}}>
+                          {commonGames.length>0&&(
+                            <div style={{fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+                              <span style={{color:G,fontWeight:700}}>✓</span>
+                              <span style={{color:M}}>Jeux en commun :</span>
+                              <span style={{color:"white"}}>{commonGames.join(", ")}</span>
+                            </div>
+                          )}
+                          {commonDays.length>0&&(
+                            <div style={{fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+                              <span style={{color:G,fontWeight:700}}>✓</span>
+                              <span style={{color:M}}>Jours similaires :</span>
+                              <span style={{color:"white"}}>{commonDays.map(d=>d.charAt(0).toUpperCase()+d.slice(1)).join(", ")}</span>
+                            </div>
+                          )}
+                          {c.stream_hours&&(
+                            <div style={{fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+                              <span style={{color:BL,fontWeight:700}}>◉</span>
+                              <span style={{color:M}}>Ses horaires :</span>
+                              <span style={{color:"white"}}>{c.stream_hours}</span>
+                            </div>
+                          )}
+                          {c.games&&(
+                            <div style={{fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+                              <span style={{color:BL,fontWeight:700}}>◉</span>
+                              <span style={{color:M}}>Ses jeux :</span>
+                              <span style={{color:"white"}}>{c.games}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                          {c.twitch&&(
+                            <a href={`https://twitch.tv/${c.twitch}`} target="_blank" style={{flex:1,background:"rgba(145,70,255,0.1)",border:`1px solid rgba(145,70,255,0.25)`,borderRadius:8,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,color:PU,textDecoration:"none"}}>
+                              🟣 Voir @{c.twitch}
+                            </a>
+                          )}
+                          <button onClick={()=>{setPage("communaute");setCommTab("tchat");setTimeout(()=>setChatInput(`@${c.name} `),100);}} style={{flex:1,background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"8px",fontSize:12,fontWeight:700,color:R,cursor:"pointer"}}>
+                            💬 Mentionner dans le tchat
+                          </button>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div style={{marginTop:16,background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:"12px 16px",fontSize:12,color:M,lineHeight:1.8}}>
+                📊 <strong style={{color:"white"}}>Score calculé sur :</strong> jeux en commun × 30pts + jours compatibles × 10pts + mêmes horaires + niveau similaire<br/>
+                🔄 Se met à jour en temps réel quand les créateurs complètent leur profil
+              </div>
             </div>
           );
         })()}
@@ -3843,12 +4244,68 @@ const STRIPE_URLS = {
                           <input key={i} value={(profil.games||[])[i]||""} onChange={e=>{const g=[...(profil.games||["","","","","",""])];g[i]=e.target.value;setProfil(p=>({...p,games:g}));}} placeholder={`Jeu ${i+1}${i===0?" *":""}`} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
                         ))}
                       </div>
-                      <div style={{fontSize:11,color:M,marginTop:6}}>💡 Au moins un jeu recommandé — les autres créateurs pourront te trouver</div>
+                      <div style={{fontSize:11,color:M,marginTop:6}}>💡 Au moins un jeu recommandé — utilisé pour le Collab Match</div>
                     </div>
                     <Field label="Ville / Région" value={profil.city||""} onChange={e=>setProfil(p=>({...p,city:e.target.value}))} placeholder="Ex: Paris, Lyon..."/>
                     <Field label="Disponibilités" value={profil.dispo||""} onChange={e=>setProfil(p=>({...p,dispo:e.target.value}))} placeholder="Ex: Soirs semaine, weekends"/>
+                    {/* Champs Collab Match */}
+                    <div style={{gridColumn:"1/-1",background:"rgba(212,16,63,0.04)",border:`1px solid rgba(212,16,63,0.15)`,borderRadius:12,padding:"14px 16px"}}>
+                      <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:R}}>🤝 Infos Collab Match</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>📅 Jours de stream</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                            {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d=>{
+                              const full={Lun:"Lundi",Mar:"Mardi",Mer:"Mercredi",Jeu:"Jeudi",Ven:"Vendredi",Sam:"Samedi",Dim:"Dimanche"}[d];
+                              const selected=(user.stream_days||"").includes(full);
+                              return(
+                                <button key={d} onClick={()=>{
+                                  const current=(user.stream_days||"").split(",").map(s=>s.trim()).filter(Boolean);
+                                  const next=selected?current.filter(x=>x!==full):[...current,full];
+                                  const val=next.join(", ");
+                                  setUser(p=>({...p,stream_days:val}));
+                                  const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                                  if(sv[user.email]){sv[user.email].stream_days=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                                  db.updateUser(user.email,{stream_days:val}).catch(()=>{});
+                                }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:8,padding:"5px 10px",color:selected?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                                  {d}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>⏰ Horaires habituels</div>
+                          <select value={user.stream_hours||""} onChange={e=>{
+                            const val=e.target.value;
+                            setUser(p=>({...p,stream_hours:val}));
+                            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                            if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                            db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
+                          }} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none"}}>
+                            <option value="">Choisir...</option>
+                            <option>12h-14h</option>
+                            <option>16h-18h</option>
+                            <option>18h-20h</option>
+                            <option>19h-21h</option>
+                            <option>20h-22h</option>
+                            <option>20h-23h</option>
+                            <option>21h-00h</option>
+                            <option>22h-00h</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <Btn sz="sm" onClick={()=>setProfilEdit(false)} icon="💾">Sauvegarder</Btn>
+                  <Btn sz="sm" onClick={()=>{
+                    // Sauvegarder jeux dans user aussi pour le matching
+                    const gamesStr=(profil.games||[]).filter(Boolean).join(", ");
+                    setUser(p=>({...p,games:gamesStr}));
+                    const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                    if(sv[user.email]){sv[user.email].games=gamesStr;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                    db.updateUser(user.email,{games:gamesStr}).catch(()=>{});
+                    setProfilEdit(false);
+                  }} icon="💾">Sauvegarder</Btn>
                 </div>
               )}
             </Card>
