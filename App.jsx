@@ -759,7 +759,7 @@ const STRIPE_URLS = {
   const role=user?.role;
   const isPro=user?.plan==="pro"||user?.plan==="unlimited"||role==="admin";
   const isBeliveCreator=user?.plan==="belive_creator";
-  const trialStart=user?.trialStart?new Date(user.trialStart):null;
+  const trialStart=user?.trialStart?new Date(user.trialStart):user?.trial_start?new Date(user.trial_start):null;
   const trialDays=14;
   const trialDaysLeft=trialStart?Math.max(0,trialDays-Math.floor((Date.now()-trialStart.getTime())/(1000*60*60*24))):0;
   const isInTrial=trialDaysLeft>0;
@@ -2039,7 +2039,7 @@ const STRIPE_URLS = {
           onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
           <div style={{position:"relative"}}>
             <div style={{width:34,height:34,borderRadius:"50%",background:R,border:`2px solid ${page==="profil"?R:"transparent"}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,flexShrink:0}}>
-              {profil.photo?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:user.name.charAt(0)}
+              {profil.photo?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.name||"?").charAt(0)}
             </div>
             <div style={{position:"absolute",bottom:0,right:0,width:9,height:9,background:"#22c55e",borderRadius:"50%",border:`2px solid #0a0a0a`}}/>
           </div>
@@ -2075,7 +2075,7 @@ const STRIPE_URLS = {
         </button>
         <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:18,letterSpacing:2,flex:1}}>BELIVE <span style={{color:R}}>ACADEMY</span></div>
         <div onClick={()=>{setPage("profil");setMenuOpen(false);}} style={{width:32,height:32,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,flexShrink:0,cursor:"pointer",overflow:"hidden"}}>
-          {profil.photo?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:user.name.charAt(0)}
+          {profil.photo?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(user.name||"?").charAt(0)}
         </div>
       </div>
 
@@ -3247,7 +3247,7 @@ const STRIPE_URLS = {
                     const low=newPost.toLowerCase();
                     const found=banned.find(w=>low.includes(w));
                     if(found){alert(`⚠️ Message non autorisé — ce contenu n'est pas permis dans la communauté Belive Academy.`);return;}
-                    setPosts(p=>[{id:Date.now(),user:user.name,av:(user.av||user.name.charAt(0)),time:"À l'instant",content:newPost,likes:0,liked:false,replies:[],showReplies:false,replyInput:"",category:commCat},...p]);
+                    setPosts(p=>[{id:Date.now(),user:user.name,av:(user.av||(user.name||"?").charAt(0)),time:"À l'instant",content:newPost,likes:0,liked:false,replies:[],showReplies:false,replyInput:"",category:commCat},...p]);
                     setNewPost("");
                   }}>Publier</Btn>
                 </div>
@@ -3312,10 +3312,10 @@ const STRIPE_URLS = {
                           </div>
                         ))}
                         <div style={{display:"flex",gap:10,marginTop:10}}>
-                          <div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(user.av||user.name.charAt(0)).toUpperCase()}</div>
+                          <div style={{width:28,height:28,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{(user.av||(user.name||"?").charAt(0)).toUpperCase()}</div>
                           <input value={p.replyInput||""} onChange={e=>setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replyInput:e.target.value}))}
                             onKeyDown={e=>{if(e.key==="Enter"&&p.replyInput?.trim()){
-                              setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replies:[...(x.replies||[]),{user:user.name,av:(user.av||user.name.charAt(0)),text:x.replyInput,time:"À l'instant"}],replyInput:"",showReplies:true}));
+                              setPosts(prev=>prev.map((x,j)=>j!==i?x:{...x,replies:[...(x.replies||[]),{user:user.name,av:(user.av||(user.name||"?").charAt(0)),text:x.replyInput,time:"À l'instant"}],replyInput:"",showReplies:true}));
                               if(notifPrefs.messages){sendNotif("💬 Nouveau message",`${user.name} a répondu dans la communauté`,"msg");}
                             }}}
                             placeholder="Ta réponse... (Entrée pour envoyer)" style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
@@ -3507,7 +3507,7 @@ const STRIPE_URLS = {
                   <div style={{width:80,height:80,borderRadius:"50%",background:"rgba(212,16,63,0.15)",border:`3px solid ${R}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {profil.photo
                       ?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                      :<div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:R}}>{user.name.charAt(0)}</div>
+                      :<div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:R}}>{(user.name||"?").charAt(0)}</div>
                     }
                   </div>
                   <label style={{position:"absolute",bottom:-2,right:-2,width:24,height:24,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:12}}>
@@ -3662,6 +3662,31 @@ const STRIPE_URLS = {
                   </div>
                 )}
               </div>
+
+              {/* Bouton passer Premium si pas encore pro */}
+              {user.plan!=="pro" && user.plan!=="belive_creator" && (
+                <div style={{marginBottom:16}}>
+                  <div style={{background:"linear-gradient(135deg,rgba(212,16,63,0.15),rgba(212,16,63,0.05))",border:"1px solid rgba(212,16,63,0.3)",borderRadius:12,padding:16,marginBottom:12,textAlign:"center"}}>
+                    <div style={{fontSize:22,marginBottom:6}}>🚀</div>
+                    <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>Passer à Premium</div>
+                    <div style={{fontSize:12,color:M,marginBottom:12}}>Accès illimité à toutes les fonctionnalités</div>
+                    <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R,marginBottom:12}}>14,99€<span style={{fontSize:14,color:M}}>/mois</span></div>
+                    <Btn v="primary" full onClick={()=>createSubscription("premium", user.email, user)} icon="⭐">
+                      S'abonner maintenant
+                    </Btn>
+                  </div>
+                  {!isInTrial && (
+                    <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,padding:12,textAlign:"center",fontSize:12,color:"#ef4444",fontWeight:700}}>
+                      ⚠️ Ton essai gratuit est expiré — abonne-toi pour continuer
+                    </div>
+                  )}
+                  {isInTrial && (
+                    <div style={{background:"rgba(251,191,36,0.08)",border:"1px solid rgba(251,191,36,0.2)",borderRadius:10,padding:12,textAlign:"center",fontSize:12,color:YE}}>
+                      ⏳ Il te reste <strong>{trialDaysLeft} jours</strong> d'essai gratuit
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Bouton d'annulation */}
               {user.plan==="pro" && (
