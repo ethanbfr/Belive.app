@@ -2148,13 +2148,13 @@ const STRIPE_URLS = {
             </div>
             {role==="admin"&&(() => {
               // Récupère tous les utilisateurs inscrits depuis localStorage
-              const localStorageUsers = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+              const localStorageUsers = (() => { const lsU = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})); const map = new Map(); lsU.forEach(u=>map.set(u.email,u)); createurs.forEach(u=>map.set(u.email,{...(map.get(u.email)||{}),...u})); return Array.from(map.values()).filter(u=>u.email!=="ethanbfr06@gmail.com"); })();
               
-              // Fusionne avec les données Supabase de manière synchrone (utilise les données déjà chargées si disponibles)
+              // Fusionner localStorage + createurs depuis Supabase
               const allUsersMap = new Map();
               localStorageUsers.forEach(u => allUsersMap.set(u.email, u));
-              
-              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin");
+              createurs.forEach(u => allUsersMap.set(u.email, {...(allUsersMap.get(u.email)||{}), ...u}));
+              const allUsers = Array.from(allUsersMap.values()).filter(u => u.role !== "admin" && u.email !== "ethanbfr06@gmail.com");
               
               // Informations de débogage
               console.log("=== ADMIN DASHBOARD DEBUG ===");
@@ -3007,7 +3007,7 @@ const STRIPE_URLS = {
         {/* CLASSEMENT */}
         {page==="classement"&&(()=>{
           // Calcul dynamique des points pour chaque utilisateur inscrit
-          const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+          const allUsers=(() => { const lsU = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})); const map = new Map(); lsU.forEach(u=>map.set(u.email,u)); createurs.forEach(u=>map.set(u.email,{...(map.get(u.email)||{}),...u})); return Array.from(map.values()).filter(u=>u.email!=="ethanbfr06@gmail.com"); })();
           const allStreams=JSON.parse(localStorage.getItem("ba6_st")||"[]");
 
           const scored=allUsers.map(u=>{
@@ -3821,7 +3821,7 @@ const STRIPE_URLS = {
 
         {/* CRÉATEURS ADMIN */}
         {page==="createurs"&&role==="admin"&&(()=>{
-          const allUsers=Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u}));
+          const allUsers=(() => { const lsU = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})); const map = new Map(); lsU.forEach(u=>map.set(u.email,u)); createurs.forEach(u=>map.set(u.email,{...(map.get(u.email)||{}),...u})); return Array.from(map.values()).filter(u=>u.email!=="ethanbfr06@gmail.com"); })();
           const allCreateurs=[...allUsers,...createurs.filter(c=>!allUsers.find(u=>u.email===c.email))];
           return(
             <div>
