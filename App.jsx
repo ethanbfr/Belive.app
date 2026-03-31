@@ -35,6 +35,7 @@ const db = {
   addStream:      (data)          => supabase("POST",   "streams",   data),
   getCodes:       ()              => supabase("GET",    "codes",     null),
   addCode:        (data)          => supabase("POST",   "codes",     data),
+  deleteCode:     (code)          => supabase("DELETE", "codes",     null, `code=eq.${code}`),
   useCode:        (code, name)    => supabase("PATCH",  "codes",     {used_by: name, used_at: new Date().toISOString()}, `code=eq.${code}`),
   getContrats:    ()              => supabase("GET",    "contrats",  null),
   addContrat:     (data)          => supabase("POST",   "contrats",  data),
@@ -877,7 +878,7 @@ const STRIPE_URLS = {
             usedBy:c.used_by,
             usedAt:c.used_at,
             owner:c.owner,
-            creatorName:c.creator_name||"",
+            creatorName:c.creator_name||c.creatorName||"",
           })));
         }
       }).catch(()=>{});
@@ -2449,8 +2450,8 @@ const STRIPE_URLS = {
                 choisis ton offre ci-dessous.
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
-                <button onClick={()=>window.open("https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email="+encodeURIComponent(user?.email||"")+"&client_reference_id="+encodeURIComponent(user?.email||""),"_blank")} style={{background:R,color:"white",border:"none",borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                  ⚡ S'abonner — 14,99€/mois
+                <button onClick={()=>window.open(isBeliveCreator?`https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04?prefilled_email=${encodeURIComponent(user?.email||"")}&client_reference_id=${encodeURIComponent(user?.email||"")}`:`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(user?.email||"")}&client_reference_id=${encodeURIComponent(user?.email||"")}`, "_blank")} style={{background:R,color:"white",border:"none",borderRadius:12,padding:"16px 24px",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                  {isBeliveCreator?"🎁 S'abonner — 9,99€/mois":"⚡ S'abonner — 14,99€/mois"}
                 </button>
               </div>
               <div style={{fontSize:12,color:M}}>🔒 Paiement sécurisé via Stripe • Résiliable à tout moment</div>
@@ -4478,11 +4479,26 @@ const STRIPE_URLS = {
                 {/* Bouton s'abonner */}
                 {user.plan!=="pro"&&user.plan!=="belive_creator"&&(
                   <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:12,padding:16,textAlign:"center",marginBottom:12}}>
-                    <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:30,color:R,marginBottom:4}}>14,99€<span style={{fontSize:14,color:M}}>/mois</span></div>
-                    <div style={{fontSize:12,color:M,marginBottom:12}}>Accès illimité • Coach IA • Partenariats • Collab Match</div>
-                    <Btn full onClick={()=>window.open(`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(user.email)}&client_reference_id=${encodeURIComponent(user.email)}`,"_blank")} icon="⭐">
-                      S'abonner — 14,99€/mois
-                    </Btn>
+                    {isBeliveCreator?(
+                      <>
+                        <div style={{background:"rgba(167,139,250,0.1)",border:`1px solid rgba(167,139,250,0.2)`,borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:12,color:PU,fontWeight:700}}>
+                          🎁 Tarif exclusif agence — réservé aux créateurs Belive
+                        </div>
+                        <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:30,color:PU,marginBottom:4}}>9,99€<span style={{fontSize:14,color:M}}>/mois</span></div>
+                        <div style={{fontSize:12,color:M,marginBottom:12}}>Accès illimité • Tarif agence exclusif</div>
+                        <Btn full onClick={()=>window.open(`https://buy.stripe.com/00waEW7h15eNdsT1wA1wY04?prefilled_email=${encodeURIComponent(user.email)}&client_reference_id=${encodeURIComponent(user.email)}`,"_blank")} icon="🎁">
+                          S'abonner — 9,99€/mois
+                        </Btn>
+                      </>
+                    ):(
+                      <>
+                        <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:30,color:R,marginBottom:4}}>14,99€<span style={{fontSize:14,color:M}}>/mois</span></div>
+                        <div style={{fontSize:12,color:M,marginBottom:12}}>Accès illimité • Coach IA • Partenariats • Collab Match</div>
+                        <Btn full onClick={()=>window.open(`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(user.email)}&client_reference_id=${encodeURIComponent(user.email)}`,"_blank")} icon="⭐">
+                          S'abonner — 14,99€/mois
+                        </Btn>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -5019,8 +5035,8 @@ const STRIPE_URLS = {
                   {[...codes].reverse().map((c,i)=>(
                     <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 0",borderBottom:`1px solid rgba(255,255,255,0.04)`,flexWrap:"wrap"}}>
                       <div style={{flex:1,minWidth:180}}>
-                        <div style={{fontFamily:"monospace",color:R,letterSpacing:1,fontWeight:800,fontSize:11,marginBottom:c.creatorName?4:0}}>{c.code}</div>
-                        {c.creatorName&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>👤 Pour : <strong style={{color:"white"}}>{c.creatorName}</strong></div>}
+                        <div style={{fontFamily:"monospace",color:R,letterSpacing:1,fontWeight:800,fontSize:11,marginBottom:(c.creatorName||c.creator_name)?4:0}}>{c.code}</div>
+                        {(c.creatorName||c.creator_name)&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>👤 Pour : <strong style={{color:"white"}}>{c.creatorName||c.creator_name}</strong></div>}
                       </div>
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
                         <Pill color={c.type==="createur"?"purple":"blue"} xs>{c.type}</Pill>
@@ -5036,7 +5052,11 @@ const STRIPE_URLS = {
                         }
                       </div>
                       <button onClick={()=>{navigator.clipboard?.writeText(c.code).catch(()=>{});alert("✅ Copié !");}} style={{background:"none",border:`1px solid ${B}`,borderRadius:6,padding:"3px 8px",color:M,fontSize:10,cursor:"pointer"}}>📋</button>
-                      <button onClick={()=>setCodes(p=>p.filter((_,j)=>j!==codes.length-1-i))} style={{background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:12,cursor:"pointer"}}>✕</button>
+                      <button onClick={async()=>{
+                        if(!confirm(`Supprimer le code ${c.code} ?`)) return;
+                        setCodes(p=>p.filter(x=>x.code!==c.code));
+                        try{ await db.deleteCode(c.code); }catch(e){}
+                      }} style={{background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>
                   ))}
                 </Card>
