@@ -259,7 +259,7 @@ ethan@beliveacademy.com | 07 80 99 92 51`;
 const css=`
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&display=swap');
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
-body{background:${D};color:white;font-family:'Manrope',sans-serif;}
+body{background:${D};color:white;font-family:'Manrope',sans-serif;overflow-x:hidden;max-width:100vw;}
 input,select,textarea,button{font-family:'Manrope',sans-serif;}
 input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.18);}
 select option{background:#1a1a1a;color:white;}
@@ -279,7 +279,11 @@ select option{background:#1a1a1a;color:white;}
   .main-content{margin-left:0 !important;padding-top:64px !important;}
 }
 @media(max-width:480px){
-  .main-content{padding:12px !important;padding-top:72px !important;}
+  .main-content{padding:10px !important;padding-top:68px !important;overflow-x:hidden;}
+  div[style*="repeat(auto-fit"]{grid-template-columns:1fr 1fr !important;}
+  div[style*="minmax(130px"]{grid-template-columns:1fr 1fr !important;}
+  div[style*="minmax(150px"]{grid-template-columns:1fr 1fr !important;}
+  div[style*="minmax(140px"]{grid-template-columns:1fr 1fr !important;}
 }
 `;
 
