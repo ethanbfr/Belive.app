@@ -3644,20 +3644,25 @@ const STRIPE_URLS = {
 
           async function sendChat(){
             if(!chatInput.trim())return;
-            const mentions=[];
-            const mentionRegex=/@(\w[\w.]*)/g;
-            let match;
-            while((match=mentionRegex.exec(chatInput))!==null) mentions.push(match[1].toLowerCase());
+            const now=new Date().toISOString();
             const msg={
-              user_name:user.username||user.name,
+              user_name:user.name,
               user_av:user.av||(user.name||"?").charAt(0),
               user_email:user.email,
               text:chatInput,
-              mentions:JSON.stringify(mentions),
-              created_at:new Date().toISOString(),
+              created_at:now,
             };
+            const localMsg={
+              id:"local_"+Date.now(),
+              user:user.name,
+              av:user.av||(user.name||"?").charAt(0),
+              email:user.email,
+              text:chatInput,
+              time:new Date(now).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
+            };
+            setChatMessages(prev=>[...prev,localMsg]);
             setChatInput("");
-            try{ await db.addChat(msg); }catch(e){}
+            try{ await db.addChat(msg); }catch(e){ console.log("Chat error:",e); }
           }
 
           function renderChatText(text){
