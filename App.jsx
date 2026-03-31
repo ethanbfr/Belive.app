@@ -445,8 +445,9 @@ export default function App(){
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
   const [posts,setPosts]=useState(()=>JSON.parse(localStorage.getItem("ba6_posts")||"[]"));
   const [chatMessages,setChatMessages]=useState([]);
+  const [chatInput,setChatInput]=useState("");
   const [lastSeenChatId,setLastSeenChatId]=useState(()=>localStorage.getItem("ba6_lastchat_"+(JSON.parse(localStorage.getItem("ba6_session")||"{}").email||""))||"0");
-  const [commTab,setCommTab]=useState("posts"); // 'posts' | 'tchat'
+  const [commTab,setCommTab]=useState("posts");
   const [parrainages,setParrainages]=useState([]);
   const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
