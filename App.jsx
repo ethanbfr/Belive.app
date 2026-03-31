@@ -4463,11 +4463,15 @@ const STRIPE_URLS = {
                   </div>
                 )}
 
-                {/* Annuler abo */}
+                {/* Annuler / Gérer abo via Stripe Portal */}
                 {user.plan==="pro"&&(
                   <div>
-                    <Btn v="danger" full onClick={cancelSubscription} icon="✕">Annuler mon abonnement</Btn>
-                    <div style={{fontSize:11,color:M,textAlign:"center",marginTop:8}}>L'annulation prend effet à la fin de ta période de facturation</div>
+                    <Btn v="ghost" full onClick={()=>window.open(`https://billing.stripe.com/p/login/cNi5kC0SDbDbfB18Z21wY00?prefilled_email=${encodeURIComponent(user.email)}`,"_blank")} icon="⚙️">
+                      Gérer mon abonnement (Stripe)
+                    </Btn>
+                    <div style={{fontSize:11,color:M,textAlign:"center",marginTop:8}}>
+                      Annuler, changer de carte ou voir tes factures directement sur Stripe
+                    </div>
                   </div>
                 )}
               </Card>
