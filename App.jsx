@@ -3682,9 +3682,9 @@ const STRIPE_URLS = {
             });
           }
 
-          const mentionSearch=chatInput.match(/@([\w.]*)$/)?.[1]||null;
-          const allChatUsers=[...new Set(chatMessages.map(m=>m.user))].filter(n=>n&&n!==(user.username||user.name));
-          const mentionSuggestions=mentionSearch!==null?allChatUsers.filter(n=>n.toLowerCase().startsWith(mentionSearch.toLowerCase())).slice(0,4):[];
+          const mentionSearch=chatInput.match(/@([\w.]*)$/)?.[1]??null;
+          const allChatUsers=[...new Set((chatMessages||[]).map(m=>m.user))].filter(n=>n&&n!==user.name);
+          const mentionSuggestions=mentionSearch!==null?allChatUsers.filter(n=>(n||"").toLowerCase().startsWith((mentionSearch||"").toLowerCase())).slice(0,4):[];
 
           async function deleteChatMsg(m){
             try{
