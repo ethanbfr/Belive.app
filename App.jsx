@@ -474,7 +474,10 @@ export default function App(){
   const [tmplPhoto,setTmplPhoto]=useState(null);
   const [profilePhoto,setProfilePhoto]=useState(null);
   const [selectedTmpl,setSelectedTmpl]=useState("banner-dark");
-  const [parrainCopied,setParrainCopied]=useState(false);
+  const [editInfos,setEditInfos]=useState(false);
+  const [editUsername,setEditUsername]=useState(false);
+  const [tmpUsername,setTmpUsername]=useState("");
+  const [tmpInfos,setTmpInfos]=useState({name:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:""});
   const [profil,setProfil]=useState(()=>JSON.parse(localStorage.getItem("ba6_profil")||"{}"));
   const [profilEdit,setProfilEdit]=useState(false);
   const [showSubscriptionSection,setShowSubscriptionSection]=useState(false);
@@ -4191,17 +4194,6 @@ const STRIPE_URLS = {
         {/* COACH IA */}
         {/* PROFIL */}
         {page==="profil"&&role==="createur"&&(()=>{
-          const [editInfos,setEditInfos]=React.useState(false);
-          const [editUsername,setEditUsername]=React.useState(false);
-          const [tmpUsername,setTmpUsername]=React.useState(user.username||"");
-          const [tmpInfos,setTmpInfos]=React.useState({
-            name:user.name||"",
-            phone:user.phone||"",
-            twitch:user.twitch||"",
-            youtube:user.youtube||"",
-            tiktok:user.tiktok||"",
-            instagram:user.instagram||"",
-          });
 
           async function saveUsername(){
             if(tmpUsername.length<3){alert("Minimum 3 caractères.");return;}
@@ -4272,7 +4264,7 @@ const STRIPE_URLS = {
                       ):(
                         <>
                           <span style={{background:"rgba(255,255,255,0.07)",borderRadius:100,padding:"3px 10px",fontSize:12,color:M,fontWeight:600}}>@{user.username||"non défini"}</span>
-                          <button onClick={()=>setEditUsername(true)} style={{background:"none",border:"none",color:M,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Modifier</button>
+                          <button onClick={()=>{setTmpUsername(user.username||"");setEditUsername(true);}} style={{background:"none",border:"none",color:M,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Modifier</button>
                         </>
                       )}
                     </div>
@@ -4312,7 +4304,12 @@ const STRIPE_URLS = {
               <Card style={{marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                   <div style={{fontWeight:800,fontSize:15}}>👤 Mes informations</div>
-                  <Btn sz="sm" v="ghost" onClick={()=>{setEditInfos(!editInfos);setTmpInfos({name:user.name||"",phone:user.phone||"",twitch:user.twitch||"",youtube:user.youtube||"",tiktok:user.tiktok||"",instagram:user.instagram||"",});}}>{editInfos?"✕ Annuler":"✏️ Modifier"}</Btn>
+                  <Btn sz="sm" v="ghost" onClick={()=>{
+                    if(!editInfos){
+                      setTmpInfos({name:user.name||"",phone:user.phone||"",twitch:user.twitch||"",youtube:user.youtube||"",tiktok:user.tiktok||"",instagram:user.instagram||""});
+                    }
+                    setEditInfos(!editInfos);
+                  }}>{editInfos?"✕ Annuler":"✏️ Modifier"}</Btn>
                 </div>
                 {editInfos?(
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
