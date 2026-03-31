@@ -278,6 +278,9 @@ select option{background:#1a1a1a;color:white;}
   .mobile-bar{display:flex !important;}
   .main-content{margin-left:0 !important;padding-top:64px !important;}
 }
+@media(max-width:480px){
+  .main-content{padding:12px !important;padding-top:72px !important;}
+}
 `;
 
 // ATOMS
@@ -2508,7 +2511,7 @@ const STRIPE_URLS = {
 
               return(<>
                 {/* KPIs */}
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:16}}>
                   <SC label="Total inscrits" value={allUsers.length} sub="créateurs" icon="👥"/>
                   <SC label="Revenu réel" value={`${revenuMensuel.toFixed(2)}€`} sub="ce mois" icon="💰" color="green"/>
                   <SC label="En essai" value={essai.length} sub={`${essai.length} gratuits`} icon="⏳" color="yellow"/>
@@ -2860,7 +2863,7 @@ const STRIPE_URLS = {
                 </div>
               )}
 
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:18}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:14,marginBottom:18}}>
                 <SC label="🟣 Twitch" value={ms.twitch||"—"} color="purple"/>
                 <SC label="▶️ YouTube" value={ms.youtube||"—"} color="red"/>
                 <SC label="Viewers moy." value={avgV} color="blue"/>
@@ -3011,7 +3014,7 @@ const STRIPE_URLS = {
               </div>
               <Btn sz="sm" onClick={saveStats}>💾 Sauvegarder</Btn>
             </Card>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:16}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:14,marginBottom:16}}>
               <SC label="Total heures" value={totalH.toFixed(1)+"h"} icon="⏱️" delta={8}/>
               <SC label="Viewers moyen" value={avgV} icon="👁️" color="blue" delta={-2}/>
               <SC label="Record viewers" value={maxV} icon="📈" color="green"/>
@@ -4191,7 +4194,7 @@ const STRIPE_URLS = {
 
               {/* PHOTOS DE PROFIL */}
               <div style={{fontWeight:800,fontSize:16,marginBottom:16}}>👤 Cadres Photo de Profil</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:20,marginBottom:24}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:24}}>
                 <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Noir/Rouge</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring={R} badge={R} badgeTxt="white" bg="#080808"/></div><div style={{fontSize:11,color:M}}>Classique Belive</div></Card>
                 <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Rouge/Blanc</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring="white" badge="white" badgeTxt={R} bg={R}/></div><div style={{fontSize:11,color:M}}>Style dynamique</div></Card>
                 <Card style={{textAlign:"center",padding:24}}><div style={{fontSize:12,color:M,marginBottom:14,fontWeight:600}}>Style Or — VIP</div><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Frame ring="#ffd700" badge="#ffd700" badgeTxt="#1a1200" bg="#1a1200"/></div><div style={{fontSize:11,color:M}}>Créateur premium</div></Card>
