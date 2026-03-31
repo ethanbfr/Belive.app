@@ -404,6 +404,8 @@ export default function App(){
   const [menuOpen,setMenuOpen]=useState(false);
   const [modal,setModal]=useState(null);
   const [showWelcome,setShowWelcome]=useState(false);
+  const [showUsernameSetup,setShowUsernameSetup]=useState(false);
+  const [usernameInput,setUsernameInput]=useState("");
   const [showLegalModal,setShowLegalModal]=useState(null);
   const [adminNotifs,setAdminNotifs]=useState(()=>JSON.parse(localStorage.getItem("ba6_notifs")||"[]"));
   const [userNotifs,setUserNotifs]=useState(()=>{
@@ -931,7 +933,16 @@ const STRIPE_URLS = {
     }
   },[role]);
 
-  // Notif collab match au chargement
+  // Détecter les comptes sans username → afficher la modale de setup
+  useEffect(()=>{
+    if(!user||role==="admin") return;
+    if(!user.username){
+      // Auto-générer une suggestion
+      const suggested=(user.name||"").toLowerCase().replace(/\s+/g,".").replace(/[^a-z0-9._]/g,"").slice(0,20);
+      setUsernameInput(suggested);
+      setShowUsernameSetup(true);
+    }
+  },[user?.email]);
   useEffect(()=>{
     if(!user||role==="admin") return;
     if(!notifPrefs.collab) return;
@@ -1832,37 +1843,17 @@ const STRIPE_URLS = {
   });setModal("contract");}
 
   async function cancelSubscription(){
-    if(!confirm("⚠️ Tu es sûr de vouloir annuler ton abonnement ?\n\nTu perdras l'accès à toutes les fonctionnalités premium à la fin de la période en cours.")) return;
-    
+    if(!confirm("⚠️ Tu es sûr de vouloir annuler ton abonnement ?\n\nContacte-nous pour annuler : ethan@beliveacademy.com\nOu clique OK pour continuer.")) return;
     try{
-      // Utiliser Supabase pour gérer l'annulation Stripe
-      const { data, error } = await supabase
-        .rpc('cancel_stripe_subscription', {
-          user_email: user.email
-        });
-      
-      if(error){
-        console.error('Erreur Supabase:', error);
-        alert("❌ Erreur lors de l'annulation. Contacte le support : ethan@beliveacademy.com");
-        return;
-      }
-      
-      // Mettre à jour l'état local
+      // Mettre à jour localement
       const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-      if(sv[user.email]){
-        sv[user.email].plan="free";
-        sv[user.email].paid=false;
-        sv[user.email].cancelledAt=new Date().toISOString();
-      }
+      if(sv[user.email]){sv[user.email].plan="free";sv[user.email].paid=false;sv[user.email].cancelledAt=new Date().toISOString();}
       localStorage.setItem("ba6_users",JSON.stringify(sv));
-      
-      setUser({...user,plan:"free",paid:false,cancelledAt:new Date().toISOString()});
-      
-      alert("✅ Ton abonnement a été annulé. Tu continueras à bénéficier des avantages jusqu'à la fin de ta période en cours.");
-      
+      await db.updateUser(user.email,{plan:"free",paid:false});
+      setUser({...user,plan:"free",paid:false});
+      alert("✅ Abonnement annulé.\nTu garderas l'accès jusqu'à la fin de ta période en cours.\n\nPour toute question : ethan@beliveacademy.com");
     }catch(e){
-      console.error('Erreur:', e);
-      alert("❌ Erreur de connexion. Contacte le support : ethan@beliveacademy.com");
+      alert("Pour annuler ton abonnement, contacte-nous :\n📧 ethan@beliveacademy.com\n📱 07 80 99 92 51");
     }
   }
 
@@ -4199,278 +4190,301 @@ const STRIPE_URLS = {
 
         {/* COACH IA */}
         {/* PROFIL */}
-        {page==="profil"&&role==="createur"&&(
-          <div className="fade">
-            <div style={{marginBottom:20}}>
-              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>MON PROFIL</div>
-              <div style={{fontSize:13,color:M,marginTop:2}}>Ton identité sur Belive Academy</div>
-            </div>
+        {page==="profil"&&role==="createur"&&(()=>{
+          const [editInfos,setEditInfos]=React.useState(false);
+          const [editUsername,setEditUsername]=React.useState(false);
+          const [tmpUsername,setTmpUsername]=React.useState(user.username||"");
+          const [tmpInfos,setTmpInfos]=React.useState({
+            name:user.name||"",
+            phone:user.phone||"",
+            twitch:user.twitch||"",
+            youtube:user.youtube||"",
+            tiktok:user.tiktok||"",
+            instagram:user.instagram||"",
+          });
 
-            {/* Photo + infos principales */}
-            <Card style={{marginBottom:20}}>
-              <div style={{display:"flex",gap:20,alignItems:"flex-start"}}>
-                <div style={{position:"relative",flexShrink:0}}>
-                  <div style={{width:80,height:80,borderRadius:"50%",background:"rgba(212,16,63,0.15)",border:`3px solid ${R}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    {profil.photo
-                      ?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                      :<div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:32,color:R}}>{(user.name||"?").charAt(0)}</div>
-                    }
-                  </div>
-                  <label style={{position:"absolute",bottom:-2,right:-2,width:24,height:24,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:12}}>
-                    📷
-                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setProfil(p=>({...p,photo:ev.target.result}));r.readAsDataURL(f);}}/>
-                  </label>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,fontSize:18,marginBottom:4}}>{user.name}</div>
-                  <div style={{fontSize:13,color:M,marginBottom:8}}>{profil.bio||"Aucune bio pour l'instant"}</div>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {user.twitch&&<span style={{background:"rgba(145,70,255,0.12)",color:"#a78bfa",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>🟣 @{user.twitch}</span>}
-                    {user.youtube&&<span style={{background:"rgba(255,0,0,0.1)",color:"#ff6b6b",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>▶️ {user.youtube}</span>}
-                    {user.tiktok&&<span style={{background:"rgba(0,0,0,0.3)",color:"white",borderRadius:100,padding:"3px 10px",fontSize:11,fontWeight:700}}>🎵 {user.tiktok}</span>}
-                  </div>
-                </div>
-                <Btn sz="sm" v="ghost" onClick={()=>setProfilEdit(!profilEdit)}>{profilEdit?"✕ Fermer":"✏️ Modifier"}</Btn>
+          async function saveUsername(){
+            if(tmpUsername.length<3){alert("Minimum 3 caractères.");return;}
+            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+            const taken=Object.entries(sv).some(([em,u])=>em!==user.email&&u.username?.toLowerCase()===tmpUsername.toLowerCase());
+            if(taken){alert(`❌ "@${tmpUsername}" est déjà pris.`);return;}
+            try{
+              const supaUsers=await db.getUsers();
+              if(supaUsers&&supaUsers.find(u=>u.email!==user.email&&u.username?.toLowerCase()===tmpUsername.toLowerCase())){
+                alert(`❌ "@${tmpUsername}" est déjà pris.`);return;
+              }
+            }catch(e){}
+            const updated={...user,username:tmpUsername};
+            setUser(updated);
+            localStorage.setItem("ba6_session",JSON.stringify(updated));
+            if(sv[user.email]){sv[user.email].username=tmpUsername;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+            db.updateUser(user.email,{username:tmpUsername}).catch(()=>{});
+            setEditUsername(false);
+            alert(`✅ Username mis à jour : @${tmpUsername}`);
+          }
+
+          async function saveInfos(){
+            if(!tmpInfos.name.trim()){alert("Le nom est obligatoire.");return;}
+            const updated={...user,...tmpInfos};
+            setUser(updated);
+            localStorage.setItem("ba6_session",JSON.stringify(updated));
+            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+            if(sv[user.email]){Object.assign(sv[user.email],tmpInfos);localStorage.setItem("ba6_users",JSON.stringify(sv));}
+            db.updateUser(user.email,{name:tmpInfos.name,phone:tmpInfos.phone,twitch:tmpInfos.twitch,youtube:tmpInfos.youtube,tiktok:tmpInfos.tiktok,instagram:tmpInfos.instagram}).catch(()=>{});
+            setEditInfos(false);
+            alert("✅ Infos mises à jour !");
+          }
+
+          return(
+            <div className="fade">
+              <div style={{marginBottom:20}}>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>MON PROFIL</div>
+                <div style={{fontSize:13,color:M,marginTop:2}}>Ton identité sur Belive Academy</div>
               </div>
 
-              {profilEdit&&(
-                <div style={{marginTop:20,paddingTop:20,borderTop:`1px solid ${B}`}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                    <Field label="Bio" as="textarea" value={profil.bio||""} onChange={e=>setProfil(p=>({...p,bio:e.target.value}))} placeholder="Parle de toi, ton style de stream..."/>
-                    <div style={{gridColumn:"1/-1"}}>
-                      <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:8,textTransform:"uppercase"}}>🎮 Jeux streamés (6 max)</div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                        {[0,1,2,3,4,5].map(i=>(
-                          <input key={i} value={(profil.games||[])[i]||""} onChange={e=>{const g=[...(profil.games||["","","","","",""])];g[i]=e.target.value;setProfil(p=>({...p,games:g}));}} placeholder={`Jeu ${i+1}${i===0?" *":""}`} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
-                        ))}
-                      </div>
-                      <div style={{fontSize:11,color:M,marginTop:6}}>💡 Au moins un jeu recommandé — utilisé pour le Collab Match</div>
+              {/* Photo + nom + username */}
+              <Card style={{marginBottom:14}}>
+                <div style={{display:"flex",gap:16,alignItems:"flex-start",marginBottom:16}}>
+                  <div style={{position:"relative",flexShrink:0}}>
+                    <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(212,16,63,0.15)",border:`3px solid ${R}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {profil.photo
+                        ?<img src={profil.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                        :<div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R}}>{(user.name||"?").charAt(0)}</div>
+                      }
                     </div>
-                    <Field label="Ville / Région" value={profil.city||""} onChange={e=>setProfil(p=>({...p,city:e.target.value}))} placeholder="Ex: Paris, Lyon..."/>
-                    <Field label="Disponibilités" value={profil.dispo||""} onChange={e=>setProfil(p=>({...p,dispo:e.target.value}))} placeholder="Ex: Soirs semaine, weekends"/>
-                    {/* Champs Collab Match */}
-                    <div style={{gridColumn:"1/-1",background:"rgba(212,16,63,0.04)",border:`1px solid rgba(212,16,63,0.15)`,borderRadius:12,padding:"14px 16px"}}>
-                      <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:R}}>🤝 Infos Collab Match</div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                        <div>
-                          <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>📅 Jours de stream</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                            {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d=>{
-                              const full={Lun:"Lundi",Mar:"Mardi",Mer:"Mercredi",Jeu:"Jeudi",Ven:"Vendredi",Sam:"Samedi",Dim:"Dimanche"}[d];
-                              const selected=(user.stream_days||"").includes(full);
-                              return(
-                                <button key={d} onClick={()=>{
-                                  const current=(user.stream_days||"").split(",").map(s=>s.trim()).filter(Boolean);
-                                  const next=selected?current.filter(x=>x!==full):[...current,full];
-                                  const val=next.join(", ");
-                                  setUser(p=>({...p,stream_days:val}));
-                                  const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                                  if(sv[user.email]){sv[user.email].stream_days=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
-                                  db.updateUser(user.email,{stream_days:val}).catch(()=>{});
-                                }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:8,padding:"5px 10px",color:selected?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                                  {d}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>⏰ Horaires habituels</div>
-                          <select value={user.stream_hours||""} onChange={e=>{
-                            const val=e.target.value;
-                            setUser(p=>({...p,stream_hours:val}));
-                            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                            if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
-                            db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
-                          }} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none"}}>
-                            <option value="">Choisir...</option>
-                            <option>12h-14h</option>
-                            <option>16h-18h</option>
-                            <option>18h-20h</option>
-                            <option>19h-21h</option>
-                            <option>20h-22h</option>
-                            <option>20h-23h</option>
-                            <option>21h-00h</option>
-                            <option>22h-00h</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
+                    <label style={{position:"absolute",bottom:-2,right:-2,width:22,height:22,background:R,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:11}}>
+                      📷<input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setProfil(p=>({...p,photo:ev.target.result}));localStorage.setItem("ba6_profil",JSON.stringify({...profil,photo:ev.target.result}));};r.readAsDataURL(f);}}/>
+                    </label>
                   </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:800,fontSize:18,marginBottom:2}}>{user.name}</div>
+                    {/* Username */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      {editUsername?(
+                        <div style={{display:"flex",gap:6,alignItems:"center",flex:1}}>
+                          <div style={{position:"relative",flex:1}}>
+                            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:M,fontSize:13}}>@</span>
+                            <input value={tmpUsername} onChange={e=>setTmpUsername(e.target.value.replace(/[^a-zA-Z0-9._]/g,"").toLowerCase().slice(0,20))} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1px solid ${B}`,borderRadius:8,padding:"6px 10px 6px 24px",color:"white",fontSize:13,outline:"none"}} autoFocus/>
+                          </div>
+                          <Btn sz="sm" onClick={saveUsername} v="success">✓</Btn>
+                          <Btn sz="sm" v="ghost" onClick={()=>{setEditUsername(false);setTmpUsername(user.username||"");}}>✕</Btn>
+                        </div>
+                      ):(
+                        <>
+                          <span style={{background:"rgba(255,255,255,0.07)",borderRadius:100,padding:"3px 10px",fontSize:12,color:M,fontWeight:600}}>@{user.username||"non défini"}</span>
+                          <button onClick={()=>setEditUsername(true)} style={{background:"none",border:"none",color:M,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Modifier</button>
+                        </>
+                      )}
+                    </div>
+                    <div style={{fontSize:13,color:M}}>{profil.bio||"Aucune bio"}</div>
+                  </div>
+                </div>
+
+                {/* Bio */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:M,marginBottom:6,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>Bio</div>
+                  <textarea value={profil.bio||""} onChange={e=>{const p={...profil,bio:e.target.value};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));}} placeholder="Parle de toi, ton style de stream..." rows={2} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:13,outline:"none",resize:"none",fontFamily:"'Manrope',sans-serif"}}/>
+                </div>
+
+                {/* Jeux */}
+                <div>
+                  <div style={{fontSize:11,color:M,marginBottom:6,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>🎮 Jeux streamés</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                    {[0,1,2,3,4,5].map(i=>(
+                      <input key={i} value={(profil.games||[])[i]||""} onChange={e=>{const g=[...(profil.games||["","","","","",""])];g[i]=e.target.value;const p={...profil,games:g};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));}} placeholder={`Jeu ${i+1}`} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"8px 10px",color:"white",fontSize:12,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{marginTop:12}}>
                   <Btn sz="sm" onClick={()=>{
-                    // Sauvegarder jeux dans user aussi pour le matching
                     const gamesStr=(profil.games||[]).filter(Boolean).join(", ");
                     setUser(p=>({...p,games:gamesStr}));
                     const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
                     if(sv[user.email]){sv[user.email].games=gamesStr;localStorage.setItem("ba6_users",JSON.stringify(sv));}
                     db.updateUser(user.email,{games:gamesStr}).catch(()=>{});
-                    setProfilEdit(false);
-                  }} icon="💾">Sauvegarder</Btn>
+                    alert("✅ Profil sauvegardé !");
+                  }} icon="💾">Sauvegarder le profil</Btn>
                 </div>
-              )}
-            </Card>
+              </Card>
 
-            {/* Stats publiques */}
-            <div style={{fontWeight:800,marginBottom:12,fontSize:14}}>📊 Mes statistiques publiques</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:20}}>
-              <SC label="🟣 Twitch" value={ms.twitch||"—"} color="purple"/>
-              <SC label="▶️ YouTube" value={ms.youtube||"—"} color="red"/>
-              <SC label="Heures streamées" value={totalH.toFixed(1)+"h"} color="green"/>
-              <SC label="Streams ce mois" value={streams.length} color="purple"/>
-              <SC label="Viewers moyen" value={avgV} color="blue"/>
-            </div>
-
-            {/* Infos supplémentaires */}
-            <Card style={{marginBottom:20}}>
-              <div style={{fontWeight:800,marginBottom:14}}>🎮 À propos</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                {[
-                  ["🎮 Jeux streamés", (profil.games||[]).filter(Boolean).join(", ")||"Non renseigné"],
-                  ["📍 Localisation", profil.city||"Non renseigné"],
-                  ["⏰ Disponibilités", profil.dispo||"Non renseigné"],
-                  ["📅 Membre depuis", user.createdAt||new Date().toLocaleDateString("fr-FR")],
-                ].map(([l,v])=>(
-                  <div key={l} style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"12px 14px"}}>
-                    <div style={{fontSize:11,color:M,marginBottom:4}}>{l}</div>
-                    <div style={{fontSize:13,fontWeight:600,color:v==="Non renseigné"?M:"white"}}>{v}</div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Badge Belive */}
-            <Card style={{background:"rgba(212,16,63,0.05)",border:`1px solid rgba(212,16,63,0.15)`,marginBottom:16}}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{width:52,height:52,background:R,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏆</div>
-                <div>
-                  <div style={{fontWeight:800,marginBottom:4}}>Créateur Belive Academy</div>
-                  <div style={{fontSize:13,color:M}}>Tu fais partie de la communauté officielle Belive Academy. Utilise les templates pour afficher ton badge sur tes réseaux !</div>
+              {/* Infos personnelles */}
+              <Card style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={{fontWeight:800,fontSize:15}}>👤 Mes informations</div>
+                  <Btn sz="sm" v="ghost" onClick={()=>{setEditInfos(!editInfos);setTmpInfos({name:user.name||"",phone:user.phone||"",twitch:user.twitch||"",youtube:user.youtube||"",tiktok:user.tiktok||"",instagram:user.instagram||"",});}}>{editInfos?"✕ Annuler":"✏️ Modifier"}</Btn>
                 </div>
-              </div>
-            </Card>
-
-            {/* Centre de notifications */}
-            <Card>
-              <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>🔔 Mes notifications</div>
-              <div style={{fontSize:12,color:M,marginBottom:16}}>Active ou désactive chaque type de notification</div>
-              {[
-                {key:"planning",   icon:"📅", label:"Rappels de stream",      desc:"1h avant chaque stream planifié"},
-                {key:"messages",   icon:"💬", label:"Nouveaux messages",       desc:"Quand quelqu'un répond dans la communauté"},
-                {key:"partenariats",icon:"🤝",label:"Partenariats",            desc:"Nouvelles offres de partenariat disponibles"},
-                {key:"classement", icon:"◆", label:"Classement",              desc:"Quand tu montes dans le classement"},
-              ].map(n=>(
-                <div key={n.key} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:`1px solid ${B}`}}>
-                  <div style={{width:40,height:40,background:"rgba(255,255,255,0.04)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{n.icon}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:13}}>{n.label}</div>
-                    <div style={{fontSize:11,color:M,marginTop:2}}>{n.desc}</div>
+                {editInfos?(
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                      <Field label="Nom complet *" value={tmpInfos.name} onChange={e=>setTmpInfos(p=>({...p,name:e.target.value}))} placeholder="Prénom Nom"/>
+                      <Field label="Téléphone" value={tmpInfos.phone} onChange={e=>setTmpInfos(p=>({...p,phone:e.target.value}))} placeholder="06 12 34 56 78"/>
+                    </div>
+                    <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${B}`,borderRadius:12,padding:12}}>
+                      <div style={{fontSize:11,fontWeight:700,color:M,marginBottom:10,textTransform:"uppercase"}}>Réseaux sociaux</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        <Field label="🟣 Twitch" value={tmpInfos.twitch} onChange={e=>setTmpInfos(p=>({...p,twitch:e.target.value}))} placeholder="pseudo"/>
+                        <Field label="▶️ YouTube" value={tmpInfos.youtube} onChange={e=>setTmpInfos(p=>({...p,youtube:e.target.value}))} placeholder="chaîne"/>
+                        <Field label="🎵 TikTok" value={tmpInfos.tiktok} onChange={e=>setTmpInfos(p=>({...p,tiktok:e.target.value}))} placeholder="@pseudo"/>
+                        <Field label="📸 Instagram" value={tmpInfos.instagram} onChange={e=>setTmpInfos(p=>({...p,instagram:e.target.value}))} placeholder="@pseudo"/>
+                      </div>
+                    </div>
+                    <Btn onClick={saveInfos} icon="💾">Enregistrer les modifications</Btn>
                   </div>
-                  {/* Toggle switch */}
-                  <div onClick={()=>{
-                    const newPrefs={...notifPrefs,[n.key]:!notifPrefs[n.key]};
-                    setNotifPrefs(newPrefs);
-                    if(newPrefs[n.key]&&Notification.permission==="default"){
-                      Notification.requestPermission();
-                    }
-                  }} style={{
-                    width:46,height:26,borderRadius:13,
-                    background:notifPrefs[n.key]?R:"rgba(255,255,255,0.1)",
-                    position:"relative",cursor:"pointer",
-                    transition:"background 0.2s",flexShrink:0
-                  }}>
-                    <div style={{
-                      position:"absolute",top:3,
-                      left:notifPrefs[n.key]?22:3,
-                      width:20,height:20,background:"white",
-                      borderRadius:"50%",transition:"left 0.2s",
-                      boxShadow:"0 1px 3px rgba(0,0,0,0.3)"
-                    }}/>
+                ):(
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    {[
+                      ["📧 Email",user.email],
+                      ["📱 Téléphone",user.phone||"Non renseigné"],
+                      ["🟣 Twitch",user.twitch?"@"+user.twitch:"Non renseigné"],
+                      ["▶️ YouTube",user.youtube||"Non renseigné"],
+                      ["🎵 TikTok",user.tiktok||"Non renseigné"],
+                      ["📸 Instagram",user.instagram||"Non renseigné"],
+                    ].map(([l,v])=>(
+                      <div key={l} style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px"}}>
+                        <div style={{fontSize:11,color:M,marginBottom:3}}>{l}</div>
+                        <div style={{fontSize:13,fontWeight:600,color:v==="Non renseigné"?M:"white",wordBreak:"break-all"}}>{v}</div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-              <div style={{marginTop:14,fontSize:12,color:M,display:"flex",alignItems:"center",gap:8}}>
-                <span>{Notification.permission==="granted"?"✅ Notifications activées":"⚠️ Notifications désactivées dans ton navigateur"}</span>
-                {Notification.permission!=="granted"&&(
-                  <button onClick={()=>Notification.requestPermission()} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:R,fontSize:11,fontWeight:700,cursor:"pointer"}}>Activer</button>
                 )}
-              </div>
-            </Card>
+              </Card>
 
-            {/* Section Abonnement simplifiée */}
-            <Card>
-              <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>💳 Mon Abonnement</div>
-              
-              {/* Statut actuel */}
-              <div style={{background:user.plan==="pro"?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:12,padding:16,marginBottom:16}}>
-                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
-                  <div style={{width:40,height:40,background:user.plan==="pro"?G:"rgba(255,255,255,0.1)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
-                    {user.plan==="pro"?"⭐":"🎁"}
+              {/* Collab Match infos */}
+              <Card style={{marginBottom:14,background:"rgba(212,16,63,0.03)",border:`1px solid rgba(212,16,63,0.12)`}}>
+                <div style={{fontWeight:800,fontSize:15,marginBottom:12}}>🤝 Collab Match</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div>
+                    <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>📅 Jours de stream</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                      {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d=>{
+                        const full={Lun:"Lundi",Mar:"Mardi",Mer:"Mercredi",Jeu:"Jeudi",Ven:"Vendredi",Sam:"Samedi",Dim:"Dimanche"}[d];
+                        const selected=(user.stream_days||"").includes(full);
+                        return(
+                          <button key={d} onClick={()=>{
+                            const cur=(user.stream_days||"").split(",").map(s=>s.trim()).filter(Boolean);
+                            const next=selected?cur.filter(x=>x!==full):[...cur,full];
+                            const val=next.join(", ");
+                            setUser(p=>({...p,stream_days:val}));
+                            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                            if(sv[user.email]){sv[user.email].stream_days=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                            db.updateUser(user.email,{stream_days:val}).catch(()=>{});
+                          }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:8,padding:"5px 10px",color:selected?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                            {d}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div>
-                    <div style={{fontWeight:700,fontSize:14,color:user.plan==="pro"?G:"white"}}>
-                      {user.plan==="pro"?"Premium Actif" : user.plan==="belive_creator"?"Créateur Belive" : "Essai Gratuit"}
-                    </div>
-                    <div style={{fontSize:11,color:M}}>
-                      {user.plan==="pro"?"14,99€/mois" : 
-                       user.plan==="belive_creator"?"Offert par l'agence" :
-                       isInTrial?`${trialDaysLeft} jours restants` :
-                       "Fonctionnalités limitées"}
-                    </div>
+                    <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>⏰ Horaires</div>
+                    <select value={user.stream_hours||""} onChange={e=>{
+                      const val=e.target.value;
+                      setUser(p=>({...p,stream_hours:val}));
+                      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                      if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                      db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
+                    }} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none"}}>
+                      <option value="">Choisir...</option>
+                      {["12h-14h","16h-18h","18h-20h","19h-21h","20h-22h","20h-23h","21h-00h","22h-00h"].map(h=><option key={h}>{h}</option>)}
+                    </select>
                   </div>
                 </div>
-                {user.plan==="pro" && (
-                  <div style={{fontSize:12,color:M,marginTop:8}}>
-                    Prochain paiement : {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString("fr-FR")}
+              </Card>
+
+              {/* Notifications */}
+              <Card style={{marginBottom:14}}>
+                <div style={{fontWeight:800,fontSize:15,marginBottom:14}}>🔔 Notifications</div>
+                {[
+                  {key:"collab",icon:"🤝",label:"Collab Match",desc:"Quand un créateur compatible est trouvé"},
+                  {key:"tchat",icon:"💬",label:"Mentions tchat",desc:"Quand quelqu'un te @mentionne"},
+                  {key:"messages",icon:"📝",label:"Nouveaux posts",desc:"Dans la communauté"},
+                  {key:"partenariats",icon:"🤝",label:"Partenariats",desc:"Nouvelles offres disponibles"},
+                  {key:"planning",icon:"📅",label:"Planning",desc:"1h avant chaque stream"},
+                ].map(n=>(
+                  <div key={n.key} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${B}`}}>
+                    <div style={{width:36,height:36,background:"rgba(255,255,255,0.04)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{n.icon}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:13}}>{n.label}</div>
+                      <div style={{fontSize:11,color:M}}>{n.desc}</div>
+                    </div>
+                    <div onClick={()=>{
+                      const np={...notifPrefs,[n.key]:!notifPrefs[n.key]};
+                      setNotifPrefs(np);
+                      localStorage.setItem("ba6_nprefs",JSON.stringify(np));
+                    }} style={{width:44,height:24,borderRadius:12,background:notifPrefs[n.key]?R:"rgba(255,255,255,0.1)",position:"relative",cursor:"pointer",transition:"background 0.2s",flexShrink:0}}>
+                      <div style={{position:"absolute",top:3,left:notifPrefs[n.key]?21:3,width:18,height:18,background:"white",borderRadius:"50%",transition:"left 0.2s"}}/>
+                    </div>
+                  </div>
+                ))}
+              </Card>
+
+              {/* Abonnement */}
+              <Card style={{marginBottom:14}}>
+                <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>💳 Mon Abonnement</div>
+                <div style={{background:user.plan==="pro"?"rgba(34,197,94,0.08)":"rgba(255,255,255,0.03)",borderRadius:12,padding:16,marginBottom:16,display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:44,height:44,background:user.plan==="pro"?G:user.plan==="belive_creator"?PU:"rgba(255,255,255,0.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+                    {user.plan==="pro"?"⭐":user.plan==="belive_creator"?"🎁":"🔓"}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:15,color:user.plan==="pro"?G:user.plan==="belive_creator"?PU:"white",marginBottom:3}}>
+                      {user.plan==="pro"?"Premium Actif":user.plan==="belive_creator"?"Créateur Belive":isInTrial?`Essai gratuit — ${trialDaysLeft}j restants`:"Essai terminé"}
+                    </div>
+                    <div style={{fontSize:12,color:M}}>
+                      {user.plan==="pro"?"14,99€/mois • Accès illimité":user.plan==="belive_creator"?"Offert par Belive Academy":isInTrial?"Toutes les fonctionnalités débloquées":"Fonctionnalités limitées"}
+                    </div>
+                  </div>
+                  {user.plan==="pro"&&(
+                    <div style={{background:"rgba(34,197,94,0.12)",border:`1px solid rgba(34,197,94,0.3)`,borderRadius:100,padding:"4px 12px",fontSize:11,fontWeight:700,color:G}}>ACTIF</div>
+                  )}
+                </div>
+
+                {/* Barre progression essai */}
+                {isInTrial&&user.plan!=="pro"&&user.plan!=="belive_creator"&&(
+                  <div style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:M,marginBottom:6}}>
+                      <span>Période d'essai</span>
+                      <span>{trialDaysLeft} / {trialDays} jours</span>
+                    </div>
+                    <div style={{height:6,background:"rgba(255,255,255,0.07)",borderRadius:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${(trialDaysLeft/trialDays)*100}%`,background:`linear-gradient(90deg,${YE},${R})`,borderRadius:3}}/>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Bouton passer Premium si pas encore pro */}
-              {user.plan!=="pro" && user.plan!=="belive_creator" && (
-                <div style={{marginBottom:16}}>
-                  <div style={{background:"linear-gradient(135deg,rgba(212,16,63,0.15),rgba(212,16,63,0.05))",border:"1px solid rgba(212,16,63,0.3)",borderRadius:12,padding:16,marginBottom:12,textAlign:"center"}}>
-                    <div style={{fontSize:22,marginBottom:6}}>🚀</div>
-                    <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>Passer à Premium</div>
-                    <div style={{fontSize:12,color:M,marginBottom:12}}>Accès illimité à toutes les fonctionnalités</div>
-                    <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,color:R,marginBottom:12}}>14,99€<span style={{fontSize:14,color:M}}>/mois</span></div>
-                    <Btn v="primary" full onClick={()=>window.location.href="https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email="+encodeURIComponent(user.email)+"&client_reference_id="+encodeURIComponent(user.email)} icon="⭐">
+                {/* Bouton s'abonner */}
+                {user.plan!=="pro"&&user.plan!=="belive_creator"&&(
+                  <div style={{background:"rgba(212,16,63,0.06)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:12,padding:16,textAlign:"center",marginBottom:12}}>
+                    <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:30,color:R,marginBottom:4}}>14,99€<span style={{fontSize:14,color:M}}>/mois</span></div>
+                    <div style={{fontSize:12,color:M,marginBottom:12}}>Accès illimité • Coach IA • Partenariats • Collab Match</div>
+                    <Btn full onClick={()=>window.open(`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(user.email)}&client_reference_id=${encodeURIComponent(user.email)}`,"_blank")} icon="⭐">
                       S'abonner — 14,99€/mois
                     </Btn>
                   </div>
-                  {!isInTrial && (
-                    <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,padding:12,textAlign:"center",fontSize:12,color:"#ef4444",fontWeight:700}}>
-                      ⚠️ Ton essai gratuit est expiré — abonne-toi pour continuer
-                    </div>
-                  )}
-                  {isInTrial && (
-                    <div style={{background:"rgba(251,191,36,0.08)",border:"1px solid rgba(251,191,36,0.2)",borderRadius:10,padding:12,textAlign:"center",fontSize:12,color:YE}}>
-                      ⏳ Il te reste <strong>{trialDaysLeft} jours</strong> d'essai gratuit
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
 
-              {/* Bouton d'annulation */}
-              {user.plan==="pro" && (
-                <Btn 
-                  v="danger"
-                  onClick={cancelSubscription}
-                  icon="✕"
-                  style={{width:"100%"}}
-                >
-                  Annuler mon abonnement
-                </Btn>
-              )}
+                {/* Annuler abo */}
+                {user.plan==="pro"&&(
+                  <div>
+                    <Btn v="danger" full onClick={cancelSubscription} icon="✕">Annuler mon abonnement</Btn>
+                    <div style={{fontSize:11,color:M,textAlign:"center",marginTop:8}}>L'annulation prend effet à la fin de ta période de facturation</div>
+                  </div>
+                )}
+              </Card>
 
-              {user.plan==="pro" && (
-                <div style={{marginTop:12,fontSize:11,color:M,textAlign:"center"}}>
-                  ⚠️ L'annulation prendra effet à la fin de ta période de facturation.<br/>
-                  Tu conserveras l'accès Premium jusqu'à cette date.
+              {/* Déconnexion */}
+              <Card>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:14,marginBottom:2}}>Se déconnecter</div>
+                    <div style={{fontSize:12,color:M}}>Tu resteras inscrit — tes données sont conservées</div>
+                  </div>
+                  <Btn v="ghost" onClick={()=>{setUser(null);localStorage.removeItem("ba6_session");}}>Déconnexion</Btn>
                 </div>
-              )}
-            </Card>
-          </div>
-        )}
+              </Card>
+            </div>
+          );
+        })()}
 
         {/* PARRAINAGE */}
         {page==="parrainage"&&role==="createur"&&(()=>{
@@ -5105,6 +5119,57 @@ const STRIPE_URLS = {
           </>
         )}
       </Modal>
+
+      {/* Modale setup username pour comptes existants */}
+      {showUsernameSetup&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:700,padding:20,backdropFilter:"blur(8px)"}}>
+          <div className="fade" style={{background:"#0d0d0d",border:`1px solid rgba(212,16,63,0.3)`,borderRadius:24,padding:32,width:"100%",maxWidth:420,textAlign:"center",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${R},transparent)`}}/>
+            <div style={{fontSize:44,marginBottom:12}}>👤</div>
+            <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:26,letterSpacing:2,marginBottom:8}}>
+              CHOISIS TON <span style={{color:R}}>USERNAME</span>
+            </div>
+            <div style={{fontSize:13,color:M,lineHeight:1.7,marginBottom:20}}>
+              On a ajouté les @mentions dans le tchat — tu as besoin d'un nom d'utilisateur unique pour que les autres créateurs puissent te mentionner.
+            </div>
+            <div style={{marginBottom:8,textAlign:"left"}}>
+              <div style={{fontSize:11,fontWeight:600,color:M,letterSpacing:0.5,marginBottom:6,textTransform:"uppercase"}}>Ton username</div>
+              <div style={{position:"relative"}}>
+                <div style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:M,fontSize:13,pointerEvents:"none"}}>@</div>
+                <input
+                  value={usernameInput}
+                  onChange={e=>setUsernameInput(e.target.value.replace(/[^a-zA-Z0-9._]/g,"").toLowerCase().slice(0,20))}
+                  placeholder="ton.username"
+                  style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${usernameInput.length>=3?"rgba(34,197,94,0.4)":B}`,borderRadius:10,padding:"12px 14px 12px 28px",color:"white",fontSize:14,outline:"none",textAlign:"left"}}
+                />
+                {usernameInput.length>=3&&<div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:G,fontSize:14}}>✓</div>}
+              </div>
+              <div style={{fontSize:10,color:M,marginTop:4}}>Lettres, chiffres, points et _ • Max 20 caractères</div>
+            </div>
+            <Btn full sz="lg" disabled={usernameInput.length<3} onClick={async()=>{
+              // Vérifier unicité
+              const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+              const taken=Object.entries(sv).some(([em,u])=>em!==user.email&&u.username?.toLowerCase()===usernameInput.toLowerCase());
+              if(taken){alert(`❌ "@${usernameInput}" est déjà pris — essaie avec un chiffre ou un point.`);return;}
+              try{
+                const supaUsers=await db.getUsers();
+                if(supaUsers&&supaUsers.find(u=>u.email!==user.email&&u.username?.toLowerCase()===usernameInput.toLowerCase())){
+                  alert(`❌ "@${usernameInput}" est déjà pris.`);return;
+                }
+              }catch(e){}
+              // Sauvegarder
+              const updated={...user,username:usernameInput};
+              setUser(updated);
+              localStorage.setItem("ba6_session",JSON.stringify(updated));
+              if(sv[user.email]){sv[user.email].username=usernameInput;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+              db.updateUser(user.email,{username:usernameInput}).catch(()=>{});
+              setShowUsernameSetup(false);
+            }}>
+              ✓ Confirmer @{usernameInput||"..."}
+            </Btn>
+          </div>
+        </div>
+      )}
 
       {showWelcome&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20,backdropFilter:"blur(8px)"}}>
