@@ -445,7 +445,7 @@ export default function App(){
   const [partners,setPartners]=useState(()=>JSON.parse(localStorage.getItem("ba6_pa")||JSON.stringify(PARTNERS)));
   const [posts,setPosts]=useState(()=>JSON.parse(localStorage.getItem("ba6_posts")||"[]"));
   const [chatMessages,setChatMessages]=useState([]);
-  const [lastSeenChat,setLastSeenChat]=useState(()=>localStorage.getItem("ba6_lastchat_"+(JSON.parse(localStorage.getItem("ba6_session")||"{}").email)||"")||"");
+  const [lastSeenChatId,setLastSeenChatId]=useState(()=>localStorage.getItem("ba6_lastchat_"+(JSON.parse(localStorage.getItem("ba6_session")||"{}").email||""))||"0");
   const [commTab,setCommTab]=useState("posts"); // 'posts' | 'tchat'
   const [parrainages,setParrainages]=useState([]);
   const [adminRefs,setAdminRefs]=useState([]);
@@ -3662,9 +3662,9 @@ const STRIPE_URLS = {
             };
             setChatMessages(prev=>[...prev,localMsg]);
             setChatInput("");
-            const now2=new Date().toISOString();
-            setLastSeenChat(now2);
-            localStorage.setItem("ba6_lastchat_"+user.email,now2);
+            const lastId2=chatMessages.length>0?String(chatMessages[chatMessages.length-1].id||"0"):"0";
+            setLastSeenChatId(lastId2);
+            localStorage.setItem("ba6_lastchat_"+user.email,lastId2);
             try{ await db.addChat(msg); }catch(e){ console.log("Chat error:",e); }
           }
 
@@ -3703,14 +3703,14 @@ const STRIPE_URLS = {
               {/* Tabs */}
               <div style={{display:"flex",gap:8,marginBottom:18,borderBottom:`1px solid ${B}`,paddingBottom:12}}>
                   {[{id:"posts",icon:"📝",l:"Posts"},{id:"tchat",icon:"💬",l:"Tchat Live"}].map(t=>{
-                  const unreadCount=t.id==="tchat"?chatMessages.filter(m=>m.email!==user.email&&m.created_at>lastSeenChat).length:0;
+                  const unreadCount=t.id==="tchat"?chatMessages.filter(m=>m.email!==user.email&&String(m.id||"")>String(lastSeenChatId||"0")).length:0;
                   return(
                   <button key={t.id} onClick={()=>{
                     setCommTab(t.id);
                     if(t.id==="tchat"){
-                      const now=new Date().toISOString();
-                      setLastSeenChat(now);
-                      localStorage.setItem("ba6_lastchat_"+user.email,now);
+                      const lastId=chatMessages.length>0?String(chatMessages[chatMessages.length-1].id||"0"):"0";
+                      setLastSeenChatId(lastId);
+                      localStorage.setItem("ba6_lastchat_"+user.email,lastId);
                     }
                   }} style={{background:commTab===t.id?"rgba(212,16,63,0.12)":"transparent",border:`1px solid ${commTab===t.id?"rgba(212,16,63,0.35)":B}`,borderRadius:10,padding:"8px 18px",color:commTab===t.id?R:M,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
                     {t.icon} {t.l}
