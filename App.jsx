@@ -1378,7 +1378,7 @@ const STRIPE_URLS = {
       alert(`✅ Twitch @${pseudo} connecté !`);
     }
   }
-  const YOUTUBE_KEY="AIzaSyDiXDzDOnnI-nbLVSU4SZKFM-14v7czCi0";
+  const YOUTUBE_KEY="AIzaSyDik7vum_hSC5BGelzqcS845Vk149gQGRA";
 
   async function refreshYoutubeStats(){
     if(!user?.youtubeId)return;
