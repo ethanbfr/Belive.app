@@ -127,6 +127,11 @@ const AI_R=(q,avg)=>{
   if(!hasStream && horssujet.some(h=>l.includes(h)))
     return`❌ Cette question ne concerne pas le live streaming.\n\nJe suis spécialisé dans :\n🎮 TikTok Live, Twitch, YouTube Live\n📈 Croissance et monétisation\n🤝 Partenariats créateurs\n\n📧 Pour autre chose : ethan@beliveacademy.com`;
 
+  // ── POLITESSE ──────────────────────────────────────────────────────────────
+  if(l.match(/^(merci|merci?|mrc|thx|thanks|super|cool|nickel|parfait|top|genial|ok|oki|okk|👍|🔥|❤️|excellent|bravo|chapeau|ouf|incroyable)\s*[!?.]?$/)||
+     l.includes("merci beaucoup")||l.includes("merci bcp")||l.includes("c cool")||l.includes("c super")||l.includes("c top")||l.includes("t bo")||l.includes("t trop bo"))
+    return`Avec plaisir ! 😊 N'hésite pas si t'as d'autres questions sur le streaming.\n\n📧 Pour un accompagnement personnalisé : ethan@beliveacademy.com`;
+
   // ── SALUTATIONS ────────────────────────────────────────────────────────────
   if(l.match(/^(bonjour|salut|coucou|hello|yo|hey|bjr|slt|cc|ola|wesh|bsr|bonsoir)\s*[!?.]?$/))
     return`Salut ! 👋 Je suis ton coach live — spécialisé Twitch, TikTok Live et YouTube Live.\n\nPose-moi n'importe quelle question sur :\n🎮 Débuter sur Twitch / TikTok\n📈 Gagner des viewers et followers\n💰 Monétisation, partenariats\n🎯 Affiliation Twitch\n🎙️ Micro, OBS, setup technique\n📱 Streamer depuis une console\n⏰ Horaires et régularité\n\nQu'est-ce que tu veux savoir ?`;
