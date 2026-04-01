@@ -1363,17 +1363,26 @@ const STRIPE_URLS = {
       const followRes=await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${twitchUser.id}`,{headers:{"Client-ID":TWITCH_CLIENT_ID,"Authorization":`Bearer ${token}`}});
       const followData=await followRes.json();
       const followers=followData.total||0;
-      // Vérifier si en live
       const streamRes=await fetch(`https://api.twitch.tv/helix/streams?user_login=${pseudo}`,{headers:{"Client-ID":TWITCH_CLIENT_ID,"Authorization":`Bearer ${token}`}});
       const streamData=await streamRes.json();
       const liveStream=streamData.data&&streamData.data[0];
       const liveViewers=liveStream?liveStream.viewer_count:0;
-      setUser(p=>({...p,twitch:pseudo,twitchId:twitchUser.id,twitchAvatar:twitchUser.profile_image_url,isLive:!!liveStream,liveViewers}));
+      const updated={...user,twitch:pseudo,twitchId:twitchUser.id,twitchAvatar:twitchUser.profile_image_url,isLive:!!liveStream,liveViewers};
+      setUser(updated);
+      localStorage.setItem("ba6_session",JSON.stringify(updated));
+      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      if(sv[user.email]){sv[user.email].twitch=pseudo;sv[user.email].twitchId=twitchUser.id;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+      db.updateUser(user.email,{twitch:pseudo}).catch(()=>{});
       setMs(p=>({...p,twitch:followers,liveViewers,isLive:!!liveStream}));
       alert(`✅ Twitch @${pseudo} connecté !\n👥 ${followers.toLocaleString()} followers\n${liveStream?`🔴 EN LIVE — ${liveViewers} viewers`:"⚫ Pas en live"}`);
     }catch(e){
       const followers=parseInt(prompt("Combien de followers Twitch as-tu ?")||"0");
-      setUser(p=>({...p,twitch:pseudo}));
+      const updated={...user,twitch:pseudo};
+      setUser(updated);
+      localStorage.setItem("ba6_session",JSON.stringify(updated));
+      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      if(sv[user.email]){sv[user.email].twitch=pseudo;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+      db.updateUser(user.email,{twitch:pseudo}).catch(()=>{});
       setMs(p=>({...p,twitch:followers}));
       alert(`✅ Twitch @${pseudo} connecté !`);
     }
@@ -1415,12 +1424,22 @@ const STRIPE_URLS = {
       const statsData=await statsRes.json();
       const channel=statsData.items[0];
       const subs=parseInt(channel.statistics.subscriberCount||0);
-      setUser(p=>({...p,youtube:channel.snippet.title,youtubeId:channelId}));
+      const updated={...user,youtube:channel.snippet.title,youtubeId:channelId};
+      setUser(updated);
+      localStorage.setItem("ba6_session",JSON.stringify(updated));
+      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      if(sv[user.email]){sv[user.email].youtube=channel.snippet.title;sv[user.email].youtubeId=channelId;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+      db.updateUser(user.email,{youtube:channel.snippet.title}).catch(()=>{});
       setMs(p=>({...p,youtube:subs}));
       alert(`✅ YouTube "${channel.snippet.title}" connecté ! ${subs.toLocaleString()} abonnés récupérés.`);
     }catch(e){
       const subs=parseInt(prompt("Combien d'abonnés YouTube as-tu ?")||"0");
-      setUser(p=>({...p,youtube:ch}));
+      const updated={...user,youtube:ch};
+      setUser(updated);
+      localStorage.setItem("ba6_session",JSON.stringify(updated));
+      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+      if(sv[user.email]){sv[user.email].youtube=ch;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+      db.updateUser(user.email,{youtube:ch}).catch(()=>{});
       setMs(p=>({...p,youtube:subs}));
       alert(`✅ YouTube "${ch}" connecté !`);
     }
