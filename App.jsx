@@ -487,6 +487,7 @@ export default function App(){
   const [editUsername,setEditUsername]=useState(false);
   const [tmpUsername,setTmpUsername]=useState("");
   const [tmpInfos,setTmpInfos]=useState({name:"",phone:"",twitch:"",youtube:"",tiktok:"",instagram:""});
+  const [parrainCopied,setParrainCopied]=useState(false);
   const [profil,setProfil]=useState(()=>JSON.parse(localStorage.getItem("ba6_profil")||"{}"));
   const [profilEdit,setProfilEdit]=useState(false);
   const [showSubscriptionSection,setShowSubscriptionSection]=useState(false);
@@ -2604,9 +2605,9 @@ const STRIPE_URLS = {
 
                 {/* Liste complète des inscrits */}
                 <Card style={{marginBottom:16}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:8}}>
                   <div style={{fontWeight:800,fontSize:15}}>👥 Tous les inscrits ({allUsers.length})</div>
-                  <div style={{display:"flex",gap:8}}>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     <Btn sz="sm" onClick={()=>{
                       // Synchronisation simplifiée pour mobile
                       const syncData = async () => {
@@ -2880,7 +2881,7 @@ const STRIPE_URLS = {
                   <div style={{fontWeight:800}}>🔗 Connecte tes plateformes</div>
                   <button onClick={()=>{refreshTwitchStats();refreshYoutubeStats();}} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:M,fontSize:11,cursor:"pointer"}}>🔄 Actualiser</button>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10}}>
                   <div style={{background:"rgba(145,70,255,0.08)",border:`1px solid ${ms.isLive?"rgba(255,50,50,0.4)":"rgba(145,70,255,0.2)"}`,borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:10}}>
                     <span style={{fontSize:24}}>🟣</span>
                     <div style={{flex:1}}>
