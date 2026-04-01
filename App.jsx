@@ -2881,7 +2881,7 @@ const STRIPE_URLS = {
                   <div style={{fontWeight:800}}>🔗 Connecte tes plateformes</div>
                   <button onClick={()=>{refreshTwitchStats();refreshYoutubeStats();}} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"4px 10px",color:M,fontSize:11,cursor:"pointer"}}>🔄 Actualiser</button>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10}}>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   <div style={{background:"rgba(145,70,255,0.08)",border:`1px solid ${ms.isLive?"rgba(255,50,50,0.4)":"rgba(145,70,255,0.2)"}`,borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:10}}>
                     <span style={{fontSize:24}}>🟣</span>
                     <div style={{flex:1}}>
