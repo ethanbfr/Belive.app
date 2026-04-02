@@ -1213,7 +1213,7 @@ const STRIPE_URLS = {
     const{name,email,pass,phone,twitch,youtube,tiktok,instagram,code,username}=reg;
     if(!name||!email||!pass||!phone){alert("Nom, email, mot de passe et téléphone obligatoires.");return;}
     if(!username||username.length<3){alert("❌ Choisis un nom d'utilisateur (minimum 3 caractères).");return;}
-    if(!regAge){alert("⚠️ Tu dois confirmer avoir 18 ans ou plus.");return;}
+    if(!regCGU){alert("⚠️ Tu dois accepter les CGU et la politique de confidentialité.");return;}
     if(!regCGU){alert("⚠️ Tu dois accepter les CGU et la politique de confidentialité.");return;}
 
     // Vérifier email unique
@@ -2164,16 +2164,8 @@ const STRIPE_URLS = {
             <Field label="Code Belive Academy" value={reg.code} onChange={e=>setReg({...reg,code:e.target.value.toUpperCase()})} placeholder="BELIVE-XXXXXX" hint="Si tu es dans l'agence — sinon essai gratuit 14 jours"/>
             <Field label="Code de parrainage (optionnel)" value={reg.referralCode} onChange={e=>setReg({...reg,referralCode:e.target.value.toUpperCase()})} placeholder="REF-XXXXXX-XXX" hint="Si un créateur t'a recommandé Belive Academy"/>
 
-            {/* Vérification âge */}
-            <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginBottom:10,padding:"12px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${regAge?"rgba(34,197,94,0.3)":B}`,borderRadius:10}}>
-              <input type="checkbox" checked={regAge} onChange={e=>setRegAge(e.target.checked)} style={{marginTop:2,width:16,height:16,accentColor:R,flexShrink:0}}/>
-              <div style={{fontSize:12,color:M,lineHeight:1.6}}>
-                <strong style={{color:"white"}}>Je confirme avoir 18 ans ou plus</strong><br/>
-                L'accès à Belive Academy est réservé aux personnes majeures. En cochant cette case, je certifie sur l'honneur avoir au moins 18 ans.
-              </div>
-            </label>
-
-            {/* CGU + confidentialité */}
+            <Btn full onClick={doReg} sz="lg" disabled={!regCGU}>Créer mon compte</Btn>
+            {!regCGU&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>⚠️ Tu dois accepter les CGU + la confidentialité pour continuer</div>}
             <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginBottom:16,padding:"12px 14px",background:"rgba(255,255,255,0.03)",border:`1px solid ${regCGU?"rgba(34,197,94,0.3)":B}`,borderRadius:10}}>
               <input type="checkbox" checked={regCGU} onChange={e=>setRegCGU(e.target.checked)} style={{marginTop:2,width:16,height:16,accentColor:R,flexShrink:0}}/>
               <div style={{fontSize:12,color:M,lineHeight:1.6}}>
@@ -2186,8 +2178,8 @@ const STRIPE_URLS = {
               </div>
             </label>
 
-            <Btn full onClick={doReg} sz="lg" disabled={!regAge||!regCGU}>Créer mon compte</Btn>
-            {(!regAge||!regCGU)&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>⚠️ Tu dois confirmer ton âge et accepter les CGU + la confidentialité pour continuer</div>}
+            <Btn full onClick={doReg} sz="lg" disabled={!regCGU}>Créer mon compte</Btn>
+            {!regCGU&&<div style={{textAlign:"center",fontSize:11,color:M,marginTop:8}}>⚠️ Tu dois accepter les CGU + la confidentialité pour continuer</div>}
           </>):(<>
             <Field label="Email" type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="ton@email.com"/>
             <div style={{marginBottom:14}}>
