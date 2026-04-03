@@ -4555,9 +4555,9 @@ const STRIPE_URLS = {
                     </div>
                   </div>
                   <div>
-                    <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>⏰ Horaires</div>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-                      {["00h-01h","01h-02h","02h-03h","03h-04h","04h-05h","05h-06h","06h-07h","07h-08h","08h-09h","09h-10h","10h-11h","11h-12h","12h-13h","13h-14h","14h-15h","15h-16h","16h-17h","17h-18h","18h-19h","19h-20h","20h-21h","21h-22h","22h-23h","23h-00h"].map(h=>{
+                    <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>⏰ Horaires de stream</div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}}>
+                      {["00h","01h","02h","03h","04h","05h","06h","07h","08h","09h","10h","11h","12h","13h","14h","15h","16h","17h","18h","19h","20h","21h","22h","23h"].map(h=>{
                         const selected=(user.stream_hours||"").includes(h);
                         return(
                           <button key={h} onClick={()=>{
@@ -4568,12 +4568,13 @@ const STRIPE_URLS = {
                             const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
                             if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
                             db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
-                          }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:8,padding:"5px 9px",color:selected?R:M,fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                          }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:7,padding:"6px 4px",color:selected?R:M,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center"}}>
                             {h}
                           </button>
                         );
                       })}
                     </div>
+                    <div style={{fontSize:10,color:M,marginTop:5}}>Sélectionne les heures auxquelles tu streames habituellement</div>
                   </div>
                 </div>
               </Card>
