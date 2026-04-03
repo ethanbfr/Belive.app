@@ -4557,7 +4557,7 @@ const STRIPE_URLS = {
                   <div>
                     <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>⏰ Horaires</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-                      {["12h-14h","16h-18h","18h-20h","19h-21h","20h-22h","20h-23h","21h-00h","22h-00h"].map(h=>{
+                      {["00h-01h","01h-02h","02h-03h","03h-04h","04h-05h","05h-06h","06h-07h","07h-08h","08h-09h","09h-10h","10h-11h","11h-12h","12h-13h","13h-14h","14h-15h","15h-16h","16h-17h","17h-18h","18h-19h","19h-20h","20h-21h","21h-22h","22h-23h","23h-00h"].map(h=>{
                         const selected=(user.stream_hours||"").includes(h);
                         return(
                           <button key={h} onClick={()=>{
