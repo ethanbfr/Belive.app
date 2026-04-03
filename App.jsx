@@ -1505,27 +1505,29 @@ const STRIPE_URLS = {
     setAiMsgs(p=>[...p,{role:"user",text:q}]);
     setAiTyping(true);
     try{
+      const GEMINI_KEY=import.meta.env.VITE_GEMINI_KEY;
+      if(!GEMINI_KEY){setAiTyping(false);setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);return;}
       const history=aiMsgs.slice(-10).map(m=>({
-        role:m.role==="user"?"user":"assistant",
-        content:m.text
+        role:m.role==="user"?"user":"model",
+        parts:[{text:m.text}]
       }));
-      const response=await fetch("https://api.anthropic.com/v1/messages",{
+      const systemPrompt=`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser leur contenu et progresser. Tu connais parfaitement l'algorithme Twitch, TikTok, YouTube, les stratégies de croissance, l'affiliation, les partenariats, le matériel (OBS, micro, caméra), et tout ce qui touche aux jeux vidéo. Tu réponds toujours en français, de façon concrète, directe et motivante. Si la question n'a rien à voir avec le streaming ou le gaming, tu réponds poliment que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"} et a environ ${avgV} viewers en moyenne.`;
+      const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:1000,
-          system:`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser leur contenu et progresser dans le streaming. Tu connais parfaitement l'algorithme Twitch, TikTok et YouTube, les stratégies de croissance, l'affiliation, les partenariats, le matériel (OBS, micro, caméra), et tout ce qui touche aux jeux vidéo et au live gaming. Tu réponds toujours en français, de façon concrète, directe et motivante. Si on te demande quelque chose hors streaming/gaming, tu réponds que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"} et a environ ${avgV} viewers en moyenne.`,
-          messages:[...history,{role:"user",content:q}]
+          system_instruction:{parts:[{text:systemPrompt}]},
+          contents:[...history,{role:"user",parts:[{text:q}]}],
+          generationConfig:{maxOutputTokens:800,temperature:0.7}
         })
       });
       const data=await response.json();
-      const text=data.content?.[0]?.text||"Désolé, je n'ai pas pu répondre. Réessaie !";
+      const text=data.candidates?.[0]?.content?.parts?.[0]?.text||"Désolé, je n'ai pas pu répondre. Réessaie !";
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text}]);
     }catch(e){
       setAiTyping(false);
-      setAiMsgs(p=>[...p,{role:"ai",text:"❌ Erreur de connexion. Vérifie ta connexion et réessaie."}]);
+      setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);
     }
   }
 
@@ -3710,8 +3712,9 @@ const STRIPE_URLS = {
             const banned=["agence","recrutement","rejoins nous","whatsapp","telegram","http","www",".com",".fr","€","euro","gratuit","offre","deal"];
             const low=newPost.toLowerCase();
             if(banned.find(w=>low.includes(w))){alert("⚠️ Message non autorisé.");return;}
+            const displayName=user.username?`@${user.username}`:user.name;
             const p={
-              user_name:user.name,
+              user_name:displayName,
               user_av:user.av||(user.name||"?").charAt(0),
               user_email:user.email,
               content:newPost,
@@ -3723,7 +3726,7 @@ const STRIPE_URLS = {
             try{
               const res=await db.addPost(p);
               const newId=res?.[0]?.id||Date.now();
-              const local={id:newId,...p,user:user.name,av:p.user_av,time:"À l'instant",liked:false,replies:[],showReplies:false,replyInput:""};
+              const local={id:newId,...p,user:displayName,av:p.user_av,time:"À l'instant",liked:false,replies:[],showReplies:false,replyInput:""};
               const updated=[local,...posts];
               setPosts(updated);
               localStorage.setItem("ba6_posts",JSON.stringify(updated));
@@ -3748,8 +3751,9 @@ const STRIPE_URLS = {
           async function sendChat(){
             if(!chatInput.trim())return;
             const now=new Date().toISOString();
+            const displayName=user.username?`@${user.username}`:user.name;
             const msg={
-              user_name:user.name,
+              user_name:displayName,
               user_av:user.av||(user.name||"?").charAt(0),
               user_email:user.email,
               text:chatInput,
@@ -3757,7 +3761,7 @@ const STRIPE_URLS = {
             };
             const localMsg={
               id:"local_"+Date.now(),
-              user:user.name,
+              user:displayName,
               av:user.av||(user.name||"?").charAt(0),
               email:user.email,
               text:chatInput,
