@@ -4522,6 +4522,8 @@ const STRIPE_URLS = {
                           setUser(u=>({...u,platforms:val}));
                           const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
                           if(sv[user.email]){sv[user.email].platforms=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                          const sess=JSON.parse(localStorage.getItem("ba6_session")||"{}");
+                          localStorage.setItem("ba6_session",JSON.stringify({...sess,platforms:val}));
                           db.updateUser(user.email,{platforms:val}).catch(()=>{});
                         }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:10,padding:"7px 12px",color:selected?R:M,fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
                           <span>{p.icon}</span>{p.label}
@@ -4546,6 +4548,8 @@ const STRIPE_URLS = {
                             setUser(p=>({...p,stream_days:val}));
                             const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
                             if(sv[user.email]){sv[user.email].stream_days=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                            const sess=JSON.parse(localStorage.getItem("ba6_session")||"{}");
+                            localStorage.setItem("ba6_session",JSON.stringify({...sess,stream_days:val}));
                             db.updateUser(user.email,{stream_days:val}).catch(()=>{});
                           }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:8,padding:"5px 10px",color:selected?R:M,fontSize:11,fontWeight:700,cursor:"pointer"}}>
                             {d}
@@ -4567,6 +4571,8 @@ const STRIPE_URLS = {
                             setUser(p=>({...p,stream_hours:val}));
                             const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
                             if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                            const sess=JSON.parse(localStorage.getItem("ba6_session")||"{}");
+                            localStorage.setItem("ba6_session",JSON.stringify({...sess,stream_hours:val}));
                             db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
                           }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:7,padding:"6px 2px",color:selected?R:M,fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center"}}>
                             {label}
