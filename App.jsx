@@ -4556,16 +4556,24 @@ const STRIPE_URLS = {
                   </div>
                   <div>
                     <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>⏰ Horaires</div>
-                    <select value={user.stream_hours||""} onChange={e=>{
-                      const val=e.target.value;
-                      setUser(p=>({...p,stream_hours:val}));
-                      const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
-                      if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
-                      db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
-                    }} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none"}}>
-                      <option value="">Choisir...</option>
-                      {["12h-14h","16h-18h","18h-20h","19h-21h","20h-22h","20h-23h","21h-00h","22h-00h"].map(h=><option key={h}>{h}</option>)}
-                    </select>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                      {["12h-14h","16h-18h","18h-20h","19h-21h","20h-22h","20h-23h","21h-00h","22h-00h"].map(h=>{
+                        const selected=(user.stream_hours||"").includes(h);
+                        return(
+                          <button key={h} onClick={()=>{
+                            const cur=(user.stream_hours||"").split(",").map(s=>s.trim()).filter(Boolean);
+                            const next=selected?cur.filter(x=>x!==h):[...cur,h];
+                            const val=next.join(", ");
+                            setUser(p=>({...p,stream_hours:val}));
+                            const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                            if(sv[user.email]){sv[user.email].stream_hours=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                            db.updateUser(user.email,{stream_hours:val}).catch(()=>{});
+                          }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:8,padding:"5px 9px",color:selected?R:M,fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                            {h}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </Card>
