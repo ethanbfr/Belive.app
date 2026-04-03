@@ -1498,7 +1498,36 @@ const STRIPE_URLS = {
     }
   }
 
-  async function sendAI(){if(!aiInput.trim())return;const q=aiInput;setAiInput("");setAiMsgs(p=>[...p,{role:"user",text:q}]);setAiTyping(true);await new Promise(r=>setTimeout(r,900+Math.random()*700));setAiTyping(false);setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);}
+  async function sendAI(){
+    if(!aiInput.trim())return;
+    const q=aiInput;
+    setAiInput("");
+    setAiMsgs(p=>[...p,{role:"user",text:q}]);
+    setAiTyping(true);
+    try{
+      const history=aiMsgs.slice(-10).map(m=>({
+        role:m.role==="user"?"user":"assistant",
+        content:m.text
+      }));
+      const response=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          system:`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser leur contenu et progresser dans le streaming. Tu connais parfaitement l'algorithme Twitch, TikTok et YouTube, les stratégies de croissance, l'affiliation, les partenariats, le matériel (OBS, micro, caméra), et tout ce qui touche aux jeux vidéo et au live gaming. Tu réponds toujours en français, de façon concrète, directe et motivante. Si on te demande quelque chose hors streaming/gaming, tu réponds que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"} et a environ ${avgV} viewers en moyenne.`,
+          messages:[...history,{role:"user",content:q}]
+        })
+      });
+      const data=await response.json();
+      const text=data.content?.[0]?.text||"Désolé, je n'ai pas pu répondre. Réessaie !";
+      setAiTyping(false);
+      setAiMsgs(p=>[...p,{role:"ai",text}]);
+    }catch(e){
+      setAiTyping(false);
+      setAiMsgs(p=>[...p,{role:"ai",text:"❌ Erreur de connexion. Vérifie ta connexion et réessaie."}]);
+    }
+  }
 
   async function addStream(){
     const{date,dur,viewers,platform}=newSt;
