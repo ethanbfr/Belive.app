@@ -122,7 +122,7 @@ const AI_R=(q,avg)=>{
   // ── HORS SUJET ─────────────────────────────────────────────────────────────
   const horssujet=["cuisine","recette","restaurant","voiture","football","medecin","sante","amour","couple","meteo","voyage","vacances","ecole","bac","emploi","droit","avocat","impot","immobilier","crypto","bitcoin","bourse","psychologie","religion","politique","guerre","film","serie","musique","chanson","mode","vetement","shopping"];
   // Vérifier hors sujet seulement si aucun mot streaming présent
-  const motsStream=["stream","live","twitch","tiktok","youtube","viewer","follower","obs","gaming","game","jeu","jouer","plateforme","monetis","affili","partenariat","audience","chat","raid","clip","bitrate","fps","micro","camera","cadeau","diamond","diamant","sub","don","abonne","console","ps4","ps5","xbox","nintendo","streamer","streameuse"];
+  const motsStream=["stream","live","twitch","tiktok","youtube","viewer","follower","obs","gaming","game","jeu","jouer","plateforme","monetis","affili","partenariat","audience","chat","raid","clip","bitrate","fps","micro","camera","cadeau","diamond","diamant","sub","don","abonne","console","ps4","ps5","xbox","nintendo","streamer","streameuse","personne","comment","faire","avoir","veux","envie","aide","comment","quoi","pourquoi","arrive","marche","fonctionne","possible","peut"];
   const hasStream=motsStream.some(m=>l.includes(m))||motsStream.some(m=>raw.includes(m));
   if(!hasStream && horssujet.some(h=>l.includes(h)))
     return`❌ Cette question ne concerne pas le live streaming.\n\nJe suis spécialisé dans :\n🎮 TikTok Live, Twitch, YouTube Live\n📈 Croissance et monétisation\n🤝 Partenariats créateurs`;
@@ -238,7 +238,7 @@ const AI_R=(q,avg)=>{
     return`Bonne question sur le streaming ! Voici les sujets sur lesquels je peux t'aider :\n\n🎮 Débuter sur Twitch / TikTok / YouTube Live\n📱 Streamer depuis une console (PS4/PS5/Xbox)\n💬 Quoi dire pendant un stream\n📈 Gagner des viewers et followers\n💰 Monétisation et partenariats\n🎯 Affiliation Twitch\n🎙️ Micro, OBS, setup technique\n⏰ Meilleurs horaires\n🔥 Animer son chat\n\nPose ta question plus précisément et je t'aide ! 💪`;
 
   // ── HORS SUJET ABSOLU ──────────────────────────────────────────────────────
-  return`❌ Cette question ne concerne pas le live streaming.\n\nJe suis spécialisé dans :\n🎮 TikTok Live, Twitch, YouTube Live\n📈 Croissance et monétisation\n🤝 Partenariats créateurs`;
+  return`Pas de viewers sur tes lives ? Voila ce qui marche vraiment :\n\n🎬 Clip tes meilleurs moments et poste sur TikTok. Un bon clip peut ramener 20-100 viewers en 48h\n📢 Annonce 1h avant chaque stream sur tes reseaux sociaux\n🤝 Fais des raids a la fin de tes streams vers des crea de ta taille\n💬 Rejoins des Discord gaming FR et annonce tes streams\n🗣️ Parle en permanence meme avec 0 viewer — les gens repartent si tu es silencieux\n\nTu veux de l aide sur un point precis ? Viewers, monetisation, setup, TikTok...`;
 };
 const CTR=(c,ct)=>{
   const revenus=[];
