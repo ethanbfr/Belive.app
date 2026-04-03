@@ -1507,25 +1507,27 @@ const STRIPE_URLS = {
     try{
       const GEMINI_KEY=import.meta.env.VITE_GEMINI_KEY;
       if(!GEMINI_KEY){setAiTyping(false);setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);return;}
-      const history=aiMsgs.slice(-10).map(m=>({
-        role:m.role==="user"?"user":"model",
-        parts:[{text:m.text}]
-      }));
-      const systemPrompt=`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser leur contenu et progresser. Tu connais parfaitement l'algorithme Twitch, TikTok, YouTube, les stratégies de croissance, l'affiliation, les partenariats, le matériel (OBS, micro, caméra), et tout ce qui touche aux jeux vidéo. Tu réponds toujours en français, de façon concrète, directe et motivante. Si la question n'a rien à voir avec le streaming ou le gaming, tu réponds poliment que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"} et a environ ${avgV} viewers en moyenne.`;
+      const systemPrompt=`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser et progresser. Tu connais l'algorithme Twitch, TikTok, YouTube, les stratégies de croissance, l'affiliation, les partenariats, OBS, micro, caméra, et tout ce qui touche aux jeux vidéo. Réponds toujours en français, de façon concrète et motivante. Hors streaming/gaming, dis poliment que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"}, il a environ ${avgV} viewers en moyenne.`;
+      const history=aiMsgs.slice(-8);
+      const contents=[
+        {role:"user",parts:[{text:systemPrompt}]},
+        {role:"model",parts:[{text:"Compris, je suis prêt à coacher !"}]},
+        ...history.map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]})),
+        {role:"user",parts:[{text:q}]}
+      ];
       const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          system_instruction:{parts:[{text:systemPrompt}]},
-          contents:[...history,{role:"user",parts:[{text:q}]}],
-          generationConfig:{maxOutputTokens:800,temperature:0.7}
-        })
+        body:JSON.stringify({contents,generationConfig:{maxOutputTokens:800,temperature:0.7}})
       });
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
-      const text=data.candidates?.[0]?.content?.parts?.[0]?.text||"Désolé, je n'ai pas pu répondre. Réessaie !";
+      const text=data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(!text)throw new Error("No text");
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text}]);
     }catch(e){
+      console.log("Gemini error:",e.message);
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);
     }
