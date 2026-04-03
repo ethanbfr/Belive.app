@@ -1520,8 +1520,8 @@ const STRIPE_URLS = {
       });
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
-      const text=data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if(!text)throw new Error("No text");
+      const text=data.text||data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(!text)throw new Error(data.error||"No text");
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text}]);
     }catch(e){
