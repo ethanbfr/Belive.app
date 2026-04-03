@@ -3992,8 +3992,12 @@ const STRIPE_URLS = {
               const ratio=Math.min(myF,otherF)/Math.max(myF,otherF);
               score+=Math.round(ratio*20);
             }
-            // Même plateforme
+            // Même plateforme de jeu (PC, PS5, Xbox, Switch...)
             if(user.twitch&&other.twitch) score+=10;
+            const myPlatforms=(user.platforms||"").split(",").map(s=>s.trim()).filter(Boolean);
+            const otherPlatforms=(other.platforms||"").split(",").map(s=>s.trim()).filter(Boolean);
+            const commonPlatforms=myPlatforms.filter(p=>otherPlatforms.includes(p));
+            score+=commonPlatforms.length*15;
             return Math.min(100,score);
           }
 
@@ -4090,6 +4094,19 @@ const STRIPE_URLS = {
                               <span style={{color:BL,fontWeight:700}}>◉</span>
                               <span style={{color:M}}>Ses jeux :</span>
                               <span style={{color:"white"}}>{c.games}</span>
+                            </div>
+                          )}
+                          {c.platforms&&(
+                            <div style={{fontSize:12,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                              <span style={{color:YE,fontWeight:700}}>◉</span>
+                              <span style={{color:M}}>Plateformes :</span>
+                              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                                {c.platforms.split(",").map(s=>s.trim()).filter(Boolean).map((p,i)=>(
+                                  <span key={i} style={{background:"rgba(251,191,36,0.1)",color:YE,borderRadius:100,padding:"2px 8px",fontSize:10,fontWeight:700}}>
+                                    {p==="PC"?"🖥️":p==="PlayStation"?"🎮":p==="Xbox"?"🟩":p==="Nintendo Switch"?"🔴":"📱"} {p}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -4368,15 +4385,59 @@ const STRIPE_URLS = {
                   <textarea value={profil.bio||""} onChange={e=>{const p={...profil,bio:e.target.value};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));}} placeholder="Parle de toi, ton style de stream..." rows={2} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:13,outline:"none",resize:"none",fontFamily:"'Manrope',sans-serif"}}/>
                 </div>
 
-                {/* Jeux */}
-                <div>
-                  <div style={{fontSize:11,color:M,marginBottom:6,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>🎮 Jeux streamés</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                    {[0,1,2,3,4,5].map(i=>(
-                      <input key={i} value={(profil.games||[])[i]||""} onChange={e=>{const g=[...(profil.games||["","","","","",""])];g[i]=e.target.value;const p={...profil,games:g};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));}} placeholder={`Jeu ${i+1}`} style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:8,padding:"8px 10px",color:"white",fontSize:12,outline:"none",fontFamily:"'Manrope',sans-serif"}}/>
-                    ))}
-                  </div>
-                </div>
+                {/* Jeux avec autocomplétion */}
+                {(()=>{
+                  const GAMES_LIST=["Valorant","Fortnite","Minecraft","League of Legends","Apex Legends","GTA V","Call of Duty: Warzone","Call of Duty: Modern Warfare III","Call of Duty: Black Ops 6","Counter-Strike 2","CS:GO","Rocket League","FIFA 24","EA FC 25","NBA 2K24","Overwatch 2","World of Warcraft","Hearthstone","Diablo IV","Starcraft II","Teamfight Tactics","VALORANT","Among Us","Fall Guys","Roblox","Genshin Impact","Honkai: Star Rail","Wuthering Waves","Lost Ark","New World","Final Fantasy XIV","Final Fantasy XVI","Elden Ring","Dark Souls III","Sekiro","Bloodborne","Hollow Knight","Celeste","Hades","Hades II","Dead Cells","Stardew Valley","Animal Crossing","The Legend of Zelda: Tears of the Kingdom","The Legend of Zelda: Breath of the Wild","Super Mario Bros Wonder","Super Smash Bros Ultimate","Mario Kart 8","Splatoon 3","Pokémon Écarlate","Pokémon Violet","Pokémon Go","Metroid Dread","Fire Emblem Engage","Xenoblade Chronicles 3","Kirby's Return to Dream Land","The Witcher 3","Cyberpunk 2077","Red Dead Redemption 2","GTA Online","Baldur's Gate 3","Divinity: Original Sin 2","Pathfinder: Wrath of the Righteous","Dragon Age: Inquisition","Mass Effect Legendary Edition","Starfield","Skyrim","Fallout 4","Fallout 76","The Elder Scrolls Online","Destiny 2","Warframe","Path of Exile","Path of Exile 2","Diablo III","Diablo Immortal","World of Warcraft Classic","Dota 2","Smite","Paladins","Battlerite","Brawlhalla","Street Fighter 6","Mortal Kombat 1","Tekken 8","Dragon Ball FighterZ","Guilty Gear Strive","MultiVersus","Nickelodeon All-Star Brawl","Halo Infinite","Halo 5","Gears 5","Sea of Thieves","Grounded","State of Decay 2","Back 4 Blood","Left 4 Dead 2","Phasmophobia","Dead by Daylight","Friday the 13th","Texas Chain Saw Massacre","Lethal Company","Content Warning","Buckshot Roulette","The Forest","Green Hell","Subnautica","No Man's Sky","Astroneer","Satisfactory","Factorio","Dyson Sphere Program","Valheim","Rust","DayZ","Arma 3","Arma Reforger","Squad","Hell Let Loose","Post Scriptum","Escape from Tarkov","Hunt: Showdown","PUBG: Battlegrounds","Naraka: Bladepoint","Vampire: The Masquerade - Bloodlines","V Rising","Don't Starve Together","Terraria","Core Keeper","Deep Rock Galactic","Risk of Rain 2","Returnal","Vampire Survivors","Brotato","20 Minutes Till Dawn","Binding of Isaac","Enter the Gungeon","Nuclear Throne","Noita","Spelunky 2","Shovel Knight","Cuphead","Hollow Knight: Silksong","Ori and the Will of the Wisps","Ori and the Blind Forest","Limbo","Inside","Little Nightmares","Little Nightmares II","Unpacking","A Short Hike","Journey","Flower","What Remains of Edith Finch","Gone Home","Firewatch","The Long Dark","Subnautica Below Zero","Planet Crafter","Terra Nil","Civilization VI","Civilization VII","Age of Empires IV","Age of Empires II","Anno 1800","Cities: Skylines","Cities: Skylines II","Planet Zoo","Planet Coaster","RimWorld","Dwarf Fortress","Crusader Kings III","Europa Universalis IV","Hearts of Iron IV","Victoria 3","Stellaris","Endless Space 2","Endless Legend","Humankind","Total War: Warhammer III","Total War: Three Kingdoms","XCOM 2","Midnight Suns","Into the Breach","Slay the Spire","Monster Train","Inscryption","Cobalt Core","Luck be a Landlord","Loop Hero","Across the Obelisk","Legends of Runeterra","Magic: The Gathering Arena","Shadowverse","Hearthstone Battlegrounds","Teamfight Tactics","Auto Chess","Dota Underlords","Realm Royale","Darwin Project","Super People","Spellbreak","Cuisine Royale","Islands of Nyne","Hyperscape","Splitgate","Halo","Battlefield 2042","Battlefield V","Battlefield 1","Battlefield 4","Bad Company 2","Medal of Honor","Brothers in Arms","Rainbow Six Siege","Rainbow Six Extraction","Ghost Recon Breakpoint","Ghost Recon Wildlands","The Division 2","The Division","Watch Dogs Legion","Watch Dogs 2","Assassin's Creed Valhalla","Assassin's Creed Odyssey","Assassin's Creed Origins","Assassin's Creed Mirage","Far Cry 6","Far Cry 5","Far Cry New Dawn","Far Cry Primal","Just Cause 4","Sleeping Dogs","Mafia: Definitive Edition","Mafia III","Saints Row","Saints Row IV","Agents of Mayhem","Crackdown 3","Prototype","inFamous Second Son","Spider-Man","Spider-Man Miles Morales","Spider-Man 2","God of War","God of War Ragnarök","Returnal","Demon's Souls","Ratchet & Clank: Rift Apart","Ghost of Tsushima","Horizon Zero Dawn","Horizon Forbidden West","Detroit: Become Human","Heavy Rain","Beyond: Two Souls","Until Dawn","The Quarry","Man of Medan","Little Hope","House of Ashes","The Devil in Me","Alan Wake 2","Control","Quantum Break","Max Payne 3","Resident Evil 4 Remake","Resident Evil Village","Resident Evil 2 Remake","Resident Evil 3 Remake","Silent Hill 2","Dead Space Remake","The Callisto Protocol","Scorn","Soma","Alien: Isolation","Amnesia: The Bunker","Outlast Trials","Observation","Visage","Layers of Fear","Observer","Observer: System Redux","The Medium","Blair Witch","Phasmophobia","Dredge","Cult of the Lamb","Dave the Diver","Palworld","Enshrouded","Nightingale","Pax Dei","Tarisland","Blue Protocol","Throne and Liberty","Once Human","The First Descendant","Wayfinder","Dauntless","Monster Hunter World","Monster Hunter Rise","Monster Hunter Wilds","God Eater 3","Code Vein","Scarlet Nexus","Tales of Arise","Ni no Kuni II","Persona 5 Royal","Persona 4 Golden","Persona 3 Reload","Shin Megami Tensei V","Fire Emblem Three Houses","Xenoblade Chronicles","Dragon Quest XI","Octopath Traveler II","Triangle Strategy","Live a Live","Star Ocean Divine Force","Crisis Core Final Fantasy VII","Final Fantasy VII Remake","Final Fantasy VII Rebirth","Kingdom Hearts III","NieR: Automata","NieR: Replicant","Astral Chain","Bayonetta 3","Devil May Cry 5","Metal Gear Solid V","Death Stranding","Death Stranding Director's Cut","Ghostwire: Tokyo","Sifu","Trek to Yomi","Wanted: Dead","Ghostrunner","Ghostrunner 2","Katana ZERO","Neon White","Hi-Fi Rush","Trepang2","Ultrakill","Devil Daggers","Superhot","Superhot: Mind Control Delete","Superhot VR","Beat Saber","Pistol Whip","Synth Riders","Asgard's Wrath 2","Resident Evil 4 VR","Lone Echo II","Half-Life: Alyx","Boneworks","Bonelab","The Walking Dead VR","Propagation VR","Into the Radius","Contractors","Pavlov","Onward","Population: ONE","Echo VR","Gorilla Tag","Rec Room","VRChat","AltspaceVR","Horizon Worlds","Roblox VR","Minecraft VR","No Man's Sky VR","Star Trek: Bridge Crew","Elite Dangerous VR","Microsoft Flight Simulator","Microsoft Flight Simulator 2024","X-Plane 12","DCS World","War Thunder","World of Tanks","World of Warships","World of Warplanes","Enlisted","Foxhole","Holdfast: Nations at War","Verdun","Isonzo","Chivalry 2","Mordhau","Kingdom Come: Deliverance","Mount & Blade II: Bannerlord","For Honor","Conqueror's Blade","Crowfall","New World","Lost Ark","Throne and Liberty","Lineage W","Black Desert Online","ArcheAge","Albion Online","Tibia","RuneScape","Old School RuneScape","Guild Wars 2","Elder Scrolls Online","Star Wars: The Old Republic","Final Fantasy XI","Ultima Online","Maplestory","Ragnarok Online","Aion","TERA","Blade & Soul","Tree of Savior","Spiral Knights","Dungeon Fighter Online","Dungeon & Fighter","Dragon Nest","Vindictus","Mabinogi","Flyff","Perfect World","Knight Online","Mu Online","Silkroad Online","Cabal Online","Fiesta Online","Rappelz","4Story","Metin2","Priston Tale","Conquer Online","Eudemons Online","Dofus","Wakfu","Krosmaga","Waven","Clash of Clans","Clash Royale","Brawl Stars","Hay Day","Boom Beach","Hades","Stumble Guys","Subway Surfers","Temple Run","Angry Birds","Plants vs. Zombies","Candy Crush","Coin Master","Garena Free Fire","Mobile Legends","Wild Rift","PUBG Mobile","Call of Duty Mobile","Minecraft Pocket Edition","Roblox Mobile","Among Us Mobile","Pokémon UNITE","Pokémon Masters EX","Pokémon Café ReMix","Diablo Immortal Mobile","Genshin Impact Mobile","Honkai Impact 3rd","Punishing: Gray Raven","Arknights","Azur Lane","Nikke","Tower of Fantasy","Reverse: 1999","Limbus Company","Path to Nowhere","Echocalypse","Brown Dust 2","Another Eden","Octopath Traveler Champions of the Continent","Final Fantasy Brave Exvius","War of the Visions","Dissidia Final Fantasy Opera Omnia","Crisis Core Final Fantasy VII Reunion","Star Ocean Anamnesis","Tales of the Rays","Romancing SaGa Re:univerSe","Granblue Fantasy","Princess Connect","Uma Musume","Blue Archive","Fate/Grand Order","Touhou Lost Word","Sword Art Online Memory Defrag","One Piece Treasure Cruise","Naruto x Boruto Ninja Tribes","Dragon Ball Legends","My Hero Academia The Strongest Hero","Attack on Titan Tactics","Black Clover Mobile","Overlord Mass for the Dead","Re:Zero Starting Life in Another World Lost in Memories"];
+                  const selectedGames=(profil.games||[]).filter(Boolean);
+                  const [gameSearch,setGameSearch]=React.useState("");
+                  const [showSugg,setShowSugg]=React.useState(false);
+                  const suggestions=gameSearch.length>=2?GAMES_LIST.filter(g=>g.toLowerCase().includes(gameSearch.toLowerCase())&&!selectedGames.includes(g)).slice(0,6):[];
+                  return(
+                    <div>
+                      <div style={{fontSize:11,color:M,marginBottom:8,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>🎮 Jeux streamés</div>
+                      {/* Tags des jeux sélectionnés */}
+                      {selectedGames.length>0&&(
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+                          {selectedGames.map((g,i)=>(
+                            <span key={i} style={{background:"rgba(212,16,63,0.12)",border:"1px solid rgba(212,16,63,0.25)",borderRadius:100,padding:"4px 10px",fontSize:11,fontWeight:700,color:R,display:"flex",alignItems:"center",gap:6}}>
+                              {g}
+                              <span onClick={()=>{const ng=selectedGames.filter((_,j)=>j!==i);const p={...profil,games:ng};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));}} style={{cursor:"pointer",color:"rgba(212,16,63,0.6)",fontWeight:800,fontSize:13,lineHeight:1}}>×</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* Input recherche */}
+                      {selectedGames.length<8&&(
+                        <div style={{position:"relative"}}>
+                          <input
+                            value={gameSearch}
+                            onChange={e=>{setGameSearch(e.target.value);setShowSugg(true);}}
+                            onFocus={()=>setShowSugg(true)}
+                            onBlur={()=>setTimeout(()=>setShowSugg(false),200)}
+                            placeholder="Cherche un jeu... (ex: Valorant, Fortnite)"
+                            style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 12px",color:"white",fontSize:12,outline:"none",fontFamily:"'Manrope',sans-serif"}}
+                          />
+                          {showSugg&&suggestions.length>0&&(
+                            <div style={{position:"absolute",top:"100%",left:0,right:0,background:"#1a1a1a",border:`1px solid ${B}`,borderRadius:10,marginTop:4,zIndex:100,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                              {suggestions.map((g,i)=>(
+                                <div key={i} onMouseDown={()=>{const ng=[...selectedGames,g];const p={...profil,games:ng};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));setGameSearch("");setShowSugg(false);}} style={{padding:"10px 14px",fontSize:12,cursor:"pointer",color:"white",borderBottom:`1px solid rgba(255,255,255,0.04)`,transition:"background 0.15s"}} onMouseEnter={e=>e.target.style.background="rgba(212,16,63,0.1)"} onMouseLeave={e=>e.target.style.background="transparent"}>
+                                  🎮 {g}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {showSugg&&gameSearch.length>=2&&suggestions.length===0&&(
+                            <div style={{position:"absolute",top:"100%",left:0,right:0,background:"#1a1a1a",border:`1px solid ${B}`,borderRadius:10,marginTop:4,padding:"10px 14px",fontSize:12,color:M,zIndex:100}}>
+                              Jeu non trouvé — tape Entrée pour l'ajouter quand même
+                              <div onMouseDown={()=>{if(gameSearch.trim()){const ng=[...selectedGames,gameSearch.trim()];const p={...profil,games:ng};setProfil(p);localStorage.setItem("ba6_profil",JSON.stringify(p));setGameSearch("");setShowSugg(false);}}} style={{marginTop:6,color:R,fontWeight:700,cursor:"pointer"}}>+ Ajouter "{gameSearch}"</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{fontSize:10,color:M,marginTop:6}}>Sélectionne jusqu'à 8 jeux • utilisés pour le Collab Match</div>
+                    </div>
+                  );
+                })()}
 
                 <div style={{marginTop:12}}>
                   <Btn sz="sm" onClick={()=>{
@@ -4440,6 +4501,36 @@ const STRIPE_URLS = {
               {/* Collab Match infos */}
               <Card style={{marginBottom:14,background:"rgba(212,16,63,0.03)",border:`1px solid rgba(212,16,63,0.12)`}}>
                 <div style={{fontWeight:800,fontSize:15,marginBottom:12}}>🤝 Collab Match</div>
+
+                {/* Plateformes */}
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>🎮 Mes plateformes</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {[
+                      {id:"PC",icon:"🖥️",label:"PC"},
+                      {id:"PlayStation",icon:"🎮",label:"PlayStation"},
+                      {id:"Xbox",icon:"🟩",label:"Xbox"},
+                      {id:"Nintendo Switch",icon:"🔴",label:"Switch"},
+                      {id:"Mobile",icon:"📱",label:"Mobile"},
+                    ].map(p=>{
+                      const platforms=(user.platforms||"").split(",").map(s=>s.trim()).filter(Boolean);
+                      const selected=platforms.includes(p.id);
+                      return(
+                        <button key={p.id} onClick={()=>{
+                          const next=selected?platforms.filter(x=>x!==p.id):[...platforms,p.id];
+                          const val=next.join(", ");
+                          setUser(u=>({...u,platforms:val}));
+                          const sv=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                          if(sv[user.email]){sv[user.email].platforms=val;localStorage.setItem("ba6_users",JSON.stringify(sv));}
+                          db.updateUser(user.email,{platforms:val}).catch(()=>{});
+                        }} style={{background:selected?"rgba(212,16,63,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${selected?"rgba(212,16,63,0.4)":B}`,borderRadius:10,padding:"7px 12px",color:selected?R:M,fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                          <span>{p.icon}</span>{p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                   <div>
                     <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:8,textTransform:"uppercase"}}>📅 Jours de stream</div>
