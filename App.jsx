@@ -169,8 +169,8 @@ const AI_R=(q,avg)=>{
     return`Affiliation Twitch — conditions exactes :\n\n✅ 50 followers\n✅ 500 minutes streamées sur 30 jours\n✅ 7 jours de stream différents sur 30 jours\n✅ 3 viewers moyens simultanés\n\n**Le plus dur : les 3 viewers moyens.**\n\nComment y arriver vite :\n• Invite 3–5 amis à regarder tes premiers streams\n• Annonce chaque stream 1h avant sur tes réseaux\n• Streame en heures de pointe (20h–23h)\n• Rejoins des Discord de streamers pour du soutien mutuel\n\n**Après l'affiliation :**\n• Subs à 2,50€ (tu gardes 50%)\n• Bits, emotes, mode sub-only`;
 
   // ── VIEWERS ────────────────────────────────────────────────────────────────
-  if(l.includes("viewer")||l.includes("audience")||l.includes("spectateur")||l.includes("regarder")||l.includes("regardeurs")||l.includes("gens qui regardent")||l.includes("personne regarde"))
-    return`Gagner des viewers — les leviers concrets :\n\n**Actions immédiates :**\n• Parle en permanence même si personne ne regarde\n• Pose une question au chat toutes les 5 minutes\n• Remercie chaque nouveau viewer par son pseudo\n• Pas de silence de plus de 10 secondes\n\n**Cette semaine :**\n• Lance 3 raids vers des streamers de ta taille\n• Poste un clip sur TikTok\n• Rejoins 2–3 Discord de créateurs\n\n**Ce mois :**\n• Horaires fixes = viewers fidèles\n• Co-stream avec un streamer de même niveau`;
+  if(l.includes("viewer")||l.includes("audience")||l.includes("spectateur")||l.includes("regarder")||l.includes("regardeurs")||l.includes("gens qui regardent")||l.includes("personne regarde")||l.includes("personne sur")||l.includes("jamais personne")||l.includes("0 viewer")||l.includes("zero viewer")||l.includes("pas de viewer")||l.includes("toujours personne")||l.includes("personne vient")||l.includes("personne ne vient")||l.includes("personne ne regarde")||(l.includes("personne")&&(l.includes("live")||l.includes("stream")))||(l.includes("deja fait")&&l.includes("personne")))
+    return`Pas de viewers en live — voici pourquoi et comment y remédier :\n\n**Le vrai problème :**\nTwitch/TikTok ne référence pas les petits streamers spontanément. Il faut amener les viewers SOI-MÊME.\n\n**Ce qui marche vraiment :**\n🎬 **Clip → TikTok** : ton meilleur moment du stream en vidéo courte. Un bon clip peut ramener 20–100 viewers en 48h\n📢 **Annonce 1h avant** sur tes réseaux : "Je stream ce soir 21h sur Fortnite !"\n🤝 **Raids** : à la fin de ton stream, raid un streamer de ta taille — il te raidera en retour\n💬 **Discord de streamers** : rejoins des serveurs gaming FR et annonce tes streams\n\n**Parle même avec 0 viewer :**\nLes gens qui arrivent repartent si tu es silencieux. Commente ton gameplay en permanence.\n\n**La réalité :**\nLes 10 premiers viewers sont les plus durs à avoir. Une fois que tu as une petite base régulière, ça grossit naturellement. Continue — ça prend 2–6 mois en moyenne. 💪`;
 
   // ── FOLLOWERS / CROISSANCE ─────────────────────────────────────────────────
   if(l.includes("follower")||l.includes("abonne")||l.includes("croissance")||l.includes("grandir")||l.includes("progresser")||l.includes("grow")||l.includes("grossir")||l.includes("plus connu")||l.includes("me faire connaitre")||l.includes("audience"))
@@ -1505,8 +1505,6 @@ const STRIPE_URLS = {
     setAiMsgs(p=>[...p,{role:"user",text:q}]);
     setAiTyping(true);
     try{
-      const GEMINI_KEY=import.meta.env.VITE_GEMINI_KEY;
-      if(!GEMINI_KEY){setAiTyping(false);setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);return;}
       const systemPrompt=`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser et progresser. Tu connais l'algorithme Twitch, TikTok, YouTube, les stratégies de croissance, l'affiliation, les partenariats, OBS, micro, caméra, et tout ce qui touche aux jeux vidéo. Réponds toujours en français, de façon concrète et motivante. Hors streaming/gaming, dis poliment que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"}, il a environ ${avgV} viewers en moyenne.`;
       const history=aiMsgs.slice(-8);
       const contents=[
@@ -1515,10 +1513,10 @@ const STRIPE_URLS = {
         ...history.map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]})),
         {role:"user",parts:[{text:q}]}
       ];
-      const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{
+      const response=await fetch("/api/coach",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({contents,generationConfig:{maxOutputTokens:800,temperature:0.7}})
+        body:JSON.stringify({messages:contents})
       });
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
@@ -1527,7 +1525,7 @@ const STRIPE_URLS = {
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text}]);
     }catch(e){
-      console.log("Gemini error:",e.message);
+      console.log("AI error:",e.message);
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);
     }
