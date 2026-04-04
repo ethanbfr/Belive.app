@@ -89,157 +89,521 @@ function storeAdminNotif(msg){
   notifs.unshift({msg,time:new Date().toLocaleString("fr-FR"),read:false});
   localStorage.setItem("ba6_notifs",JSON.stringify(notifs.slice(0,50)));
 }
-const AI_R=(q,avg)=>{
-  // Normalisation — corrige les fautes courantes et variantes phonétiques
-  const normalize=(s)=>s.toLowerCase()
-    .replace(/[àâä]/g,"a").replace(/[éèêë]/g,"e").replace(/[îï]/g,"i")
-    .replace(/[ôö]/g,"o").replace(/[ùûü]/g,"u").replace(/ç/g,"c")
-    .replace(/twich|twich|twicth|twichs|twiitch|twittch|twtich/g,"twitch")
-    .replace(/yutub|youtub|yotube|ytb|youttube|youtbe/g,"youtube")
-    .replace(/tiktoc|tikток|tik tok|tikok|tiktock/g,"tiktok")
-    .replace(/strem|streem|streeem|straem/g,"stream")
-    .replace(/viwer|viweurs|vieuwr|wiewers|vewer/g,"viewer")
-    .replace(/folower|foloweur|folllower|followeur/g,"follower")
-    .replace(/monnetis|monétis|monetiz|monetis/g,"monetis")
-    .replace(/partenaria|partenaria|partenariat/g,"partenariat")
-    .replace(/afiliation|afilliation|affilliaton/g,"affili")
-    .replace(/comencer|comenzer|commancer|commensé/g,"commenc")
-    .replace(/debuter|débuté|debuté/g,"debuter")
-    .replace(/ps4|ps5|playstation|play station|playsation|pleistation/g,"console")
-    .replace(/xbox|x box|x-box/g,"console")
-    .replace(/nintendo|switch nintendo/g,"console")
-    .replace(/micro|micro-phone|microphone/g,"micro")
-    .replace(/algoritme|algorytme|algorythme/g,"algorithme")
-    .replace(/parler|parlé|parleer/g,"parler")
-    .replace(/dire|diire|dir/g,"dire")
-    .replace(/savoir|savoiir|savoire/g,"savoir")
-    .replace(/comment|commen|comant|coment/g,"comment")
-    .replace(/koi|quoi|quoy/g,"quoi");
+const AI_R=(q,avg,history=[])=>{
+  const l=q.toLowerCase().replace(/[àâä]/g,"a").replace(/[éèêë]/g,"e").replace(/[îï]/g,"i").replace(/[ôö]/g,"o").replace(/[ùûü]/g,"u").replace(/ç/g,"c");
+  const has=(...words)=>words.some(w=>l.includes(w));
+  const lastAI=history.filter(m=>m.role==="ai").slice(-1)[0]?.text||"";
+  const lastUser=history.filter(m=>m.role==="user").slice(-2,-1)[0]?.text?.toLowerCase()||"";
 
-  const l=normalize(q);
-  const raw=q.toLowerCase();
+  // ── CONTEXT : si le dernier message parlait de viewers/personne et l'utilisateur dit "toujours pareil", "encore", "ça marche pas", "et si"
+  const isFollowUp=has("toujours","encore","quand meme","meme","mais","et si","et alors","qu est ce","pourquoi","comment","autre chose","autre conseil","suite","approfondir","plus","développe","detaille","expliquer","expli");
 
-  // ── HORS SUJET ─────────────────────────────────────────────────────────────
-  const horssujet=["cuisine","recette","restaurant","voiture","football","medecin","sante","amour","couple","meteo","voyage","vacances","ecole","bac","emploi","droit","avocat","impot","immobilier","crypto","bitcoin","bourse","psychologie","religion","politique","guerre","film","serie","musique","chanson","mode","vetement","shopping"];
-  // Vérifier hors sujet seulement si aucun mot streaming présent
-  const motsStream=["stream","live","twitch","tiktok","youtube","viewer","follower","obs","gaming","game","jeu","jouer","plateforme","monetis","affili","partenariat","audience","chat","raid","clip","bitrate","fps","micro","camera","cadeau","diamond","diamant","sub","don","abonne","console","ps4","ps5","xbox","nintendo","streamer","streameuse","personne","comment","faire","avoir","veux","envie","aide","comment","quoi","pourquoi","arrive","marche","fonctionne","possible","peut"];
-  const hasStream=motsStream.some(m=>l.includes(m))||motsStream.some(m=>raw.includes(m));
-  if(!hasStream && horssujet.some(h=>l.includes(h)))
-    return`❌ Cette question ne concerne pas le live streaming.\n\nJe suis spécialisé dans :\n🎮 TikTok Live, Twitch, YouTube Live\n📈 Croissance et monétisation\n🤝 Partenariats créateurs`;
+  if(isFollowUp && (lastUser.includes("personne")||lastUser.includes("viewer")||lastAI.includes("viewer")||lastAI.includes("personne"))){
+    return `Voilà des stratégies plus avancées pour avoir des viewers :
 
-  // ── POLITESSE ──────────────────────────────────────────────────────────────
-  if(l.match(/^(merci|merci?|mrc|thx|thanks|super|cool|nickel|parfait|top|genial|ok|oki|okk|👍|🔥|❤️|excellent|bravo|chapeau|ouf|incroyable)\s*[!?.]?$/)||
-     l.includes("merci beaucoup")||l.includes("merci bcp")||l.includes("c cool")||l.includes("c super")||l.includes("c top")||l.includes("t bo")||l.includes("t trop bo"))
-    return`Avec plaisir ! 😊 N'hésite pas si t'as d'autres questions sur le streaming.`;
+**1. Le clip viral — méthode concrète**
+Dès que tu fais quelque chose de drôle/fort en stream → clip immédiat → poste sur TikTok avec texte accrocheur. Format : vertical, 15-30 secondes, sous-titres auto. Fais ça CHAQUE stream.
 
-  // ── SALUTATIONS ────────────────────────────────────────────────────────────
-  if(l.match(/^(bonjour|salut|coucou|hello|yo|hey|bjr|slt|cc|ola|wesh|bsr|bonsoir)\s*[!?.]?$/))
-    return`Salut ! 👋 Je suis ton coach live — spécialisé Twitch, TikTok Live et YouTube Live.\n\nPose-moi n'importe quelle question sur :\n🎮 Débuter sur Twitch / TikTok\n📈 Gagner des viewers et followers\n💰 Monétisation, partenariats\n🎯 Affiliation Twitch\n🎙️ Micro, OBS, setup technique\n📱 Streamer depuis une console\n⏰ Horaires et régularité\n\nQu'est-ce que tu veux savoir ?`;
+**2. La collaboration forcée**
+Contacte 5 streamers de ta taille par semaine sur Discord/Twitter : "Hey, je stream [jeu] comme toi, on fait un co-stream ?" 80% ne répondront pas, mais 1 sur 5 oui. 1 co-stream = souvent 10-50 nouveaux viewers.
 
-  // ── DÉBUTER / COMMENT FAIRE ────────────────────────────────────────────────
-  if(l.includes("comment")&&(l.includes("stream")||l.includes("live")||l.includes("twitch")||l.includes("tiktok")||l.includes("commenc")||l.includes("debuter")||l.includes("faire")||l.includes("lancer"))||
-     l.includes("debuter")||l.includes("commenc")||l.includes("partir de zero")||l.includes("premier stream")||l.includes("premiere fois")||
-     l.includes("par ou")||l.includes("par quoi")||l.includes("comment ca marche")||l.includes("cest quoi")||l.includes("c quoi")||
-     (l.includes("veux")&&(l.includes("stream")||l.includes("live")||l.includes("faire")))||
-     (l.includes("envie")&&(l.includes("stream")||l.includes("live")||l.includes("faire"))))
-    return`Comment débuter sur Twitch — guide complet :\n\n**Étape 1 — Créer ton compte Twitch**\n• Va sur twitch.tv → créer un compte\n• Choisis un pseudo mémorable\n• Configure ta page : photo, bio, réseaux sociaux\n\n**Étape 2 — Le minimum pour commencer**\n• PC ou console (PS4/PS5/Xbox)\n• Connexion internet : 6 Mbps upload minimum\n• OBS Studio (gratuit) pour PC\n• Un bon micro — c'est la priorité n°1\n\n**Étape 3 — Sur console directement (sans PC)**\n• PS4/PS5 : Paramètres → Twitch → Lier le compte → pendant une partie → Options → Diffusion\n• Xbox : Menu → Twitch → Diffuser\n• Aucun PC ni OBS nécessaire !\n\n**Étape 4 — Sur PC avec OBS**\n• Télécharge OBS sur obsproject.com (gratuit)\n• Ajoute une scène avec ta capture de jeu\n• Paramètres → Stream → colle ta clé Twitch\n• Lance le stream !\n\n**Étape 5 — Tes premiers streams**\n• Annonce 1h avant sur Instagram/TikTok\n• Parle en permanence même si personne ne regarde\n• Durée minimum recommandée : 1h30\n• Sois régulier — toujours aux mêmes horaires`;
+**3. Le titre qui donne envie**
+Avant → "Valorant ce soir"
+Après → "Je rage-quit si je perds encore 💀 - Valorant ranked"
+Les titres avec émotion/défi = +40% de clics organiques.
 
-  // ── CONSOLE (PS4/PS5/XBOX/NINTENDO) ───────────────────────────────────────
-  if(l.includes("console")||raw.includes("ps4")||raw.includes("ps5")||raw.includes("playstation")||raw.includes("xbox")||raw.includes("nintendo")||raw.includes("switch"))
-    return`Streamer depuis une console — c'est simple :\n\n**PS4 / PS5 :**\n1. Paramètres → Twitch → Lier le compte\n2. Lance un jeu → appuie sur le bouton SHARE (PS4) ou CREATE (PS5)\n3. Sélectionne "Diffusion"\n4. Choisis Twitch → configure le titre → Lance !\n\n**Xbox Series :**\n1. Menu Xbox → Twitch → Se connecter\n2. Appuie sur le bouton Xbox → Capturer → Commencer la diffusion\n\n**Qualité depuis console :**\n• La qualité est correcte mais limitée\n• Pour une meilleure qualité : utilise une carte de capture (Elgato) + PC\n• Le micro intégré de la manette PS5 fonctionne pour débuter\n\n**Streamer FIFA / EA FC, COD, Fortnite depuis console :**\n• Fonctionne parfaitement sans PC\n• Ajoute un micro USB ou un casque avec micro pour le son\n\n**Astuce :**\nSi tu veux une webcam, branche-la en USB sur PS4/PS5 — elle sera détectée automatiquement.`;
+**4. L'heure optimale**
+Regarde quand tes concurrents streament le même jeu → stream 1h AVANT eux. Tu captes leur audience qui arrive tôt.
 
-  // ── QUOI DIRE / ANIMER / PARLER ────────────────────────────────────────────
-  if(l.includes("quoi dire")||l.includes("koi dire")||l.includes("quoi parler")||l.includes("sais pas quoi")||l.includes("sai pa koi")||
-     l.includes("animer")||l.includes("meubler")||l.includes("silence")||l.includes("parler aux")||l.includes("parler pendant")||
-     l.includes("timide")||l.includes("gene")||l.includes("suis pas a l aise")||l.includes("pas a laise")||
-     (l.includes("quoi")&&l.includes("dire"))||(l.includes("comment")&&l.includes("parler"))||
-     l.includes("seul devant")||l.includes("0 viewer")||l.includes("personne regarde"))
-    return`Quoi dire pendant un stream — les techniques qui marchent :\n\n**La règle d'or :**\nParle comme si 1000 personnes regardaient. Même avec 0 viewer, commente en permanence — les gens qui arrivent restent si tu es actif.\n\n**Ce que tu peux dire en continu :**\n• Commente ton gameplay : "Là je vais tenter de flanker par la droite"\n• Tes émotions : "C'est chaud là, je suis en clutch !"\n• Pose des questions au chat : "Chat vous jouez quoi en ce moment ?"\n• Explique ta stratégie : "Je vais essayer ce build ce soir"\n• Tes réactions : rage, fou rire, surprise — montre-toi !\n\n**Sujets pour meubler :**\n• Actualité gaming ("Vous avez vu la mise à jour ?"\n• Anecdotes sur le jeu\n• Demande l'avis du chat sur des décisions en jeu\n• Parle de ton objectif du stream\n• Raconte une histoire drôle / une anecdote\n\n**Si tu es timide :**\nCommence par streamer sans webcam — juste ta voix. Une fois à l'aise, ajoute la cam.\n\n**Ce qui fidélise :**\n• Retiens les pseudos de tes viewers réguliers\n• Remercie chaque nouveau follower par son pseudo\n• Crée des inside jokes avec ta communauté`;
+**5. Le Discord communauté**
+Crée un Discord même avec 0 membres. Annonce chaque stream dedans. Les premiers membres deviennent tes viewers fidèles.
 
-  // ── TIKTOK LIVE ────────────────────────────────────────────────────────────
-  if(l.includes("tiktok")||raw.includes("tiktok"))
-    return`TikTok Live — tout ce qu'il faut savoir :\n\n**Débloquer le Live :**\n• 1000 followers minimum\n• Compte actif depuis +30 jours\n• Application à jour\n\n**Algorithme TikTok Live :**\n✅ Minimum 10 viewers simultanés\n✅ Beaucoup d'interactions (cadeaux, commentaires)\n✅ Durée minimum 30 minutes\n✅ Lives réguliers aux mêmes horaires\n\n**Meilleurs créneaux TikTok FR :**\n• 12h–14h : pause déjeuner\n• 18h–20h : retour école/boulot\n• 21h–23h ✅ : pic d'audience\n\n**Croître vite :**\n• Fais des lives à deux avec d'autres créateurs\n• Réponds à chaque commentaire pendant le live\n• Lance des défis ou questions à ton audience`;
+**La vraie vérité :**
+Les streamers qui grandissent vite font TOUJOURS du contenu court en parallèle (TikTok/Shorts). Sans ça, la croissance Twitch seule prend des années. Lequel de ces points tu veux approfondir ?`;
+  }
 
-  // ── DIAMANTS TIKTOK ────────────────────────────────────────────────────────
-  if(l.includes("diamant")||l.includes("diamond")||l.includes("cadeau")||l.includes("gift")||l.includes("rose")||l.includes("lion")||l.includes("piece tiktok")||l.includes("coin"))
-    return`Les diamants TikTok — comment ça marche :\n\n**Conversion :**\n• 1 pièce TikTok = 0,01€ environ\n• Les cadeaux sont convertis en diamants\n• 1 diamant ≈ 0,005€ (TikTok garde ~50%)\n• Seuil de retrait : 100€ minimum\n\n**Cadeaux les plus rentables :**\n🦁 Lion = 29 999 pièces ≈ 150€\n🚀 Rocket = 20 000 pièces ≈ 100€\n🌌 Universe = 34 999 pièces ≈ 175€\n🌹 Rose = 1 pièce — symbolique mais fréquent\n\n**Comment maximiser les cadeaux :**\n• Remercie chaque cadeau par le prénom\n• Crée des objectifs visuels ("Si on atteint 100 roses je fais X")\n• Les top gifters méritent une attention spéciale`;
+  if(isFollowUp && (lastUser.includes("follower")||lastUser.includes("abonne")||lastAI.includes("follower"))){
+    return `Pour accélérer les followers, voilà ce qui marche vraiment :
 
-  // ── AFFILIATION TWITCH ─────────────────────────────────────────────────────
-  if(l.includes("affili")||l.includes("partenaire twitch")||l.includes("affilier")||l.includes("devenir affilie"))
-    return`Affiliation Twitch — conditions exactes :\n\n✅ 50 followers\n✅ 500 minutes streamées sur 30 jours\n✅ 7 jours de stream différents sur 30 jours\n✅ 3 viewers moyens simultanés\n\n**Le plus dur : les 3 viewers moyens.**\n\nComment y arriver vite :\n• Invite 3–5 amis à regarder tes premiers streams\n• Annonce chaque stream 1h avant sur tes réseaux\n• Streame en heures de pointe (20h–23h)\n• Rejoins des Discord de streamers pour du soutien mutuel\n\n**Après l'affiliation :**\n• Subs à 2,50€ (tu gardes 50%)\n• Bits, emotes, mode sub-only`;
+**La méthode la plus rapide :**
+🎬 **TikTok → Twitch pipeline**
+Poste 1 clip/jour sur TikTok de tes meilleurs moments. Dans la bio TikTok → lien Twitch. Un TikTok viral peut t'apporter 100-1000 followers en une nuit.
 
-  // ── VIEWERS ────────────────────────────────────────────────────────────────
-  if(l.includes("viewer")||l.includes("audience")||l.includes("spectateur")||l.includes("regarder")||l.includes("regardeurs")||l.includes("gens qui regardent")||l.includes("personne regarde")||l.includes("personne sur")||l.includes("jamais personne")||l.includes("0 viewer")||l.includes("zero viewer")||l.includes("pas de viewer")||l.includes("toujours personne")||l.includes("personne vient")||l.includes("personne ne vient")||l.includes("personne ne regarde")||(l.includes("personne")&&(l.includes("live")||l.includes("stream")))||(l.includes("deja fait")&&l.includes("personne")))
-    return`Pas de viewers en live — voici pourquoi et comment y remédier :\n\n**Le vrai problème :**\nTwitch/TikTok ne référence pas les petits streamers spontanément. Il faut amener les viewers SOI-MÊME.\n\n**Ce qui marche vraiment :**\n🎬 **Clip → TikTok** : ton meilleur moment du stream en vidéo courte. Un bon clip peut ramener 20–100 viewers en 48h\n📢 **Annonce 1h avant** sur tes réseaux : "Je stream ce soir 21h sur Fortnite !"\n🤝 **Raids** : à la fin de ton stream, raid un streamer de ta taille — il te raidera en retour\n💬 **Discord de streamers** : rejoins des serveurs gaming FR et annonce tes streams\n\n**Parle même avec 0 viewer :**\nLes gens qui arrivent repartent si tu es silencieux. Commente ton gameplay en permanence.\n\n**La réalité :**\nLes 10 premiers viewers sont les plus durs à avoir. Une fois que tu as une petite base régulière, ça grossit naturellement. Continue — ça prend 2–6 mois en moyenne. 💪`;
+**Le réseau Twitch :**
+• Raid 3 streamers après chaque stream → ils te raidront en retour
+• Commente dans le chat d'autres streamers (avec ton pseudo visible)
+• Participe aux events Twitch de ta catégorie
 
-  // ── FOLLOWERS / CROISSANCE ─────────────────────────────────────────────────
-  if(l.includes("follower")||l.includes("abonne")||l.includes("croissance")||l.includes("grandir")||l.includes("progresser")||l.includes("grow")||l.includes("grossir")||l.includes("plus connu")||l.includes("me faire connaitre")||l.includes("audience"))
-    return`Croissance — les 3 leviers qui marchent :\n\n**1. 🎬 Contenu court (impact immédiat)**\nClipe tes meilleurs moments → TikTok/Shorts en vertical. Un bon clip = 50–500 followers en une nuit.\n\n**2. 🤝 Le réseau**\n• Raids vers des streamers de ta taille\n• Co-streams avec des créateurs complémentaires\n• Discord de créateurs\n\n**3. 📅 La régularité**\nStreame toujours aux mêmes horaires — les viewers reviennent par habitude.\n\n❌ Ce qui ne marche pas : acheter des followers, follow for follow, streamer sans horaires fixes.`;
+**Ce qui prend du temps mais marche :**
+• Régularité absolue — même heure, même jour chaque semaine
+• Crée un "rendez-vous" : "Le lundi c'est ranked avec les subs"
+• Une vraie personalité reconnaissable — les gens s'abonnent à TOI pas à ton contenu
 
-  // ── MONÉTISATION / ARGENT ──────────────────────────────────────────────────
-  if(l.includes("argent")||l.includes("monetis")||l.includes("gagner")||l.includes("revenu")||l.includes("salaire")||l.includes("paye")||l.includes("remunere")||l.includes("sous")||l.includes("thune")||l.includes("cash")||l.includes("oseille"))
-    return`Monétisation streaming — toutes les sources :\n\n**🎮 Twitch :**\n• Subs : 2,50€ / 5€ / 25€ (tu gardes 50%)\n• Bits : 1 bit = 0,01$\n• Ads : 0,50€–3€ pour 1000 views\n\n**📱 TikTok Live :**\n• Diamants via cadeaux (TikTok garde ~50%)\n• Seuil retrait : 100€ minimum\n\n**▶️ YouTube Live :**\n• Super Chat : dons mis en avant\n• Membres : abonnement mensuel\n\n**💰 La vraie source de revenus : les partenariats**\n• 0–200 followers : codes promo affiliation\n• 200–500 : produits offerts\n• 500–1000 : premiers deals rémunérés (50€–300€)\n• 1000+ : sponsoring régulier`;
+Tu es sur quel jeu principalement ?`;
+  }
 
-  // ── PARTENARIATS ───────────────────────────────────────────────────────────
-  if(l.includes("partenariat")||l.includes("sponsor")||l.includes("deal")||l.includes("marque")||l.includes("collaboration")||l.includes("contrat")||l.includes("sponsorise"))
-    return`Partenariats — comment ça marche :\n\n• 0–200 followers → codes promo affiliation (GFuel, Kinguin)\n• 200–500 → produits offerts\n• 500–1000 → premiers deals rémunérés (50–300€)\n• 1000–5000 → deals réguliers (300–1000€)\n• 5000+ → sponsoring sérieux\n\n**Comment prospecter :**\n1. Crée un media kit (stats + audience + tarifs)\n2. Contacte par DM Instagram/Twitter ou email\n3. Commence par les marques gaming`;
+  if(isFollowUp && (lastUser.includes("monetis")||lastUser.includes("argent")||lastAI.includes("monétis")||lastAI.includes("argent"))){
+    return `Pour la monétisation en détail :
+
+**🎮 Affiliation Twitch (premier objectif)**
+Conditions : 50 followers + 500min streamées + 7 jours différents + 3 viewers moyens
+Une fois affilié : les abonnés à 4,99€ (tu gardes 50%), les bits (0,01€ chacun)
+
+**📱 TikTok Live (plus rapide)**
+À partir de 1000 followers → live TikTok activé
+Les cadeaux = diamants = argent (TikTok garde 50%)
+Un Lion = 150€, une Rose = 0,01€
+
+**💰 Les partenariats (la vraie source de revenus)**
+• 0-200 followers → codes affiliés (GFuel, Kinguin) = 5-15% commission
+• 200-500 → produits offerts
+• 500-2000 → deals payants 50-300€/mois
+• 2000+ → sponsoring régulier 300-2000€/mois
+
+**Le chemin le plus rapide :**
+1. Affiliation Twitch
+2. TikTok en parallèle pour la croissance
+3. Premier partenariat gaming dès 200 followers
+
+Tu en es où dans ce parcours ?`;
+  }
+
+  // ── VIEWERS / PERSONNE SUR LE LIVE ──────────────────────────────────────────
+  if(has("personne","0 viewer","zero viewer","pas de viewer","jamais viewer","aucun viewer","vide","tout seul","seul en live")||
+     (has("personne")&&has("live","stream","viewers"))||
+     (has("comment")&&has("viewer","spectateur","audience","gens"))||
+     has("avoir des viewer","gagner des viewer","plus de viewer","attirer")){
+    return `Pas de viewers ? Voilà pourquoi et comment régler ça :
+
+**Le vrai problème :**
+Twitch/TikTok ne référence pas les petits streamers. Tu dois amener les viewers TOI-MÊME.
+
+**Actions immédiates qui marchent :**
+🎬 **Clip → TikTok** : capture ton meilleur moment, poste en vertical sur TikTok. 1 clip viral = 20-200 nouveaux viewers
+📢 **Annonce 1h avant** sur tous tes réseaux : "Je stream ce soir 21h ! Fortnite ranked"
+🤝 **Raids mutuels** : contacte des streamers du même jeu et taille, organisez des raids croisés
+💬 **Discord gaming FR** : rejoins des serveurs de ton jeu et annonce tes streams dans les salons prévus
+🗣️ **Parle en permanence** même à 0 viewer — les gens qui arrivent partent si tu es silencieux
+
+**Ce qui ne marche PAS :**
+❌ Attendre que Twitch te recommend naturellement
+❌ Streamer sans annoncer avant
+❌ Rester silencieux
+
+**La réalité :**
+Les 10 premiers viewers réguliers sont les plus durs. Après ça grossit naturellement. Ça prend 2-6 mois. Continue — tu veux qu'on approfondisse un point ?`;
+  }
+
+  // ── FOLLOWERS / CROISSANCE ────────────────────────────────────────────────
+  if(has("follower","abonne","croissance","grandir","progresser","grow","grossir","connu","me faire connaitre","plus de follower","gagner follower")){
+    return `Croissance followers — les 3 leviers qui marchent vraiment :
+
+**1. 🎬 Contenu court (impact immédiat)**
+Clipe tes meilleurs moments → TikTok/Shorts en vertical. Un bon clip = 50-500 followers en une nuit. C'est LE levier n°1 pour grandir vite.
+
+**2. 🤝 Le réseau Twitch**
+• Raids vers streamers de ta taille après chaque stream
+• Co-streams avec créateurs complémentaires
+• Rejoins des Discord de streamers FR
+
+**3. 📅 La régularité**
+Même heure, mêmes jours chaque semaine. Les viewers deviennent des abonnés par habitude.
+
+**❌ Ce qui ne marche pas :**
+Acheter des followers, follow-for-follow, streamer sans horaires fixes, pas d'annonces avant les streams.
+
+Tu veux approfondir l'un de ces points ?`;
+  }
+
+  // ── AFFILIATION TWITCH ────────────────────────────────────────────────────
+  if(has("affili","devenir affilie","conditions affili","paliers twitch","partenaire twitch")){
+    return `Affiliation Twitch — tout ce qu'il faut savoir :
+
+**Les 4 conditions exactes :**
+✅ 50 followers minimum
+✅ 500 minutes streamées sur 30 jours
+✅ 7 jours de stream différents sur 30 jours
+✅ **3 viewers moyens simultanés** (le plus dur !)
+
+**Comment atteindre les 3 viewers moyens :**
+• Invite 3-5 amis à regarder tes premiers streams
+• Annonce chaque stream 1h avant sur Instagram/TikTok
+• Streame aux heures de pointe : 20h-23h FR
+• Rejoins des Discord de streamers pour du soutien mutuel
+• Fais des clips pour ramener des gens depuis TikTok
+
+**Une fois affilié :**
+• Subs à 4,99€ (tu gardes 50% soit 2,50€)
+• Bits : 1 bit = 0,01$
+• Emotes personnalisées
+• Mode sub-only, slow mode etc.
+
+**Combien de temps ?**
+Avec de la régularité : 3-6 mois en moyenne. Avec TikTok en parallèle : 1-3 mois.
+
+Tu en es où dans ce parcours ?`;
+  }
+
+  // ── MONÉTISATION ──────────────────────────────────────────────────────────
+  if(has("argent","monetis","gagner","revenu","salaire","paye","sous","thune","cash","combien","gagne")){
+    return `Monétisation streaming — toutes les sources de revenus :
+
+**🎮 Twitch Affilié :**
+• Subs : 2,50€ par abonné/mois
+• Bits : 1 bit = 0,01$
+• Ads : 0,50-3€ pour 1000 views
+
+**📱 TikTok Live :**
+• Diamants via cadeaux (TikTok garde ~50%)
+• Lion = 29 999 pièces ≈ 150€
+• Seuil de retrait : 100€ minimum
+
+**▶️ YouTube Live :**
+• Super Chat : dons mis en avant
+• Membres : abonnement mensuel
+
+**💰 Les partenariats (vraie source de revenus) :**
+• 0-200 followers → codes promo affiliation (5-15%)
+• 200-500 → produits offerts
+• 500-2000 → premiers deals payants (50-300€)
+• 2000+ → sponsoring régulier (300-2000€/mois)
+
+**Chemin le plus rapide :**
+Affiliation Twitch → TikTok pour croissance → 1er partenariat à 200 followers
+
+Tu veux approfondir un point particulier ?`;
+  }
+
+  // ── TIKTOK ────────────────────────────────────────────────────────────────
+  if(has("tiktok")){
+    return `TikTok Live — tout ce qu'il faut savoir :
+
+**Débloquer le Live :**
+• 1000 followers minimum
+• Compte actif depuis +30 jours
+• Application à jour
+
+**Algorithme TikTok Live :**
+✅ Minimum 10 viewers simultanés pour être mis en avant
+✅ Beaucoup d'interactions (cadeaux, commentaires)
+✅ Durée minimum 30 minutes
+✅ Lives réguliers aux mêmes horaires
+
+**Meilleurs créneaux TikTok FR :**
+• 12h-14h : pause déjeuner
+• 18h-20h : retour école/boulot
+• 21h-23h ✅ : pic d'audience
+
+**Pour croître vite sur TikTok :**
+• 1 vidéo courte/jour de tes meilleurs moments de stream
+• Lives à deux avec d'autres créateurs
+• Réponds à CHAQUE commentaire pendant le live
+• Lance des défis ou questions à ton audience
+• Dans ta bio : lien Twitch/YouTube
+
+**Diamants et cadeaux :**
+• 1 pièce TikTok ≈ 0,01€
+• Lion (29 999 pièces) ≈ 150€
+• TikTok garde ~50% des diamants
+• Retrait minimum : 100€
+
+Tu as déjà les 1000 followers TikTok ?`;
+  }
+
+  // ── OBS / TECHNIQUE ───────────────────────────────────────────────────────
+  if(has("obs","bitrate","fps","resolution","lag","freeze","logiciel","parametr","config","encodage","1080","720")){
+    return `Paramètres OBS optimaux selon ta connexion :
+
+**PC Gaming moyen (upload 6-10 Mbps) :**
+• Résolution : 720p60
+• Bitrate : 4500-5000 kbps
+• Encodeur : NVENC (Nvidia) ou AMF (AMD) → moins de CPU
+• FPS : 60
+
+**PC Gaming puissant (upload +10 Mbps) :**
+• Résolution : 1080p60
+• Bitrate : 6000 kbps
+• Encodeur : NVENC New ou x264 slow
+
+**Si ça lag/freeze :**
+1. Passe de 1080p à 720p
+2. Baisse le bitrate de 500 en 500
+3. Branche en ethernet (pas WiFi)
+4. Utilise NVENC plutôt que x264
+5. Ferme Chrome et les apps en arrière-plan
+
+**Paramètres audio :**
+• Taux d'échantillonnage : 48kHz
+• Piste 1 : 320 kbps
+
+**Scenes recommandées :**
+• Jeu (capture de jeu + webcam + alertes)
+• Just Chatting (webcam plein écran)
+• BRB (musique + image)
+• Fin de stream
+
+Tu as quel problème spécifique avec OBS ?`;
+  }
+
+  // ── SETUP / MATÉRIEL ──────────────────────────────────────────────────────
+  if(has("micro","camera","webcam","materiel","setup","matos","eclairage","lumiere","casque","ring light","acheter")){
+    return `Setup streaming — priorités et budget :
+
+**1. 🎙️ Micro — LE plus important**
+Les viewers pardonnent une mauvaise image, pas un mauvais son.
+• 50€ : HyperX SoloCast ✅ Meilleur rapport qualité/prix
+• 80€ : Blue Snowball iCE
+• 150€ : HyperX QuadCast S (avec filtre anti-pop intégré)
+• Budget serré : un casque gaming avec micro correct suffit pour débuter
+
+**2. 📡 Connexion**
+Minimum 6 Mbps upload — ethernet OBLIGATOIRE (pas WiFi)
+Test : speedtest.net
+
+**3. 💡 Éclairage — impact visuel énorme**
+Ring light LED 20-30€ → change complètement le rendu
+Mets-la face à toi, légèrement en hauteur
+
+**4. 📷 Webcam — pas obligatoire pour débuter**
+• Logitech C920 (80€) : référence
+• Logitech C270 (50€) : entrée de gamme correct
+• iPhone comme webcam : utilise Camo ou Continuity Camera (gratuit sur Mac)
+
+**Ordre d'achat recommandé :**
+Bon micro → Ring light → Webcam → Upgrade micro haut de gamme
+
+Tu as déjà du matériel ou tu pars de zéro ?`;
+  }
+
+  // ── QUOI DIRE / ANIMER ────────────────────────────────────────────────────
+  if(has("quoi dire","koi dire","quoi parler","sais pas quoi","animer","meubler","silence","parler","timide","gene","seul")){
+    return `Quoi dire pendant un stream — les techniques concrètes :
+
+**La règle d'or :**
+Parle comme si 1000 personnes regardaient. Même à 0 viewer, commente EN PERMANENCE.
+
+**Ce que tu peux dire en continu :**
+🎮 Commente ton gameplay : "Là je vais tenter de flanker par la droite, je sens qu'il est là"
+😤 Tes émotions : "C'est chaud là, je suis en 1v3 !"
+💬 Questions au chat : "Chat vous jouez quoi en ce moment ?"
+🧠 Ta stratégie : "Ce soir j'essaie un nouveau build, on voit si ça marche"
+😂 Tes réactions : rage, fou rire, surprise — montre-toi authentique !
+
+**Sujets pour meubler :**
+• Actualité gaming ("Vous avez vu la nouvelle map ?"
+• Anecdotes sur le jeu
+• Demande l'avis du chat sur des décisions en jeu
+• Parle de ton objectif du stream
+• Raconte des anecdotes personnelles liées au gaming
+
+**Si tu es timide :**
+Commence sans webcam — juste ta voix. C'est plus facile de parler sans être vu.
+
+**Ce qui fidélise les viewers :**
+• Retiens les pseudos de tes viewers réguliers
+• Remercie chaque nouveau follower par son pseudo
+• Crée des inside jokes avec ta communauté
+• Un rituel de début et fin de stream reconnaissable
+
+Tu veux des exemples de phrases spécifiques pour ton jeu ?`;
+  }
+
+  // ── CONSOLE ───────────────────────────────────────────────────────────────
+  if(has("console","ps4","ps5","playstation","xbox","switch","nintendo")){
+    return `Streamer depuis une console — guide complet :
+
+**PlayStation 4 / PS5 (le plus simple) :**
+1. Paramètres → Twitch/YouTube → Lier le compte
+2. Lance un jeu
+3. Appuie sur le bouton SHARE (PS4) ou CREATE (PS5)
+4. Sélectionne "Diffusion"
+5. Choisis Twitch → configure titre → Lance !
+
+**Xbox Series / One :**
+1. Menu Xbox → Twitch → Se connecter
+2. Bouton Xbox pendant le jeu → Capturer → Commencer la diffusion
+
+**Qualité depuis console :**
+• 720p30 en natif — correct pour débuter
+• Pour monter en qualité : carte de capture Elgato HD60 (150€) + PC
+• Le micro intégré PS5 fonctionne bien pour débuter
+
+**Micro sur console :**
+• PS4/PS5 : n'importe quel casque jack 3.5mm
+• Xbox : casque USB ou jack
+• HyperX Cloud Stinger (50€) → excellent rapport qualité/prix sur console
+
+**Webcam sur console :**
+• PS5 : caméra HD PlayStation officielle (60€)
+• Xbox : n'importe quelle webcam USB
+• PS4 : caméra PlayStation 4 ou webcam USB
+
+Tu as quelle console exactement ?`;
+  }
+
+  // ── HORAIRES ─────────────────────────────────────────────────────────────
+  if(has("horaire","heure","quand","moment","creneau","matin","soir","weekend","meilleur moment")){
+    return `Meilleurs horaires pour streamer en France :
+
+**🏆 Prime time (audience maximale) :**
+• 20h-23h semaine ✅ Le meilleur créneau
+• 21h-00h vendredi/samedi ✅ Très bon
+• 14h-17h weekend ✅ Bon pour les plus jeunes
+
+**⚠️ Créneaux à éviter :**
+• 8h-12h semaine : trop peu de monde
+• 23h+ semaine : audience qui diminue
+
+**La règle la plus importante :**
+Streame TOUJOURS aux mêmes horaires — la régularité > les heures idéales.
+Tes viewers reviennent par habitude. Si tu changes tout le temps, ils ne savent pas quand te retrouver.
+
+**Stratégie maline :**
+Regarde quand tes concurrents streament le même jeu → stream 30-60min AVANT eux. Tu captes les viewers qui arrivent tôt avant qu'ils choisissent un autre stream.
+
+**Durée recommandée :**
+• Minimum : 1h30
+• Idéal : 2h-3h
+• Maximum sans épuisement : 4h
+
+Tu streames sur quelle plateforme ?`;
+  }
 
   // ── TITRE / DESCRIPTION ────────────────────────────────────────────────────
-  if(l.includes("titre")||l.includes("title")||l.includes("description")||l.includes("tag")||l.includes("miniature")||l.includes("thumbnail")||l.includes("nom de stream"))
-    return`Optimiser ton titre de stream :\n\n**La formule :**\n[Jeu] — [Ce que tu fais] + [Émotion/Défi]\n\n❌ "Warzone ce soir"\n✅ "Warzone ranked — Je monte Diamond ou je delete le jeu 💀"\n✅ "Minecraft hardcore — 1 mort = stream terminé"\n\nLes titres avec un défi = +40% de clics\n\n**Tags Twitch utiles FR :**\nFrançais, Gaming, Compétitif, Débutant, Interactif`;
+  if(has("titre","title","description","tag","miniature","thumbnail","nom de stream","titre stream")){
+    return `Optimiser ton titre de stream — méthode complète :
 
-  // ── OBS / TECHNIQUE ────────────────────────────────────────────────────────
-  if(l.includes("obs")||l.includes("encodage")||l.includes("bitrate")||l.includes("fps")||l.includes("resolution")||l.includes("lag")||l.includes("freeze")||l.includes("parametre")||l.includes("logiciel"))
-    return`Paramètres OBS optimaux :\n\n• 1080p60 → bitrate 6000 kbps (upload min 8 Mbps)\n• 720p60 → bitrate 4500 kbps ✅ Recommandé pour débuter\n\n**Encodeur :**\n• Nvidia GPU → NVENC\n• AMD GPU → AMF\n• Sans GPU → x264\n\n**Si ça lag :**\n1. Baisse le bitrate de 500 en 500\n2. Passe de 1080p à 720p\n3. Branche en ethernet (pas wifi)`;
+**La formule qui marche :**
+[Jeu] — [Ce que tu fais] + [Émotion/Défi]
 
-  // ── SETUP MATÉRIEL ─────────────────────────────────────────────────────────
-  if(l.includes("micro")||l.includes("camera")||l.includes("materiel")||l.includes("eclairage")||l.includes("lumiere")||l.includes("casque")||l.includes("setup")||l.includes("matos")||l.includes("webcam")||l.includes("ring light"))
-    return`Setup streaming — priorités :\n\n**1. 🎙️ Micro — Le plus important**\n• 50€ : HyperX SoloCast\n• 80€ : Blue Snowball iCE\n• 150€ : HyperX QuadCast S\n\n**2. 📡 Connexion**\nMinimum 6 Mbps upload — ethernet obligatoire\n\n**3. 💡 Éclairage**\nRing light 20€ → change tout\n\n**4. 📷 Caméra**\nPas obligatoire pour débuter — Logitech C920 si tu veux`;
+**❌ Titres qui ne fonctionnent pas :**
+"Warzone ce soir"
+"Stream Minecraft"
+"Jeu vidéo"
 
-  // ── HORAIRES ───────────────────────────────────────────────────────────────
-  if(l.includes("horaire")||l.includes("heure")||l.includes("quand")||l.includes("moment")||l.includes("creneau")||l.includes("matin")||l.includes("soir")||l.includes("weekend"))
-    return`Meilleurs créneaux streaming FR :\n\n**Twitch :**\n• 20h–23h ✅ : Peak time\n• Weekend 15h–17h : Audience ado\n\n**TikTok Live :**\n• 12h–14h ✅ pause déjeuner\n• 18h–20h ✅ retour école/boulot\n• 21h–23h ✅ pic d'audience\n\n**La règle d'or :** Régularité > timing. Toujours aux mêmes heures.\n\n**Fréquence :**\n• Minimum : 3 fois/semaine\n• Idéal : 5 fois/semaine`;
+**✅ Titres qui cliquent :**
+"Warzone ranked — Je DELETE le jeu si je perds 💀"
+"Minecraft hardcore — 1 mort = stream terminé 😱"
+"Fortnite jusqu'au Diamant ou stream de 10h 🔥"
+"Valorant — Clutch ou rage-quit en direct 😭"
 
-  // ── JEUX ───────────────────────────────────────────────────────────────────
-  if(l.includes("jeu")||l.includes("game")||l.includes("jouer")||l.includes("categorie")||l.includes("niche")||l.includes("contenu")||l.includes("quoi jouer")||l.includes("quel jeu")||l.includes("sur quoi"))
-    return`Choix du jeu — la stratégie gagnante :\n\n**Règle d'or :** Vise des catégories avec 200–800 viewers totaux sur Twitch → tu apparais en haut de liste.\n\n**Bons choix FR :**\n• Brawl Stars, Valorant ranked, Minecraft, FIFA FUT\n\n**À éviter si tu débutes :**\n❌ Fortnite, GTA RP, LoL, Warzone — trop saturés\n\n**Conseil :** Choisis un jeu que tu connais BIEN.`;
+**Pourquoi ça marche ?**
+Les titres avec défi/émotion = +40-60% de clics organiques
+Les gens veulent voir ce qui va se passer
 
-  // ── RAID ───────────────────────────────────────────────────────────────────
-  if(l.includes("raid")||l.includes("host")||l.includes("costream")||l.includes("co stream"))
-    return`Raids et co-streams :\n\n**Qui raider :**\n✅ Même taille que toi (± 50% viewers)\n✅ Même type de contenu\n✅ En live au moment où tu termines\n\n❌ Pas les gros streamers — ton audience se dilue\n\n**Commande Twitch :** /raid [pseudo]\n\n**Co-stream :** Streamez ensemble au même moment → les deux audiences se mélangent.`;
+**Tags Twitch utiles (FR) :**
+Français, Gaming, Compétitif, Solo, Débutant, Interactif, 18+
 
-  // ── CHAT / ENGAGEMENT ──────────────────────────────────────────────────────
-  if(l.includes("chat")||l.includes("engagement")||l.includes("interaction")||l.includes("communaute")||l.includes("bot")||l.includes("nightbot")||l.includes("moderateur")||l.includes("fideliser"))
-    return`Animer son chat :\n\n• Pose une question ouverte toutes les 5–10 min\n• Lis chaque message à voix haute au début\n• Lance des débats ("PC vs Console ?")\n• Remercie chaque nouvel abonné\n\n**Bots :**\n• Nightbot — simple, gratuit\n• StreamElements — complet\n\n**Commandes utiles :**\n!discord !reseaux !objectif`;
+**Miniature :**
+Face réaction + texte + couleur vive = CTR maximum
+Outis : Canva (gratuit) → modèles gaming
 
-  // ── RÉSEAUX SOCIAUX ────────────────────────────────────────────────────────
-  if(l.includes("reseau")||l.includes("instagram")||l.includes("youtube")||l.includes("twitter")||l.includes("clip")||l.includes("short")||l.includes("reels")||l.includes("multistream")||l.includes("restream"))
-    return`Stratégie multi-plateforme :\n\n🎮 Twitch/TikTok → Stream principal\n🎵 TikTok → Clips viraux\n▶️ YouTube → Highlights\n📸 Instagram → Personal branding\n\n**Règle 80/20 :** 80% sur ta plateforme principale, 20% à recycler.\n\n**Recycler un stream :**\nStream → clip 30–60s → TikTok/Shorts/Reels`;
+Tu streames quel jeu ? Je t'aide à créer un titre spécifique.`;
+  }
 
-  // ── ALGO ───────────────────────────────────────────────────────────────────
-  if(l.includes("algorithme")||l.includes("algo")||l.includes("visibilite")||l.includes("decouverte")||l.includes("recommandation"))
-    return`Les algorithmes live :\n\n**Twitch :** Trie par viewers → vise catégories 200–800 viewers totaux pour apparaître en haut.\n\n**TikTok Live :**\n✅ 10+ viewers simultanés\n✅ Beaucoup d'interactions\n✅ Durée min 30 min\n\n**YouTube Live :**\nAnnonce 48h avant → YouTube crée des rappels.\n\n**Partout :** Régularité + rétention + interactions`;
+  // ── PARTENARIATS ─────────────────────────────────────────────────────────
+  if(has("partenariat","sponsor","deal","marque","collaboration","contrat","sponsoris","argent marque")){
+    return `Partenariats — comment en obtenir :
 
-  // ── BAN / PROBLÈMES ────────────────────────────────────────────────────────
-  if(l.includes("banni")||l.includes("ban")||l.includes("suspendu")||l.includes("suspension")||l.includes("dmca")||l.includes("copyright")||l.includes("signalement"))
-    return`Problèmes de compte :\n\n**DMCA / Copyright :**\nMusique libre : Epidemic Sound, Monstercat, Pretzel.rocks\n\n**Ban Twitch :**\n• 1er : 1–3 jours • 2ème : 7–30 jours • 3ème : permanent\n• Appel : twitch.tv/user/legal\n\n**Ban TikTok :**\nApp → Profil → Aide → Signaler un problème`;
+**Par niveau de followers :**
+• 0-200 → codes promo affiliation : GFuel, Kinguin, G2A, Instant Gaming
+• 200-500 → produits offerts contre visibilité
+• 500-2000 → premiers deals payants (50-300€)
+• 2000-10000 → deals réguliers (300-1000€/mois)
+• 10000+ → gros sponsoring (1000-5000€+/mois)
 
-  // ── MOTIVATION ─────────────────────────────────────────────────────────────
-  if(l.includes("motivat")||l.includes("decourage")||l.includes("abandonner")||l.includes("arreter")||l.includes("difficile")||l.includes("nul")||l.includes("ca sert a rien")||l.includes("personne me regarde"))
-    return`C'est normal au début — voilà la réalité :\n\n• 95% des streamers ont moins de 5 viewers leurs 6 premiers mois\n• Les plus gros streamers FR ont tous streamé devant 0 personne\n• La croissance est lente au début, rapide après un seuil\n\n**Quand il y a 0 viewer :** C'est souvent un problème de visibilité — mauvaise catégorie ou pas d'annonce avant le stream.\n\n"Streame comme si 1000 personnes regardaient — un jour ce sera vrai." 🔥`;
+**Comment prospecter (même petit) :**
+1. Crée un media kit simple : stats + audience + tarifs (Canva gratuit)
+2. Contacte par DM Instagram ou email pro
+3. Commence par les petites marques gaming (accessoires, jeux indé)
+4. Plateformes dédiées : Gameinfluencer.io, Lurkit, PowerSpike
 
-  // ── OVERLAYS ───────────────────────────────────────────────────────────────
-  if(l.includes("overlay")||l.includes("alert")||l.includes("alerte")||l.includes("streamlabs")||l.includes("widget")||l.includes("habillage"))
-    return`Overlays et alerts :\n\n**Outils gratuits :**\n• StreamElements — tout-en-un ✅\n• Streamlabs — très complet\n\n**Le minimum :**\n✅ Overlay principal\n✅ Alerts nouveaux followers/subs/dons\n✅ Scène BRB et fin de stream\n\n**Thèmes gratuits :** Nerd or Die, Own3d.tv`;
+**Tarifs à proposer :**
+• Mention orale (30sec) : 30-100€
+• Panneau stream (1h) : 50-200€
+• Vidéo dédiée YouTube : 100-500€
+• Package complet : 200-1000€
 
-  // ── FALLBACK INTELLIGENT ───────────────────────────────────────────────────
-  // Si la question contient au moins un mot lié au streaming → réponse utile
-  if(hasStream)
-    return`Bonne question sur le streaming ! Voici les sujets sur lesquels je peux t'aider :\n\n🎮 Débuter sur Twitch / TikTok / YouTube Live\n📱 Streamer depuis une console (PS4/PS5/Xbox)\n💬 Quoi dire pendant un stream\n📈 Gagner des viewers et followers\n💰 Monétisation et partenariats\n🎯 Affiliation Twitch\n🎙️ Micro, OBS, setup technique\n⏰ Meilleurs horaires\n🔥 Animer son chat\n\nPose ta question plus précisément et je t'aide ! 💪`;
+**Marques à démarcher pour débuter :**
+GFuel, Monster Gaming, Secretlab, SteelSeries, Razer, Logitech, Discord Nitro
 
-  // ── HORS SUJET ABSOLU ──────────────────────────────────────────────────────
-  return`Pas de viewers sur tes lives ? Voila ce qui marche vraiment :\n\n🎬 Clip tes meilleurs moments et poste sur TikTok. Un bon clip peut ramener 20-100 viewers en 48h\n📢 Annonce 1h avant chaque stream sur tes reseaux sociaux\n🤝 Fais des raids a la fin de tes streams vers des crea de ta taille\n💬 Rejoins des Discord gaming FR et annonce tes streams\n🗣️ Parle en permanence meme avec 0 viewer — les gens repartent si tu es silencieux\n\nTu veux de l aide sur un point precis ? Viewers, monetisation, setup, TikTok...`;
+Tu as combien de followers actuellement ?`;
+  }
+
+  // ── DÉBUTER ───────────────────────────────────────────────────────────────
+  if(has("commencer","debuter","commenc","debut","lancer","partir de zero","premiere fois","premier stream","comment stream","comment live","faire un stream","faire un live")){
+    return `Comment débuter le streaming — guide complet :
+
+**Étape 1 — Choisir sa plateforme**
+🟣 **Twitch** : le meilleur pour le gaming, communauté établie
+📱 **TikTok Live** : croissance plus rapide mais 1000 followers requis
+▶️ **YouTube Live** : bon pour les let's play longs
+
+**Étape 2 — Le minimum pour commencer**
+• PC ou console (PS4/PS5/Xbox)
+• Connexion : 6 Mbps upload minimum (test sur speedtest.net)
+• Un bon micro : HyperX SoloCast 50€ (priorité absolue)
+• OBS Studio sur PC (100% gratuit) ou stream direct depuis console
+
+**Étape 3 — Régler OBS (PC)**
+• Résolution : 720p60
+• Bitrate : 4500 kbps
+• Encodeur : NVENC (Nvidia) ou x264
+• Connecte ton compte Twitch dans Paramètres → Stream
+
+**Étape 4 — Ton premier stream**
+• Annonce 1h avant sur tes réseaux
+• Titre accrocheur avec défi ou émotion
+• Parle en permanence même à 0 viewer
+• Durée minimum : 1h30
+• Même horaire chaque stream
+
+**Étape 5 — Après le stream**
+• Clip tes meilleurs moments
+• Poste sur TikTok/Instagram
+• Analyse : combien de viewers, quels moments intéressants
+
+Tu streames sur PC ou console ?`;
+  }
+
+  // ── SALUTATIONS ───────────────────────────────────────────────────────────
+  if(l.match(/^(bonjour|salut|coucou|hello|yo|hey|bjr|slt|cc|bsr|bonsoir|hi)\s*[!?.]?$/)){
+    return `Salut ! 👋 Je suis ton coach streaming — spécialisé Twitch, TikTok Live et YouTube Live.
+
+Je peux t'aider sur :
+🎮 **Débuter** : comment commencer à streamer
+📈 **Viewers** : comment en avoir plus
+👥 **Followers** : stratégies de croissance
+💰 **Monétisation** : affiliation, partenariats, revenus
+🎯 **Affiliation Twitch** : conditions et stratégies
+🎙️ **Setup** : micro, OBS, caméra, technique
+📱 **TikTok Live** : diamants, algorithme
+⏰ **Horaires** : quand streamer pour avoir le plus de monde
+💬 **Animer** : quoi dire, comment fidéliser
+
+Pose ta question !`;
+  }
+
+  // ── POLITESSE ──────────────────────────────────────────────────────────────
+  if(l.match(/^(merci|mrc|thx|thanks|super|cool|nickel|parfait|top|genial|ok|oki|👍|🔥|excellent|bravo)\s*[!?.]?$/)||has("merci beaucoup","c cool","c super","c top")){
+    return `Avec plaisir ! 😊 N'hésite pas si tu as d'autres questions. Je suis là pour t'aider à progresser. 💪`;
+  }
+
+  // ── FALLBACK INTELLIGENT ─────────────────────────────────────────────────
+  return `Je t'aide sur ce sujet lié au streaming ! Voici les questions les plus utiles que je peux approfondir :
+
+📈 **"Comment avoir plus de viewers ?"**
+👥 **"Comment gagner des followers rapidement ?"**
+💰 **"Comment gagner de l'argent avec mon stream ?"**
+🎯 **"Comment devenir affilié Twitch ?"**
+🎙️ **"Quel micro/setup choisir ?"**
+⏰ **"Quels sont les meilleurs horaires pour streamer ?"**
+💬 **"Quoi dire pendant un stream ?"**
+📱 **"Comment fonctionne TikTok Live ?"**
+
+Pose ta question et je l'approfondis ! 💪`;
 };
+
 const CTR=(c,ct)=>{
   const revenus=[];
   if(ct.inclDons) revenus.push("Dons");
@@ -1527,7 +1891,7 @@ const STRIPE_URLS = {
     }catch(e){
       console.log("AI error:",e.message);
       setAiTyping(false);
-      setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV)}]);
+      setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV,aiMsgs)}]);
     }
   }
 
