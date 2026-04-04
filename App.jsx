@@ -1513,14 +1513,14 @@ const STRIPE_URLS = {
         ...history.map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]})),
         {role:"user",parts:[{text:q}]}
       ];
-      const response=await fetch("/api/coach",{
+      const response=await fetch("https://fiftdixtzeiidvwblvtr.supabase.co/functions/v1/coach",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({messages:contents})
       });
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
-      const text=data.text||data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const text=data.text;
       if(!text)throw new Error(data.error||"No text");
       setAiTyping(false);
       setAiMsgs(p=>[...p,{role:"ai",text}]);
