@@ -1869,32 +1869,27 @@ const STRIPE_URLS = {
     setAiMsgs(p=>[...p,{role:"user",text:q}]);
     setAiTyping(true);
     try{
-      const systemPrompt=`Tu es un coach expert en live streaming, spécialisé dans Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience, monétiser et progresser. Tu connais l'algorithme Twitch, TikTok, YouTube, les stratégies de croissance, l'affiliation, les partenariats, OBS, micro, caméra, et tout ce qui touche aux jeux vidéo. Réponds toujours en français, de façon concrète et motivante. Hors streaming/gaming, dis poliment que tu es spécialisé uniquement dans le live streaming. Le créateur s'appelle ${user?.name||"le créateur"}, il a environ ${avgV} viewers en moyenne.`;
-      const history=aiMsgs.slice(-8);
-      const contents=[
-        {role:"user",parts:[{text:systemPrompt}]},
-        {role:"model",parts:[{text:"Compris, je suis prêt à coacher !"}]},
-        ...history.map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]})),
-        {role:"user",parts:[{text:q}]}
-      ];
-      const response=await fetch("https://fiftdixtzeiidvwblvtr.supabase.co/functions/v1/coach",{
+      const sys=`Tu es un coach expert en live streaming Twitch, TikTok Live et YouTube Live. Tu aides les créateurs à faire croître leur audience et monétiser. Réponds toujours en français, de façon concrète, détaillée et approfondie. Quand on te pose une question de suivi, approfondis vraiment le sujet. Le créateur s appelle ${user?.name||"le créateur"}, il a ${avgV} viewers en moyenne.`;
+      const hist=aiMsgs.slice(-8).map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]}));
+      const contents=[{role:"user",parts:[{text:sys}]},{role:"model",parts:[{text:"Compris, je suis là pour coacher !"}]},...hist,{role:"user",parts:[{text:q}]}];
+      const r=await fetch("/api/coach",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({messages:contents})
       });
-      if(!response.ok)throw new Error(`HTTP ${response.status}`);
-      const data=await response.json();
-      const text=data.text;
-      if(!text)throw new Error(data.error||"No text");
-      setAiTyping(false);
-      setAiMsgs(p=>[...p,{role:"ai",text}]);
+      const d=await r.json();
+      if(d.text){
+        setAiTyping(false);
+        setAiMsgs(p=>[...p,{role:"ai",text:d.text}]);
+        return;
+      }
+      console.log("coach response:",JSON.stringify(d));
     }catch(e){
-      console.log("AI error:",e.message);
-      setAiTyping(false);
-      setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV,aiMsgs)}]);
+      console.log("coach error:",e.message);
     }
+    setAiTyping(false);
+    setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV,aiMsgs)}]);
   }
-
   async function addStream(){
     const{date,dur,viewers,platform}=newSt;
     if(!date||!dur){alert("Date et durée obligatoires.");return;}
