@@ -1,31 +1,42 @@
-export const config = { runtime: 'edge' };
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).end();
 
-export default async function handler(req) {
-  const cors = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
+  const GROQ_KEY = process.env.GROQ_KEY;
+  if (!GROQ_KEY) return res.status(500).json({ error: 'no key' });
 
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: cors });
-  }
+  try {
+    const { messages } = req.body;
 
-  const KEY = process.env.GEMINI_KEY;
-  if (!KEY) return new Response(JSON.stringify({ error: 'no key' }), { status: 500, headers: cors });
+    // Convertir le format Gemini vers OpenAI/Groq
+    const groqMessages = messages.map(m => ({
+      role: m.role === 'model' ? 'assistant' : m.role,
+      content: m.parts.map(p => p.text).join('')
+    }));
 
-  const { messages } = await req.json();
-
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`,
-    {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: messages, generationConfig: { maxOutputTokens: 1000 } })
-    }
-  );
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: groqMessages,
+        max_tokens: 1000,
+        temperature: 0.8
+      })
+    });
 
-  const d = await r.json();
-  const text = d.candidates?.[0]?.content?.parts?.[0]?.text;
-  return new Response(JSON.stringify({ text: text || null, raw: text ? null : d }), { headers: cors });
+    const data = await r.json();
+    const text = data.choices?.[0]?.message?.content;
+
+    if (text) return res.status(200).json({ text });
+    return res.status(500).json({ error: JSON.stringify(data).slice(0, 200) });
+
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 }
