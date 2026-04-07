@@ -1499,28 +1499,20 @@ const STRIPE_URLS = {
     if(!aiInput.trim())return;
     const q=aiInput;
     setAiInput("");
-    const newHistory=[...aiMsgs,{role:"user",text:q}];
-    setAiMsgs(newHistory);
+    setAiMsgs(p=>[...p,{role:"user",text:q}]);
     setAiTyping(true);
     try{
-      const sys=`Tu es un coach expert en live streaming Twitch, TikTok Live et YouTube Live. Reponds toujours en francais. Sois concret, detaille et approfondis vraiment les sujets. Le createur s appelle ${user?.name||"le createur"}, il a ${avgV} viewers en moyenne.`;
-      const hist=aiMsgs.slice(-8).map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]}));
-      const messages=[{role:"user",parts:[{text:sys}]},{role:"model",parts:[{text:"Compris, je suis pret a coacher !"}]},...hist,{role:"user",parts:[{text:q}]}];
-      const r=await fetch("https://fiftdixtzeiidvwblvtr.supabase.co/functions/v1/coach",{
+      const sys={role:"user",parts:[{text:`Tu es un coach expert en live streaming Twitch, TikTok Live et YouTube Live. Reponds en francais, de facon concrete et approfondie. Tu te souviens de toute la conversation et tu approfondis vraiment chaque sujet. Le createur s appelle ${user?.name||"le createur"}, il a ${avgV} viewers.`}]};
+      const hist=aiMsgs.slice(-10).map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]}));
+      const messages=[sys,{role:"model",parts:[{text:"Compris!"}]},...hist,{role:"user",parts:[{text:q}]}];
+      const r=await fetch("/api/coach",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({messages})
       });
       const d=await r.json();
-      if(d.text){
-        setAiTyping(false);
-        setAiMsgs(p=>[...p,{role:"ai",text:d.text}]);
-        return;
-      }
-      console.warn("Coach API error:",d.error||d.status);
-    }catch(e){
-      console.warn("Coach fetch error:",e.message);
-    }
+      if(d.text){setAiTyping(false);setAiMsgs(p=>[...p,{role:"ai",text:d.text}]);return;}
+    }catch(e){console.warn("AI error:",e.message);}
     setAiTyping(false);
     setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV,aiMsgs)}]);
   }
