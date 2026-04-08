@@ -1359,6 +1359,28 @@ const STRIPE_URLS = {
       if(!result) console.warn("Supabase createUser a retourné null");
       else console.log("✅ Utilisateur sauvegardé dans Supabase:", email);
     }catch(e){ console.warn("User save to Supabase failed:", e); }
+
+    // Auto-inscription aux concours actifs
+    try{
+      const allConcours=await db.getConcours();
+      if(allConcours&&allConcours.length>0){
+        const now=new Date();
+        const actifs=allConcours.filter(c=>{
+          const fin=new Date((c.date_fin||"")+"T23:59:59");
+          const deb=new Date((c.date_debut||"")+"T00:00:00");
+          return c.actif&&fin>=now&&deb<=now;
+        });
+        for(const c of actifs){
+          const parts=typeof c.participants==="string"?JSON.parse(c.participants):(c.participants||[]);
+          const isFull=c.max_participants>0&&parts.length>=c.max_participants;
+          if(!parts.includes(email)&&!isFull){
+            const newParts=[...parts,email];
+            await db.updateConcours(c.id,{participants:JSON.stringify(newParts)});
+            console.log(`✅ Auto-inscrit dans concours: ${c.titre}`);
+          }
+        }
+      }
+    }catch(e){console.warn("Auto-inscription concours failed:",e);}
     
     // Si inscrit avec un code parrain — créer le lien parrainage
     if(referredBy){
@@ -3663,12 +3685,22 @@ const STRIPE_URLS = {
                           <div>
                             <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>Participants ({nbPart})</div>
                             <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:150,overflowY:"auto"}}>
-                              {c.participants.map(email=>(
-                                <div key={email} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"6px 10px"}}>
-                                  <span style={{fontSize:12}}>{email}</span>
-                                  <button onClick={()=>removeParticipant(c.id,email)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:12}}>✕</button>
-                                </div>
-                              ))}
+                              {c.participants.map(email=>{
+                                const cr=createurs.find(x=>x.email===email);
+                                const lsUsers=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+                                const lu=lsUsers[email];
+                                const nom=cr?.name||lu?.name||"";
+                                const pseudo=cr?.username||lu?.username||cr?.twitch||lu?.twitch||"";
+                                return(
+                                  <div key={email} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"6px 10px"}}>
+                                    <div>
+                                      <div style={{fontSize:12,fontWeight:700}}>{nom||email}</div>
+                                      <div style={{fontSize:10,color:M}}>{pseudo?`@${pseudo} · `:""}{email}</div>
+                                    </div>
+                                    <button onClick={()=>removeParticipant(c.id,email)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:12}}>✕</button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
