@@ -505,6 +505,9 @@ export default function App(){
   const [lastSeenChatId,setLastSeenChatId]=useState(()=>localStorage.getItem("ba6_lastchat_"+(JSON.parse(localStorage.getItem("ba6_session")||"{}").email||""))||"0");
   const [commTab,setCommTab]=useState("posts");
   const [parrainages,setParrainages]=useState([]);
+  const [concours,setConcours]=useState(()=>JSON.parse(localStorage.getItem("ba6_concours")||"[]"));
+  const [newConcours,setNewConcours]=useState({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:"",lierClassement:false,bonusPoints:"50"});
+  const [concoursTab,setConcoursTab]=useState("liste");
   const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
@@ -1502,17 +1505,19 @@ const STRIPE_URLS = {
     setAiMsgs(p=>[...p,{role:"user",text:q}]);
     setAiTyping(true);
     try{
-      const sys={role:"user",parts:[{text:`Tu es un coach expert en live streaming Twitch, TikTok Live et YouTube Live. Reponds en francais, de facon concrete et approfondie. Tu te souviens de toute la conversation et tu approfondis vraiment chaque sujet. Le createur s appelle ${user?.name||"le createur"}, il a ${avgV} viewers.`}]};
-      const hist=aiMsgs.slice(-10).map(m=>({role:m.role==="user"?"user":"model",parts:[{text:m.text}]}));
-      const messages=[sys,{role:"model",parts:[{text:"Compris!"}]},...hist,{role:"user",parts:[{text:q}]}];
+      const hist=aiMsgs.slice(-10).map(m=>({
+        role:m.role==="user"?"user":"model",
+        parts:[{text:m.text}]
+      }));
+      const messages=[...hist,{role:"user",parts:[{text:q}]}];
       const r=await fetch("/api/coach",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({messages})
+        body:JSON.stringify({messages,userName:user?.name,avgViewers:avgV})
       });
       const d=await r.json();
       if(d.text){setAiTyping(false);setAiMsgs(p=>[...p,{role:"ai",text:d.text}]);return;}
-    }catch(e){console.warn("AI error:",e.message);}
+    }catch(e){console.warn("AI:",e.message);}
     setAiTyping(false);
     setAiMsgs(p=>[...p,{role:"ai",text:AI_R(q,avgV,aiMsgs)}]);
   }
@@ -1967,6 +1972,7 @@ const STRIPE_URLS = {
     {id:"communaute",   icon:"◎", label:"Communauté",    roles:["admin","createur"]},
     {id:"collab",       icon:"🤝", label:"Collab Match",  roles:["admin","createur"], badge:"NEW"},
     {id:"classement",   icon:"◆", label:"Classement",    roles:["admin","createur"]},
+    {id:"concours",     icon:"🏆", label:"Concours",      roles:["admin","createur"], badge:"NEW"},
     {id:"templates",    icon:"🎨",label:"Templates",     roles:["createur"]},
     {id:"parrainage",   icon:"🎁",label:"Parrainage",    roles:["createur"]},
     {id:"createurs",    icon:"▣", label:"Créateurs",     roles:["admin"],            section:"GESTION"},
@@ -3475,20 +3481,268 @@ const STRIPE_URLS = {
           );
         })()}
 
+        {/* CONCOURS */}
+        {page==="concours"&&role==="admin"&&(()=>{
+          function saveConcours(list){setConcours(list);localStorage.setItem("ba6_concours",JSON.stringify(list));}
+          function createConcours(){
+            if(!newConcours.titre.trim()){alert("Le titre est obligatoire.");return;}
+            if(!newConcours.dateFin){alert("La date de fin est obligatoire.");return;}
+            const c={
+              id:Date.now(),
+              titre:newConcours.titre,
+              description:newConcours.description,
+              photo:newConcours.photo,
+              dateDebut:newConcours.dateDebut||new Date().toISOString().split("T")[0],
+              dateFin:newConcours.dateFin,
+              maxParticipants:parseInt(newConcours.maxParticipants)||0,
+              prix:newConcours.prix,
+              participants:[],
+              actif:true,
+              lierClassement:newConcours.lierClassement,
+              bonusPoints:parseInt(newConcours.bonusPoints)||50,
+              createdAt:new Date().toISOString(),
+            };
+            saveConcours([c,...concours]);
+            setNewConcours({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:""});
+            setConcoursTab("liste");
+            alert("✅ Concours créé !");
+          }
+          function deleteConcours(id){
+            if(!confirm("Supprimer ce concours ?"))return;
+            saveConcours(concours.filter(c=>c.id!==id));
+          }
+          function removeParticipant(concoursId,email){
+            saveConcours(concours.map(c=>c.id===concoursId?{...c,participants:c.participants.filter(p=>p!==email)}:c));
+          }
+          return(
+            <div className="fade">
+              <div style={{marginBottom:16}}>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>🏆 CONCOURS</div>
+                <div style={{fontSize:13,color:M}}>Crée et gère les concours pour les créateurs</div>
+              </div>
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
+                {["liste","creer"].map(t=>(
+                  <button key={t} onClick={()=>setConcoursTab(t)} style={{background:concoursTab===t?"rgba(212,16,63,0.12)":"transparent",border:`1px solid ${concoursTab===t?"rgba(212,16,63,0.35)":B}`,borderRadius:10,padding:"8px 16px",color:concoursTab===t?R:M,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                    {t==="liste"?"📋 Mes concours":"➕ Créer un concours"}
+                  </button>
+                ))}
+              </div>
+
+              {concoursTab==="creer"&&(
+                <Card>
+                  <div style={{fontWeight:800,fontSize:15,marginBottom:14}}>➕ Nouveau concours</div>
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    <Field label="Titre du concours *" value={newConcours.titre} onChange={e=>setNewConcours(p=>({...p,titre:e.target.value}))} placeholder="Ex: Concours 100 premiers inscrits"/>
+                    <Field label="Description / Prix à gagner" as="textarea" value={newConcours.description} onChange={e=>setNewConcours(p=>({...p,description:e.target.value}))} placeholder="Ex: Gagne un micro HyperX SoloCast !"/>
+                    <Field label="Prix / Récompense" value={newConcours.prix} onChange={e=>setNewConcours(p=>({...p,prix:e.target.value}))} placeholder="Ex: Micro gaming + 1 mois Pro offert"/>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                      <Field label="Date de début" type="date" value={newConcours.dateDebut} onChange={e=>setNewConcours(p=>({...p,dateDebut:e.target.value}))}/>
+                      <Field label="Date de fin *" type="date" value={newConcours.dateFin} onChange={e=>setNewConcours(p=>({...p,dateFin:e.target.value}))}/>
+                    </div>
+                    <Field label="Limite de participants (0 = illimité)" type="number" value={newConcours.maxParticipants} onChange={e=>setNewConcours(p=>({...p,maxParticipants:e.target.value}))} placeholder="Ex: 100"/>
+                    
+                    {/* Lier au classement */}
+                    <div style={{background:"rgba(212,16,63,0.05)",border:"1px solid rgba(212,16,63,0.15)",borderRadius:12,padding:"12px 14px"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:newConcours.lierClassement?10:0}}>
+                        <div>
+                          <div style={{fontWeight:700,fontSize:13}}>🏆 Lier au classement</div>
+                          <div style={{fontSize:11,color:M,marginTop:2}}>Les participants gagnent des points bonus dans le classement</div>
+                        </div>
+                        <div onClick={()=>setNewConcours(p=>({...p,lierClassement:!p.lierClassement}))} style={{width:44,height:24,borderRadius:12,background:newConcours.lierClassement?R:"rgba(255,255,255,0.1)",position:"relative",cursor:"pointer",transition:"background 0.2s",flexShrink:0}}>
+                          <div style={{position:"absolute",top:3,left:newConcours.lierClassement?21:3,width:18,height:18,background:"white",borderRadius:"50%",transition:"left 0.2s"}}/>
+                        </div>
+                      </div>
+                      {newConcours.lierClassement&&(
+                        <Field label="Points bonus par participant" type="number" value={newConcours.bonusPoints} onChange={e=>setNewConcours(p=>({...p,bonusPoints:e.target.value}))} placeholder="Ex: 50"/>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>Photo (optionnel)</div>
+                      <label style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.04)",border:`1px solid ${B}`,borderRadius:10,padding:"10px 14px",cursor:"pointer"}}>
+                        <span style={{fontSize:20}}>🖼️</span>
+                        <span style={{fontSize:13,color:M}}>{newConcours.photo?"Photo chargée ✓":"Ajouter une photo"}</span>
+                        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setNewConcours(p=>({...p,photo:ev.target.result}));r.readAsDataURL(f);}}/>
+                      </label>
+                      {newConcours.photo&&<img src={newConcours.photo} style={{width:"100%",borderRadius:10,marginTop:8,maxHeight:150,objectFit:"cover"}}/>}
+                    </div>
+                    <Btn onClick={createConcours} icon="🏆">Créer le concours</Btn>
+                  </div>
+                </Card>
+              )}
+
+              {concoursTab==="liste"&&(
+                concours.length===0?(
+                  <Card style={{textAlign:"center",padding:32}}>
+                    <div style={{fontSize:40,marginBottom:12}}>🏆</div>
+                    <div style={{fontWeight:700,marginBottom:8}}>Aucun concours</div>
+                    <div style={{fontSize:13,color:M,marginBottom:16}}>Crée ton premier concours pour les créateurs</div>
+                    <Btn onClick={()=>setConcoursTab("creer")}>➕ Créer un concours</Btn>
+                  </Card>
+                ):(
+                  concours.map(c=>{
+                    const now=new Date();
+                    const fin=new Date(c.dateFin);
+                    const isExpire=fin<now;
+                    const nbPart=c.participants?.length||0;
+                    const isFull=c.maxParticipants>0&&nbPart>=c.maxParticipants;
+                    return(
+                      <Card key={c.id} style={{marginBottom:12}}>
+                        {c.photo&&<img src={c.photo} style={{width:"100%",borderRadius:10,marginBottom:12,maxHeight:140,objectFit:"cover"}}/>}
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                          <div style={{fontWeight:800,fontSize:15}}>{c.titre}</div>
+                          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                            <span style={{background:isExpire?"rgba(239,68,68,0.12)":"rgba(34,197,94,0.12)",color:isExpire?"#ef4444":G,borderRadius:100,padding:"2px 10px",fontSize:10,fontWeight:700}}>
+                              {isExpire?"Expiré":"Actif"}
+                            </span>
+                            <button onClick={()=>deleteConcours(c.id)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16}}>🗑️</button>
+                          </div>
+                        </div>
+                        {c.prix&&<div style={{fontSize:12,color:YE,fontWeight:700,marginBottom:6}}>🎁 {c.prix}</div>}
+                        {c.description&&<div style={{fontSize:12,color:M,marginBottom:8,lineHeight:1.5}}>{c.description}</div>}
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                          <div style={{background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:800,color:R}}>{nbPart}</div>
+                            <div style={{fontSize:10,color:M}}>Participants</div>
+                          </div>
+                          <div style={{background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                            <div style={{fontSize:11,fontWeight:700,color:c.maxParticipants>0?YE:M}}>{c.maxParticipants>0?c.maxParticipants:"∞"}</div>
+                            <div style={{fontSize:10,color:M}}>Limite</div>
+                          </div>
+                          <div style={{background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                            <div style={{fontSize:10,fontWeight:700,color:M}}>{new Date(c.dateFin).toLocaleDateString("fr-FR")}</div>
+                            <div style={{fontSize:10,color:M}}>Fin</div>
+                          </div>
+                        </div>
+                        {nbPart>0&&(
+                          <div>
+                            <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>Participants ({nbPart})</div>
+                            <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:150,overflowY:"auto"}}>
+                              {c.participants.map(email=>(
+                                <div key={email} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"6px 10px"}}>
+                                  <span style={{fontSize:12}}>{email}</span>
+                                  <button onClick={()=>removeParticipant(c.id,email)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:12}}>✕</button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })
+                )
+              )}
+            </div>
+          );
+        })()}
+
+        {/* CONCOURS CREATEUR */}
+        {page==="concours"&&role==="createur"&&(()=>{
+          const now=new Date();
+          const concoursActifs=concours.filter(c=>{
+            const fin=new Date(c.dateFin);
+            const deb=new Date(c.dateDebut);
+            return fin>=now&&deb<=now;
+          });
+          const concoursExpires=concours.filter(c=>new Date(c.dateFin)<now);
+
+          function participer(c){
+            if(!c.actif){alert("Ce concours n est plus actif.");return;}
+            if(c.participants?.includes(user.email)){alert("Tu participes déjà à ce concours !");return;}
+            const isFull=c.maxParticipants>0&&(c.participants?.length||0)>=c.maxParticipants;
+            if(isFull){alert("Ce concours est complet.");return;}
+            const updated=concours.map(x=>x.id===c.id?{...x,participants:[...(x.participants||[]),user.email]}:x);
+            setConcours(updated);
+            localStorage.setItem("ba6_concours",JSON.stringify(updated));
+            alert("🎉 Tu participes au concours ! Bonne chance !");
+          }
+
+          const ConcoursCard=({c,expire=false})=>{
+            const participe=c.participants?.includes(user.email);
+            const nbPart=c.participants?.length||0;
+            const isFull=c.maxParticipants>0&&nbPart>=c.maxParticipants;
+            return(
+              <Card style={{marginBottom:12,opacity:expire?0.6:1}}>
+                {c.photo&&<img src={c.photo} style={{width:"100%",borderRadius:10,marginBottom:12,maxHeight:160,objectFit:"cover"}}/>}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                  <div style={{fontWeight:800,fontSize:15}}>{c.titre}</div>
+                  {participe&&<span style={{background:"rgba(34,197,94,0.12)",color:G,borderRadius:100,padding:"2px 10px",fontSize:10,fontWeight:700}}>✓ Inscrit</span>}
+                  {expire&&<span style={{background:"rgba(239,68,68,0.12)",color:"#ef4444",borderRadius:100,padding:"2px 10px",fontSize:10,fontWeight:700}}>Terminé</span>}
+                </div>
+                {c.prix&&<div style={{fontSize:13,color:YE,fontWeight:800,marginBottom:6}}>🎁 Prix : {c.prix}</div>}
+                {c.description&&<div style={{fontSize:12,color:M,marginBottom:10,lineHeight:1.6}}>{c.description}</div>}
+                <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+                  <span style={{background:"rgba(255,255,255,0.05)",borderRadius:100,padding:"3px 10px",fontSize:11,color:M}}>👥 {nbPart} participant{nbPart>1?"s":""}{c.maxParticipants>0?` / ${c.maxParticipants}`:""}</span>
+                  <span style={{background:"rgba(255,255,255,0.05)",borderRadius:100,padding:"3px 10px",fontSize:11,color:M}}>📅 Fin le {new Date(c.dateFin).toLocaleDateString("fr-FR")}</span>
+                </div>
+                {!expire&&(
+                  isFull&&!participe?(
+                    <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,padding:"10px",textAlign:"center",fontSize:12,color:"#ef4444",fontWeight:700}}>🔒 Concours complet</div>
+                  ):(
+                    <Btn v={participe?"success":"primary"} full onClick={()=>!participe&&participer(c)} style={{opacity:participe?0.7:1}}>
+                      {participe?"✓ Tu participes déjà":"🏆 Participer au concours"}
+                    </Btn>
+                  )
+                )}
+              </Card>
+            );
+          };
+
+          return(
+            <div className="fade">
+              <div style={{marginBottom:16}}>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>🏆 CONCOURS</div>
+                <div style={{fontSize:13,color:M}}>Participe aux concours Belive Academy</div>
+              </div>
+
+              {concoursActifs.length===0&&concoursExpires.length===0?(
+                <Card style={{textAlign:"center",padding:32}}>
+                  <div style={{fontSize:48,marginBottom:12}}>🏆</div>
+                  <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>Aucun concours en cours</div>
+                  <div style={{fontSize:13,color:M}}>Reviens bientôt — des concours seront bientôt disponibles !</div>
+                </Card>
+              ):(
+                <>
+                  {concoursActifs.length>0&&(
+                    <>
+                      <div style={{fontWeight:800,fontSize:14,marginBottom:10,color:G}}>🟢 Concours en cours ({concoursActifs.length})</div>
+                      {concoursActifs.map(c=><ConcoursCard key={c.id} c={c}/>)}
+                    </>
+                  )}
+                  {concoursExpires.length>0&&(
+                    <>
+                      <div style={{fontWeight:800,fontSize:14,marginBottom:10,color:M,marginTop:16}}>Concours terminés</div>
+                      {concoursExpires.map(c=><ConcoursCard key={c.id} c={c} expire={true}/>)}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {/* CLASSEMENT */}
         {page==="classement"&&(()=>{
-          // Calcul dynamique des points pour chaque utilisateur inscrit
           const allUsers=(() => { const lsU = Object.entries(JSON.parse(localStorage.getItem("ba6_users")||"{}")).map(([email,u])=>({email,...u})); const map = new Map(); lsU.forEach(u=>map.set(u.email,u)); createurs.forEach(u=>map.set(u.email,{...(map.get(u.email)||{}),...u})); return Array.from(map.values()).filter(u=>u.email!=="ethanbfr06@gmail.com"); })();
           const allStreams=JSON.parse(localStorage.getItem("ba6_st")||"[]");
+          const displayName=(u)=>u.username?`@${u.username}`:u.name||u.email;
+
+          // Bonus points depuis les concours liés au classement
+          const bonusPoints=JSON.parse(localStorage.getItem("ba6_classement_bonus")||"{}");
+          const concoursLies=concours.filter(c=>c.lierClassement);
+
+          function saveBonusPoints(b){localStorage.setItem("ba6_classement_bonus",JSON.stringify(b));}
 
           const scored=allUsers.map(u=>{
             const userStreams=allStreams.filter(s=>s.user_email===u.email||s.user===u.email);
             const hours=userStreams.reduce((t,s)=>t+s.duration,0);
             const followers=parseInt(u.twitch_followers||0);
             const avgViewers=userStreams.length?Math.round(userStreams.reduce((t,s)=>t+s.viewers,0)/userStreams.length):0;
-            // Formule : heures×20 + followers×0.5 + viewers moyens×10
-            const score=Math.round(hours*20 + followers*0.5 + avgViewers*10);
-            return{name:u.name,ps:u.twitch||"—",score,hours:parseFloat(hours.toFixed(1)),followers,avgViewers,email:u.email};
+            const baseScore=Math.round(hours*20 + followers*0.5 + avgViewers*10);
+            // Bonus concours liés
+            const concoursBonus=concoursLies.filter(c=>c.participants?.includes(u.email)).length*(c=>c.bonusPoints||50);
+            const manualBonus=parseInt(bonusPoints[u.email]||0);
+            const score=baseScore+manualBonus;
+            return{name:u.name,username:u.username,ps:u.twitch||"—",score,baseScore,manualBonus,hours:parseFloat(hours.toFixed(1)),followers,avgViewers,email:u.email};
           }).filter(u=>u.score>0||u.hours>0).sort((a,b)=>b.score-a.score);
 
           const medals=["🥇","🥈","🥉"];
@@ -3496,10 +3750,25 @@ const STRIPE_URLS = {
 
           return(
             <div>
-              <div style={{marginBottom:20}}>
+              <div style={{marginBottom:16}}>
                 <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>CLASSEMENT</div>
-                <div style={{fontSize:13,color:M,marginTop:2}}>Points = Heures live × 20 + Followers × 0.5 + Viewers moyens × 10</div>
+                <div style={{fontSize:13,color:M,marginTop:2}}>Points = Heures × 20 + Followers × 0.5 + Viewers × 10{concoursLies.length>0&&` + Bonus concours 🏆`}</div>
               </div>
+
+              {/* Bandeau concours liés */}
+              {concoursLies.length>0&&(
+                <div style={{marginBottom:14,display:"flex",flexDirection:"column",gap:6}}>
+                  {concoursLies.map(c=>(
+                    <div key={c.id} style={{background:"rgba(212,16,63,0.07)",border:"1px solid rgba(212,16,63,0.2)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:18}}>🏆</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,fontWeight:700,color:R}}>{c.titre}</div>
+                        <div style={{fontSize:11,color:M}}>+{c.bonusPoints||50} pts pour chaque participant • {c.participants?.length||0} inscrits</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {scored.length===0?(
                 <Card style={{textAlign:"center",padding:"60px 20px"}}>
@@ -3529,7 +3798,7 @@ const STRIPE_URLS = {
                           <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
                             <div style={{width:44,height:44,background:`linear-gradient(135deg,${gc[i]},${gc[i]}99)`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:18}}>{medals[i]}</div>
                             <div style={{textAlign:"center"}}>
-                              <div style={{fontWeight:800,fontSize:12}}>{p.name}</div>
+                              <div style={{fontWeight:800,fontSize:12}}>{displayName(p)}</div>
                               <div style={{fontSize:13,fontWeight:800,color:R,marginTop:2}}>{p.score} pts</div>
                             </div>
                             <div style={{width:64,height:hs[hi],background:`${gc[i]}14`,border:`1px solid ${gc[i]}44`,borderRadius:"6px 6px 0 0",display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:8,fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:24,color:gc[i]}}>{i+1}</div>
@@ -3544,7 +3813,7 @@ const STRIPE_URLS = {
                     <table style={{width:"100%",borderCollapse:"collapse"}}>
                       <thead>
                         <tr style={{borderBottom:`1px solid ${B}`}}>
-                          {["#","Créateur","Heures","Viewers","Score"].map(h=>(
+                          {["#","Créateur","Heures","Viewers","Score",...(role==="admin"?["Modifier"]:[])].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"10px 14px",fontSize:11,fontWeight:700,color:M,textTransform:"uppercase"}}>{h}</th>
                           ))}
                         </tr>
@@ -3555,14 +3824,34 @@ const STRIPE_URLS = {
                             <td style={{padding:"12px 14px",fontWeight:800,color:i<3?gc[i]:M}}>{medals[i]||`#${i+1}`}</td>
                             <td style={{padding:"12px 14px"}}>
                               <div style={{fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
-                                {p.name}
+                                {displayName(p)}
                                 {p.email===user.email&&<Pill color="red" xs>Toi</Pill>}
+                                {role==="admin"&&p.name&&p.username&&<span style={{fontSize:10,color:M}}>({p.name})</span>}
                               </div>
                               <div style={{fontSize:11,color:M}}>🟣 @{p.ps}</div>
                             </td>
                             <td style={{padding:"12px 14px",color:M}}>{p.hours}h</td>
-                            <td style={{padding:"12px 14px",color:M}}>{p.avgViewers} moy.</td>
-                            <td style={{padding:"12px 14px"}}><strong style={{color:R,fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:18}}>{p.score}</strong></td>
+                            <td style={{padding:"12px 14px",color:M}}>{p.avgViewers}</td>
+                            <td style={{padding:"12px 14px"}}>
+                              <strong style={{color:R,fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:18}}>{p.score}</strong>
+                              {p.manualBonus!==0&&<div style={{fontSize:10,color:p.manualBonus>0?G:"#ef4444"}}>{p.manualBonus>0?"+":""}{p.manualBonus} bonus</div>}
+                            </td>
+                            {role==="admin"&&(
+                              <td style={{padding:"12px 14px"}}>
+                                <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                                  <button onClick={()=>{
+                                    const v=prompt(`Bonus/malus pour ${displayName(p)} (pts actuels: ${p.manualBonus})`,p.manualBonus);
+                                    if(v===null)return;
+                                    const b={...bonusPoints,[p.email]:parseInt(v)||0};
+                                    saveBonusPoints(b);
+                                    alert(`✅ Bonus mis à jour pour ${displayName(p)}`);
+                                    setPage("dashboard");setTimeout(()=>setPage("classement"),50);
+                                  }} style={{background:"rgba(96,165,250,0.12)",border:"1px solid rgba(96,165,250,0.25)",borderRadius:6,padding:"4px 8px",fontSize:11,color:"#60a5fa",cursor:"pointer",fontWeight:700}}>
+                                    ✏️ Bonus
+                                  </button>
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
