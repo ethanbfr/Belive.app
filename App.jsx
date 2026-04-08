@@ -3694,8 +3694,8 @@ const STRIPE_URLS = {
                                 return(
                                   <div key={email} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"6px 10px"}}>
                                     <div>
-                                      <div style={{fontSize:12,fontWeight:700}}>{nom||email}</div>
-                                      <div style={{fontSize:10,color:M}}>{pseudo?`@${pseudo} · `:""}{email}</div>
+                                      <div style={{fontSize:12,fontWeight:700}}>{pseudo?`@${pseudo}`:email}</div>
+                                      <div style={{fontSize:10,color:M}}>{nom&&`${nom} · `}{email}</div>
                                     </div>
                                     <button onClick={()=>removeParticipant(c.id,email)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:12}}>✕</button>
                                   </div>
