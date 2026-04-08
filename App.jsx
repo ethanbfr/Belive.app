@@ -3684,12 +3684,22 @@ const STRIPE_URLS = {
         {/* CONCOURS CREATEUR */}
         {page==="concours"&&role==="createur"&&(()=>{
           const now=new Date();
+          const getDate=(c,field)=>{
+            const val=c[field]||c[field.replace("_","")]||c[field.replace(/([A-Z])/g,"_$1").toLowerCase()];
+            if(!val)return null;
+            // Ajoute T23:59:59 pour que la date de fin soit valide toute la journée
+            return field.includes("fin")||field.includes("Fin")?new Date(val+"T23:59:59"):new Date(val+"T00:00:00");
+          };
           const concoursActifs=concours.filter(c=>{
-            const fin=new Date(c.dateFin);
-            const deb=new Date(c.dateDebut);
+            const fin=getDate(c,"dateFin")||getDate(c,"date_fin");
+            const deb=getDate(c,"dateDebut")||getDate(c,"date_debut")||new Date(0);
+            if(!fin)return false;
             return fin>=now&&deb<=now;
           });
-          const concoursExpires=concours.filter(c=>new Date(c.dateFin)<now);
+          const concoursExpires=concours.filter(c=>{
+            const fin=getDate(c,"dateFin")||getDate(c,"date_fin");
+            return fin&&fin<now;
+          });
 
           async function participer(c){
             if(!c.actif){alert("Ce concours n est plus actif.");return;}
@@ -3720,7 +3730,7 @@ const STRIPE_URLS = {
                 {c.description&&<div style={{fontSize:12,color:M,marginBottom:10,lineHeight:1.6}}>{c.description}</div>}
                 <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
                   <span style={{background:"rgba(255,255,255,0.05)",borderRadius:100,padding:"3px 10px",fontSize:11,color:M}}>👥 {nbPart} participant{nbPart>1?"s":""}{c.maxParticipants>0?` / ${c.maxParticipants}`:""}</span>
-                  <span style={{background:"rgba(255,255,255,0.05)",borderRadius:100,padding:"3px 10px",fontSize:11,color:M}}>📅 Fin le {new Date(c.dateFin).toLocaleDateString("fr-FR")}</span>
+                  <span style={{background:"rgba(255,255,255,0.05)",borderRadius:100,padding:"3px 10px",fontSize:11,color:M}}>📅 Fin le {new Date((c.dateFin||c.date_fin)+"T23:59:59").toLocaleDateString("fr-FR")}</span>
                 </div>
                 {!expire&&(
                   isFull&&!participe?(
