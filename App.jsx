@@ -511,7 +511,7 @@ export default function App(){
   const [commTab,setCommTab]=useState("posts");
   const [parrainages,setParrainages]=useState([]);
   const [concours,setConcours]=useState([]);
-  const [newConcours,setNewConcours]=useState({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:"",lierClassement:false,bonusPoints:"50"});
+  const [newConcours,setNewConcours]=useState({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:"",lierClassement:false,bonusPoints:"50",nouveauxSeulement:false});
   const [concoursTab,setConcoursTab]=useState("liste");
   const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
@@ -2449,7 +2449,7 @@ const STRIPE_URLS = {
             <div style={{position:"absolute",bottom:0,right:0,width:9,height:9,background:"#22c55e",borderRadius:"50%",border:`2px solid #0a0a0a`}}/>
           </div>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,fontWeight:700,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.name}</div>
+            <div style={{fontSize:13,fontWeight:700,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.username?`@${user.username}`:user.name}</div>
             <div style={{fontSize:10,color:M,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.twitch?`🟣 @${user.twitch}`:user.email}</div>
           </div>
           <span style={{fontSize:12,color:M}}>›</span>
@@ -2620,7 +2620,7 @@ const STRIPE_URLS = {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
               <div>
-                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>BONJOUR, {user.name.split(" ")[0].toUpperCase()} 👋</div>
+                <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:28,letterSpacing:2}}>BONJOUR, {(user.username||user.name||"").split(" ")[0].toUpperCase()} 👋</div>
                 <div style={{fontSize:13,color:M,marginTop:2}}>Voici tes performances</div>
               </div>
               {!sideOpen&&<button onClick={()=>setSideOpen(true)} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"6px 12px",color:M,fontSize:12,cursor:"pointer"}}>Menu</button>}
@@ -2851,7 +2851,7 @@ const STRIPE_URLS = {
                           <div style={{width:40,height:40,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:15,flexShrink:0}}>{(u.name||"?").charAt(0)}</div>
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
-                              <div style={{fontWeight:800,fontSize:14}}>{u.name}</div>
+                              <div style={{fontWeight:800,fontSize:14}}>{u.username?`@${u.username}`:u.name}</div>
                               {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
                               {status==="trial"&&<Pill color="yellow">⏳ Essai {daysLeft}j</Pill>}
                               {status==="expired"&&<Pill color="red">🔒 Expiré</Pill>}
@@ -2901,7 +2901,7 @@ const STRIPE_URLS = {
                       <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(34,197,94,0.08)`}}>
                         <div style={{width:34,height:34,background:"rgba(34,197,94,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontWeight:700,fontSize:13}}>{u.name}</div>
+                          <div style={{fontWeight:700,fontSize:13}}>{u.username?`@${u.username}`:u.name}</div>
                           <div style={{fontSize:11,color:M}}>📧 {u.email} • 📱 {u.phone||"—"}</div>
                         </div>
                         <div style={{fontWeight:800,color:G,fontSize:13}}>14,99€/mois</div>
@@ -2919,7 +2919,7 @@ const STRIPE_URLS = {
                       <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid rgba(212,16,63,0.08)`}}>
                         <div style={{width:34,height:34,background:"rgba(212,16,63,0.12)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13}}>{u.name.charAt(0)}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontWeight:700,fontSize:13}}>{u.name}</div>
+                          <div style={{fontWeight:700,fontSize:13}}>{u.username?`@${u.username}`:u.name}</div>
                           <div style={{fontSize:11,color:M}}>📧 {u.email} • 📱 {u.phone||"—"}</div>
                         </div>
                         <div style={{display:"flex",gap:6}}>
@@ -3555,9 +3555,9 @@ const STRIPE_URLS = {
             if(!newConcours.titre.trim()){alert("Le titre est obligatoire.");return;}
             if(!newConcours.dateFin){alert("La date de fin est obligatoire.");return;}
             const id=Date.now();
-            const row={id,titre:newConcours.titre,description:newConcours.description,photo:newConcours.photo,date_debut:newConcours.dateDebut||new Date().toISOString().split("T")[0],date_fin:newConcours.dateFin,max_participants:parseInt(newConcours.maxParticipants)||0,prix:newConcours.prix,participants:"[]",actif:true,lier_classement:newConcours.lierClassement,bonus_points:parseInt(newConcours.bonusPoints)||50};
+            const row={id,titre:newConcours.titre,description:newConcours.description,photo:newConcours.photo,date_debut:newConcours.dateDebut||new Date().toISOString().split("T")[0],date_fin:newConcours.dateFin,max_participants:parseInt(newConcours.maxParticipants)||0,prix:newConcours.prix,participants:"[]",actif:true,lier_classement:newConcours.lierClassement,bonus_points:parseInt(newConcours.bonusPoints)||50,nouveaux_seulement:newConcours.nouveauxSeulement};
             try{await db.addConcours(row);}catch(e){console.log("Supabase err",e);}
-            const c={...row,id,participants:[],lierClassement:row.lier_classement,bonusPoints:row.bonus_points,dateDebut:row.date_debut,dateFin:row.date_fin,maxParticipants:row.max_participants};
+            const c={...row,id,participants:[],lierClassement:row.lier_classement,bonusPoints:row.bonus_points,dateDebut:row.date_debut,dateFin:row.date_fin,maxParticipants:row.max_participants,nouveauxSeulement:row.nouveaux_seulement};
             const newList=[c,...concours];
             setConcours(newList);
             localStorage.setItem("ba6_concours",JSON.stringify(newList));
@@ -3623,6 +3623,19 @@ const STRIPE_URLS = {
                       {newConcours.lierClassement&&(
                         <Field label="Points bonus par participant" type="number" value={newConcours.bonusPoints} onChange={e=>setNewConcours(p=>({...p,bonusPoints:e.target.value}))} placeholder="Ex: 50"/>
                       )}
+                    </div>
+
+                    {/* Nouveaux inscrits seulement */}
+                    <div style={{background:"rgba(96,165,250,0.05)",border:"1px solid rgba(96,165,250,0.15)",borderRadius:12,padding:"12px 14px"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <div>
+                          <div style={{fontWeight:700,fontSize:13}}>🆕 Réservé aux nouveaux inscrits</div>
+                          <div style={{fontSize:11,color:M,marginTop:2}}>Seuls ceux qui créent un compte pendant la période sont inscrits automatiquement. Les créateurs déjà inscrits ne peuvent pas participer.</div>
+                        </div>
+                        <div onClick={()=>setNewConcours(p=>({...p,nouveauxSeulement:!p.nouveauxSeulement}))} style={{width:44,height:24,borderRadius:12,background:newConcours.nouveauxSeulement?"#60a5fa":"rgba(255,255,255,0.1)",position:"relative",cursor:"pointer",transition:"background 0.2s",flexShrink:0,marginLeft:12}}>
+                          <div style={{position:"absolute",top:3,left:newConcours.nouveauxSeulement?21:3,width:18,height:18,background:"white",borderRadius:"50%",transition:"left 0.2s"}}/>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <div style={{fontSize:11,fontWeight:600,color:M,marginBottom:6,textTransform:"uppercase"}}>Photo (optionnel)</div>
@@ -3765,7 +3778,11 @@ const STRIPE_URLS = {
                   <span style={{background:"rgba(255,255,255,0.05)",borderRadius:100,padding:"3px 10px",fontSize:11,color:M}}>📅 Fin le {new Date((c.dateFin||c.date_fin)+"T23:59:59").toLocaleDateString("fr-FR")}</span>
                 </div>
                 {!expire&&(
-                  isFull&&!participe?(
+                  c.nouveauxSeulement?(
+                    <div style={{background:"rgba(96,165,250,0.08)",border:"1px solid rgba(96,165,250,0.2)",borderRadius:10,padding:"10px",textAlign:"center",fontSize:12,color:"#60a5fa",fontWeight:700}}>
+                      🆕 Réservé aux nouveaux inscrits pendant la période
+                    </div>
+                  ):isFull&&!participe?(
                     <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,padding:"10px",textAlign:"center",fontSize:12,color:"#ef4444",fontWeight:700}}>🔒 Concours complet</div>
                   ):(
                     <Btn v={participe?"success":"primary"} full onClick={()=>!participe&&participer(c)} style={{opacity:participe?0.7:1}}>
@@ -4457,7 +4474,7 @@ const STRIPE_URLS = {
                           <div style={{width:42,height:42,background:`${scoreColor}22`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0,color:scoreColor}}>{(c.name||"?").charAt(0)}</div>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
-                              <div style={{fontWeight:800,fontSize:14}}>{c.name}</div>
+                              <div style={{fontWeight:800,fontSize:14}}>{c.username?`@${c.username}`:c.name}</div>
                               <span style={{background:`${scoreColor}22`,color:scoreColor,border:`1px solid ${scoreColor}44`,borderRadius:100,padding:"2px 10px",fontSize:11,fontWeight:700}}>{c.score}% compatible</span>
                               {i===0&&<span style={{background:"rgba(212,16,63,0.12)",color:R,border:`1px solid rgba(212,16,63,0.25)`,borderRadius:100,padding:"2px 8px",fontSize:10,fontWeight:700}}>⭐ Meilleur match</span>}
                             </div>
@@ -4517,7 +4534,7 @@ const STRIPE_URLS = {
                               🟣 Voir @{c.twitch}
                             </a>
                           )}
-                          <button onClick={()=>{setPage("communaute");setCommTab("tchat");setTimeout(()=>setChatInput(`@${c.name} `),100);}} style={{flex:1,background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"8px",fontSize:12,fontWeight:700,color:R,cursor:"pointer"}}>
+                          <button onClick={()=>{setPage("communaute");setCommTab("tchat");setTimeout(()=>setChatInput(`@${c.username||c.name} `),100);}} style={{flex:1,background:"rgba(212,16,63,0.08)",border:`1px solid rgba(212,16,63,0.2)`,borderRadius:8,padding:"8px",fontSize:12,fontWeight:700,color:R,cursor:"pointer"}}>
                             💬 Mentionner dans le tchat
                           </button>
                         </div>
@@ -4755,7 +4772,7 @@ const STRIPE_URLS = {
                     </label>
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:800,fontSize:18,marginBottom:2}}>{user.name}</div>
+                    <div style={{fontWeight:800,fontSize:18,marginBottom:2}}>{user.username?`@${user.username}`:user.name}</div>
                     {/* Username */}
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                       {editUsername?(
@@ -5276,7 +5293,7 @@ const STRIPE_URLS = {
                           <div style={{width:42,height:42,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0}}>{(c.name||"?").charAt(0)}</div>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:6}}>
-                              <div style={{fontWeight:800,fontSize:14}}>{c.name}</div>
+                              <div style={{fontWeight:800,fontSize:14}}>{c.username?`@${c.username}`:c.name}</div>
                               {status==="pro"&&<Pill color="green">✅ Pro</Pill>}
                               {status==="offert"&&<Pill color="purple">🎁 Offert</Pill>}
                               {status==="trial"&&<Pill color="yellow">⏳ {daysLeft}j essai</Pill>}
@@ -5350,7 +5367,7 @@ const STRIPE_URLS = {
                 })
               });
               alert(`✅ Email de relance envoyé à ${c.email} avec le lien de paiement !`);
-              storeAdminNotif(`📨 Relance envoyée à ${c.name} (${c.email})`);
+              storeAdminNotif(`📨 Relance envoyée à ${c.username?`@${c.username}`:c.name} (${c.email})`);
             }catch(e){
               // Fallback : ouvrir le mail client
               const subject=encodeURIComponent("💡 Continue ton aventure sur Belive Academy");
@@ -5401,7 +5418,7 @@ const STRIPE_URLS = {
                       <div key={c.email||i} style={{background:C,border:`1px solid rgba(212,16,63,0.2)`,borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14}}>
                         <div style={{width:40,height:40,background:"rgba(212,16,63,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0}}>{(c.name||"?").charAt(0)}</div>
                         <div style={{flex:1}}>
-                          <div style={{fontWeight:800,fontSize:13,marginBottom:2}}>{c.name}</div>
+                          <div style={{fontWeight:800,fontSize:13,marginBottom:2}}>{c.username?`@${c.username}`:c.name}</div>
                           <div style={{fontSize:11,color:M}}>📧 {c.email}{c.twitch&&` • 🟣 @${c.twitch}`}</div>
                         </div>
                         <div style={{display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
@@ -5434,7 +5451,7 @@ const STRIPE_URLS = {
                         <div key={c.email||i} style={{background:C,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14}}>
                           <div style={{width:40,height:40,background:"rgba(251,191,36,0.15)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,flexShrink:0}}>{(c.name||"?").charAt(0)}</div>
                           <div style={{flex:1}}>
-                            <div style={{fontWeight:800,fontSize:13,marginBottom:2}}>{c.name}</div>
+                            <div style={{fontWeight:800,fontSize:13,marginBottom:2}}>{c.username?`@${c.username}`:c.name}</div>
                             <div style={{fontSize:11,color:M}}>📧 {c.email}{c.twitch&&` • 🟣 @${c.twitch}`}</div>
                           </div>
                           <div style={{display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
@@ -5484,7 +5501,7 @@ const STRIPE_URLS = {
                 {contrats.map(c=>(
                   <Card key={c.id} style={{display:"flex",alignItems:"center",gap:14}}>
                     <div style={{width:44,height:44,background:"rgba(34,197,94,0.1)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📋</div>
-                    <div style={{flex:1}}><div style={{fontWeight:700}}>{c.name}</div><div style={{fontSize:12,color:M}}>{c.formule} • {c.commission}% • {c.montant}€ • {c.duree} • {c.date}</div><div style={{fontSize:12,color:M}}>📧 {c.email}</div></div>
+                    <div style={{flex:1}}><div style={{fontWeight:700}}>{c.username?`@${c.username}`:c.name}</div><div style={{fontSize:12,color:M}}>{c.formule} • {c.commission}% • {c.montant}€ • {c.duree} • {c.date}</div><div style={{fontSize:12,color:M}}>📧 {c.email}</div></div>
                     <Pill color="yellow">Envoyé</Pill>
                     <button onClick={()=>setContrats(p=>p.filter(x=>x.id!==c.id))} style={{background:"none",border:`1px solid ${B}`,borderRadius:8,padding:"5px 12px",color:M,fontSize:11,cursor:"pointer"}}>Suppr.</button>
                   </Card>
