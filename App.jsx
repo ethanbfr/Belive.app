@@ -934,6 +934,26 @@ const STRIPE_URLS = {
   }
   useEffect(()=>{aiEnd.current?.scrollIntoView({behavior:"smooth"});},[aiMsgs]);
 
+  // Recharge les concours depuis Supabase quand on ouvre la page
+  useEffect(()=>{
+    if(page==="concours"&&user){
+      db.getConcours().then(data=>{
+        if(data&&data.length>0){
+          const parsed=data.map(c=>({
+            ...c,
+            participants:typeof c.participants==="string"?JSON.parse(c.participants):(c.participants||[]),
+            lierClassement:c.lier_classement,
+            bonusPoints:c.bonus_points,
+            dateDebut:c.date_debut,
+            dateFin:c.date_fin,
+            maxParticipants:c.max_participants,
+          }));
+          setConcours(parsed);
+        }
+      }).catch(e=>console.log("concours load err:",e));
+    }
+  },[page]);
+
   const role=user?.role;
   const isPro=user?.plan==="pro"||user?.plan==="unlimited"||role==="admin";
   const isBeliveCreator=user?.plan==="belive_creator";
@@ -3663,17 +3683,6 @@ const STRIPE_URLS = {
 
         {/* CONCOURS CREATEUR */}
         {page==="concours"&&role==="createur"&&(()=>{
-          // Recharge depuis Supabase si vide
-          const [loading,setLoading]=useState(concours.length===0);
-          useEffect(()=>{
-            db.getConcours().then(data=>{
-              if(data&&data.length>0){
-                const parsed=data.map(c=>({...c,participants:typeof c.participants==="string"?JSON.parse(c.participants):(c.participants||[]),lierClassement:c.lier_classement,bonusPoints:c.bonus_points,dateDebut:c.date_debut,dateFin:c.date_fin,maxParticipants:c.max_participants}));
-                setConcours(parsed);
-              }
-              setLoading(false);
-            }).catch(()=>setLoading(false));
-          },[]);
           const now=new Date();
           const concoursActifs=concours.filter(c=>{
             const fin=new Date(c.dateFin);
@@ -3733,11 +3742,7 @@ const STRIPE_URLS = {
                 <div style={{fontSize:13,color:M}}>Participe aux concours Belive Academy</div>
               </div>
 
-              {loading?(
-                <Card style={{textAlign:"center",padding:32}}>
-                  <div style={{fontSize:13,color:M}}>Chargement des concours...</div>
-                </Card>
-              ):concoursActifs.length===0&&concoursExpires.length===0?(
+              {concoursActifs.length===0&&concoursExpires.length===0?(
                 <Card style={{textAlign:"center",padding:32}}>
                   <div style={{fontSize:48,marginBottom:12}}>🏆</div>
                   <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>Aucun concours en cours</div>
