@@ -57,6 +57,11 @@ const db = {
   getChat:        ()              => supabase("GET",    "chat_messages",   null, "order=created_at.asc&limit=100"),
   addChat:        (data)          => supabase("POST",   "chat_messages",   data),
   deleteChat:     (id)            => supabase("DELETE", "chat_messages",   null, `id=eq.${id}`),
+  // Concours
+  getConcours:    ()              => supabase("GET",    "concours",        null, "order=created_at.desc"),
+  addConcours:    (data)          => supabase("POST",   "concours",        data),
+  updateConcours: (id, data)      => supabase("PATCH",  "concours",        data, `id=eq.${id}`),
+  deleteConcours: (id)            => supabase("DELETE", "concours",        null, `id=eq.${id}`),
 };
 
 const R="#D4103F",D="#080808",C="#111",C2="#161616",B="rgba(255,255,255,0.07)",M="rgba(255,255,255,0.38)";
@@ -505,7 +510,7 @@ export default function App(){
   const [lastSeenChatId,setLastSeenChatId]=useState(()=>localStorage.getItem("ba6_lastchat_"+(JSON.parse(localStorage.getItem("ba6_session")||"{}").email||""))||"0");
   const [commTab,setCommTab]=useState("posts");
   const [parrainages,setParrainages]=useState([]);
-  const [concours,setConcours]=useState(()=>JSON.parse(localStorage.getItem("ba6_concours")||"[]"));
+  const [concours,setConcours]=useState([]);
   const [newConcours,setNewConcours]=useState({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:"",lierClassement:false,bonusPoints:"50"});
   const [concoursTab,setConcoursTab]=useState("liste");
   const [adminRefs,setAdminRefs]=useState([]);
@@ -870,6 +875,27 @@ const STRIPE_URLS = {
           }
         } catch(e) {
           console.log("Erreur referrals, utilisation localStorage");
+        }
+
+        // Charger les concours depuis Supabase
+        try {
+          const data = await db.getConcours();
+          if (data) {
+            const parsed = data.map(c => ({
+              ...c,
+              participants: typeof c.participants === "string" ? JSON.parse(c.participants) : (c.participants || []),
+              lierClassement: c.lier_classement,
+              bonusPoints: c.bonus_points,
+              dateDebut: c.date_debut,
+              dateFin: c.date_fin,
+              maxParticipants: c.max_participants,
+              createdAt: c.created_at,
+            }));
+            setConcours(parsed);
+          }
+        } catch(e) {
+          console.log("Erreur concours:", e);
+          setConcours(JSON.parse(localStorage.getItem("ba6_concours")||"[]"));
         }
         
       } catch(e) {
@@ -3483,36 +3509,36 @@ const STRIPE_URLS = {
 
         {/* CONCOURS */}
         {page==="concours"&&role==="admin"&&(()=>{
-          function saveConcours(list){setConcours(list);localStorage.setItem("ba6_concours",JSON.stringify(list));}
-          function createConcours(){
+          async function createConcours(){
             if(!newConcours.titre.trim()){alert("Le titre est obligatoire.");return;}
             if(!newConcours.dateFin){alert("La date de fin est obligatoire.");return;}
-            const c={
-              id:Date.now(),
-              titre:newConcours.titre,
-              description:newConcours.description,
-              photo:newConcours.photo,
-              dateDebut:newConcours.dateDebut||new Date().toISOString().split("T")[0],
-              dateFin:newConcours.dateFin,
-              maxParticipants:parseInt(newConcours.maxParticipants)||0,
-              prix:newConcours.prix,
-              participants:[],
-              actif:true,
-              lierClassement:newConcours.lierClassement,
-              bonusPoints:parseInt(newConcours.bonusPoints)||50,
-              createdAt:new Date().toISOString(),
-            };
-            saveConcours([c,...concours]);
-            setNewConcours({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:""});
+            const id=Date.now();
+            const row={id,titre:newConcours.titre,description:newConcours.description,photo:newConcours.photo,date_debut:newConcours.dateDebut||new Date().toISOString().split("T")[0],date_fin:newConcours.dateFin,max_participants:parseInt(newConcours.maxParticipants)||0,prix:newConcours.prix,participants:"[]",actif:true,lier_classement:newConcours.lierClassement,bonus_points:parseInt(newConcours.bonusPoints)||50};
+            try{await db.addConcours(row);}catch(e){console.log("Supabase err",e);}
+            const c={...row,id,participants:[],lierClassement:row.lier_classement,bonusPoints:row.bonus_points,dateDebut:row.date_debut,dateFin:row.date_fin,maxParticipants:row.max_participants};
+            const newList=[c,...concours];
+            setConcours(newList);
+            localStorage.setItem("ba6_concours",JSON.stringify(newList));
+            setNewConcours({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:"",lierClassement:false,bonusPoints:"50"});
             setConcoursTab("liste");
             alert("✅ Concours créé !");
           }
-          function deleteConcours(id){
+          async function deleteConcours(id){
             if(!confirm("Supprimer ce concours ?"))return;
-            saveConcours(concours.filter(c=>c.id!==id));
+            try{await db.deleteConcours(id);}catch(e){console.log("err",e);}
+            const newList=concours.filter(c=>c.id!==id);
+            setConcours(newList);
+            localStorage.setItem("ba6_concours",JSON.stringify(newList));
           }
-          function removeParticipant(concoursId,email){
-            saveConcours(concours.map(c=>c.id===concoursId?{...c,participants:c.participants.filter(p=>p!==email)}:c));
+          async function removeParticipant(concoursId,email){
+            const updated=concours.map(c=>{
+              if(c.id!==concoursId)return c;
+              const p=(c.participants||[]).filter(x=>x!==email);
+              db.updateConcours(concoursId,{participants:JSON.stringify(p)}).catch(()=>{});
+              return{...c,participants:p};
+            });
+            setConcours(updated);
+            localStorage.setItem("ba6_concours",JSON.stringify(updated));
           }
           return(
             <div className="fade">
@@ -3645,12 +3671,14 @@ const STRIPE_URLS = {
           });
           const concoursExpires=concours.filter(c=>new Date(c.dateFin)<now);
 
-          function participer(c){
+          async function participer(c){
             if(!c.actif){alert("Ce concours n est plus actif.");return;}
             if(c.participants?.includes(user.email)){alert("Tu participes déjà à ce concours !");return;}
             const isFull=c.maxParticipants>0&&(c.participants?.length||0)>=c.maxParticipants;
             if(isFull){alert("Ce concours est complet.");return;}
-            const updated=concours.map(x=>x.id===c.id?{...x,participants:[...(x.participants||[]),user.email]}:x);
+            const newParts=[...(c.participants||[]),user.email];
+            try{await db.updateConcours(c.id,{participants:JSON.stringify(newParts)});}catch(e){console.log("err",e);}
+            const updated=concours.map(x=>x.id===c.id?{...x,participants:newParts}:x);
             setConcours(updated);
             localStorage.setItem("ba6_concours",JSON.stringify(updated));
             alert("🎉 Tu participes au concours ! Bonne chance !");
