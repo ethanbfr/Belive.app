@@ -513,6 +513,7 @@ export default function App(){
   const [concours,setConcours]=useState([]);
   const [newConcours,setNewConcours]=useState({titre:"",description:"",photo:"",dateDebut:"",dateFin:"",maxParticipants:"",prix:"",lierClassement:false,bonusPoints:"50",nouveauxSeulement:false});
   const [concoursTab,setConcoursTab]=useState("liste");
+  const [rouletteTarget,setRouletteTarget]=useState(null);
   const [adminRefs,setAdminRefs]=useState([]);
   const [postFilter,setPostFilter]=useState("all");
   const [postSearch,setPostSearch]=useState("");
@@ -2466,6 +2467,88 @@ const STRIPE_URLS = {
     <div style={{display:"flex",minHeight:"100vh",background:D}}>
       <style>{css}</style>
 
+      {/* MODAL ROULETTE */}
+      {rouletteTarget&&(()=>{
+        const parts=rouletteTarget.participants||[];
+        const lsUsers=JSON.parse(localStorage.getItem("ba6_users")||"{}");
+        const getName=(email)=>{
+          const cr=createurs.find(x=>x.email===email);
+          const lu=lsUsers[email];
+          const pseudo=cr?.username||lu?.username||cr?.twitch||lu?.twitch||"";
+          return pseudo?`@${pseudo}`:email.split("@")[0];
+        };
+        let spinning=false;
+        let winnerEmail=null;
+        let currentIdx=0;
+        let speed=50;
+        let totalTurns=0;
+        const targetTurns=parts.length*5+Math.floor(Math.random()*parts.length);
+        const winnerIdx=Math.floor(Math.random()*parts.length);
+
+        function startSpin(){
+          if(parts.length<2){alert("Il faut au moins 2 participants !");return;}
+          const el=document.getElementById("roulette-name");
+          const winEl=document.getElementById("roulette-winner");
+          const btnEl=document.getElementById("roulette-btn");
+          if(!el||!btnEl)return;
+          if(btnEl)btnEl.disabled=true;
+          winEl&&(winEl.style.display="none");
+          let idx=0;speed=50;totalTurns=0;spinning=true;
+          function tick(){
+            if(!spinning)return;
+            el.textContent=getName(parts[idx%parts.length]);
+            el.style.color=`hsl(${(idx*47)%360},80%,70%)`;
+            idx++;totalTurns++;
+            if(totalTurns>targetTurns){
+              spinning=false;
+              const finalEmail=parts[winnerIdx];
+              el.textContent=getName(finalEmail);
+              el.style.color="#fbbf24";
+              el.style.fontSize="28px";
+              if(winEl){
+                winEl.style.display="block";
+                winEl.innerHTML=`🎉 <strong>Gagnant : ${getName(finalEmail)}</strong><br/><span style="font-size:11px;color:rgba(255,255,255,0.5)">${finalEmail}</span>`;
+              }
+              if(btnEl)btnEl.disabled=false;
+              return;
+            }
+            // Ralentit progressivement
+            if(totalTurns>targetTurns*0.6) speed=Math.min(speed*1.08,400);
+            setTimeout(tick,speed);
+          }
+          tick();
+        }
+
+        return(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+            <div style={{background:"#111",borderRadius:20,padding:32,maxWidth:380,width:"100%",textAlign:"center",border:"1px solid rgba(255,255,255,0.08)",position:"relative"}}>
+              <button onClick={()=>setRouletteTarget(null)} style={{position:"absolute",top:16,right:16,background:"none",border:"none",color:M,cursor:"pointer",fontSize:20}}>✕</button>
+              <div style={{fontSize:32,marginBottom:8}}>🎰</div>
+              <div style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:22,letterSpacing:2,marginBottom:4}}>TIRAGE AU SORT</div>
+              <div style={{fontSize:12,color:M,marginBottom:24}}>{rouletteTarget.titre} · {parts.length} participants</div>
+
+              {/* Roue */}
+              <div style={{background:"rgba(124,58,237,0.1)",border:"2px solid rgba(124,58,237,0.3)",borderRadius:16,padding:"24px 20px",marginBottom:20,minHeight:80,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div id="roulette-name" style={{fontFamily:"'Bebas Neue',Impact,sans-serif",fontSize:22,fontWeight:800,color:M,transition:"color 0.1s",letterSpacing:1}}>
+                  Prêt...
+                </div>
+              </div>
+
+              {/* Gagnant */}
+              <div id="roulette-winner" style={{display:"none",background:"rgba(251,191,36,0.1)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:12,padding:"14px",marginBottom:16,fontSize:15,color:"#fbbf24",lineHeight:1.6}}/>
+
+              <button id="roulette-btn" onClick={startSpin} style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#a855f7)",border:"none",borderRadius:12,padding:"14px",color:"white",fontWeight:800,fontSize:15,cursor:"pointer"}}>
+                🎰 Lancer la roulette !
+              </button>
+
+              <div style={{marginTop:12,fontSize:11,color:M}}>
+                {parts.slice(0,5).map(e=>getName(e)).join(", ")}{parts.length>5?` +${parts.length-5} autres`:""}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Sidebar desktop — cachée sur tablette/mobile via CSS */}
       {sideOpen&&(
         <div className="desktop-sidebar" style={{width:220,background:"#0a0a0a",borderRight:`1px solid ${B}`,flexDirection:"column",padding:"20px 12px",position:"fixed",top:0,left:0,bottom:0,zIndex:100}}>
@@ -3715,6 +3798,9 @@ const STRIPE_URLS = {
                                 );
                               })}
                             </div>
+                            <button onClick={()=>setRouletteTarget(c)} style={{width:"100%",marginTop:10,background:"linear-gradient(135deg,#7c3aed,#a855f7)",border:"none",borderRadius:10,padding:"10px",color:"white",fontWeight:800,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                              🎰 Tirer un gagnant au hasard
+                            </button>
                           </div>
                         )}
                       </Card>
