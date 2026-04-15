@@ -5435,27 +5435,25 @@ const STRIPE_URLS = {
           });
 
           async function sendRelance(c){
-            const link=`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(c.email)}`;
+            const link=`https://buy.stripe.com/cNicN430LdLj88zgru1wY05?prefilled_email=${encodeURIComponent(c.email)}&client_reference_id=${encodeURIComponent(c.email)}`;
             try{
               await fetch("https://api.emailjs.com/api/v1.0/email/send",{
                 method:"POST",
                 headers:{"Content-Type":"application/json"},
                 body:JSON.stringify({
                   service_id:"service_on459ks",
-                  template_id:"template_ey0hwpz",
+                  template_id:"template_7kpdxpg",
                   user_id:"MTTbA9t4YLXMDdk1I",
                   template_params:{
                     to_email:c.email,
                     to_name:c.name.split(" ")[0],
-                    from_name:"Ethan — Belive Academy",
-                    message:`Salut ${c.name.split(" ")[0]} 👋\n\nTon essai gratuit Belive Academy est terminé. Pour continuer à profiter de toutes les fonctionnalités (coach IA, partenariats, classement, templates...), passe à Premium !\n\n🚀 Seulement 14,99€/mois\n\nClique ici pour t'abonner :\n${link}\n\nÀ bientôt sur la plateforme 🔥\nEthan — Belive Academy`,
+                    stripe_link:link,
                   }
                 })
               });
-              alert(`✅ Email de relance envoyé à ${c.email} avec le lien de paiement !`);
+              alert(`✅ Email de relance envoyé à ${c.email} !`);
               storeAdminNotif(`📨 Relance envoyée à ${c.username?`@${c.username}`:c.name} (${c.email})`);
             }catch(e){
-              // Fallback : ouvrir le mail client
               const subject=encodeURIComponent("💡 Continue ton aventure sur Belive Academy");
               const body=encodeURIComponent(`Salut ${c.name.split(" ")[0]} 👋\n\nTon essai gratuit est terminé. Passe à Premium pour 14,99€/mois !\n\n→ ${link}\n\nEthan — Belive Academy`);
               window.open(`mailto:${c.email}?subject=${subject}&body=${body}`);
